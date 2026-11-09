@@ -14,7 +14,8 @@
     "node": ">=18.17"
   },
   "scripts": {
-    "build": "tsc",
+    "sync:skill": "node scripts/sync-skill.mjs",
+    "build": "node scripts/sync-skill.mjs && tsc",
     "test": "vitest run",
     "test:watch": "vitest",
     "prepack": "npm run build"
