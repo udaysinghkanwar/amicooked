@@ -3,6 +3,7 @@ import { hasActiveSession, login } from "../auth.js";
 import { detectChannel } from "../browser.js";
 import { claudeDesktopDir, installClaudeDesktop, InvalidConfigError, manualSnippet } from "../clients/claudeDesktop.js";
 import { hasClaudeCode, installClaudeCode, installSkill } from "../clients/claudeCode.js";
+import { chatgptSteps, installChatGPT } from "../clients/chatgpt.js";
 import { selfCommand } from "../clients/self.js";
 import { client } from "../client.js";
 import { getConfig, writeConfig, type School } from "../config.js";
@@ -100,7 +101,7 @@ async function chooseClients(flag: string | undefined, detected: Record<ClientId
   return chosen;
 }
 
-function configureClients(clients: ClientId[]): string[] {
+async function configureClients(clients: ClientId[]): Promise<string[]> {
   const done: string[] = [];
   const launch = selfCommand(["mcp"]);
 
@@ -132,7 +133,16 @@ function configureClients(clients: ClientId[]): string[] {
   }
 
   if (clients.includes("chatgpt")) {
-    p.log.warn("ChatGPT support is coming in the next version.");
+    const spin = p.spinner();
+    spin.start("Setting up your private ChatGPT connection");
+    try {
+      const { url, pairingCode } = await installChatGPT();
+      spin.stop("ChatGPT: running in the background");
+      p.note(chatgptSteps(url, pairingCode), "Connect ChatGPT");
+      done.push("chatgpt");
+    } catch (error) {
+      spin.stop(`ChatGPT: ${error instanceof Error ? error.message : error}`);
+    }
   }
   return done;
 }
@@ -173,7 +183,7 @@ export async function setup(options: SetupOptions): Promise<number> {
     }
 
     const detected = { desktop: Boolean(claudeDesktopDir()), code: hasClaudeCode(), chatgpt: false };
-    const done = configureClients(await chooseClients(options.clients, detected, Boolean(options.yes)));
+    const done = await configureClients(await chooseClients(options.clients, detected, Boolean(options.yes)));
 
     if (options.login !== false) await firstRoast();
 
@@ -181,7 +191,9 @@ export async function setup(options: SetupOptions): Promise<number> {
       ? "Quit and reopen Claude Desktop, then ask: am I cooked?"
       : done.includes("code")
         ? "Start Claude Code and ask: am I cooked?"
-        : "Run `amicooked setup` again once you've installed Claude Desktop or Claude Code.";
+        : done.includes("chatgpt")
+          ? "Finish connecting in ChatGPT, then ask: am I cooked?"
+          : "Run `amicooked setup` again once you've installed Claude Desktop, Claude Code or ChatGPT.";
     p.outro(next);
     return 0;
   } catch (error) {
