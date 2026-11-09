@@ -22,6 +22,8 @@ Usage: amicooked <command>
 `;
 
 async function runMcp(): Promise<number> {
+  // stdout carries the protocol; a library logging there would corrupt it
+  console.log = console.error;
   const server = createServer({ instructions: serverInstructions() });
   await server.connect(new StdioServerTransport());
   // Keep running until the AI app closes stdin
