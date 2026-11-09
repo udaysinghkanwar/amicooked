@@ -239,8 +239,12 @@ export function heatScore(reports: CourseReport[]): { heat: number; heatLabel: (
     }
   }
   heat = Math.min(heat, 10);
-  const heatLabel = heat === 0 ? "raw" : heat <= 2 ? "warming up" : heat <= 5 ? "toasty" : heat <= 8 ? "cooked" : "well done";
-  return { heat, heatLabel, reasons };
+  return { heat, heatLabel: heatLabel(heat), reasons };
+}
+
+/** Bands match the doneness meter on the website: 0-1, 2-3, 4-5, 6-7, 8-10. */
+export function heatLabel(heat: number): (typeof HEAT_LABELS)[number] {
+  return HEAT_LABELS[Math.min(Math.floor(heat / 2), HEAT_LABELS.length - 1)];
 }
 
 // ---- fetching ----

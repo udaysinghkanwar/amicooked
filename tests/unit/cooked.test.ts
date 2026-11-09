@@ -3,6 +3,7 @@ import type { Course } from "../../src/courseResolver.js";
 import {
   buildCourseReport,
   estimateGrade,
+  heatLabel,
   heatScore,
   type CourseData,
   type RawFolder,
@@ -109,6 +110,12 @@ describe("buildCourseReport", () => {
 
 describe("heatScore", () => {
   const report = (overrides: object) => ({ ...buildCourseReport(course, data(), w), ...overrides });
+
+  it("uses the same bands as the website's doneness meter", () => {
+    expect([0, 1, 2, 3, 4, 5, 6, 7, 8, 10].map(heatLabel)).toEqual([
+      "raw", "raw", "warming up", "warming up", "toasty", "toasty", "cooked", "cooked", "well done", "well done",
+    ]);
+  });
 
   it("is raw with nothing going on", () => {
     expect(heatScore([report({})]).heatLabel).toBe("raw");
