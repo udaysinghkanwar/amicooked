@@ -1,6 +1,5 @@
 import * as fs from "fs";
-import type { BrowserContext } from "playwright-core";
-import { canShowWindow, openProfile } from "./browser.js";
+import { canShowWindow, openProfile, type Tab } from "./browser.js";
 import { getSchool, paths, writePrivateFile, type School } from "./config.js";
 
 export interface Session {
@@ -69,61 +68,50 @@ function isSignedIn(url: string, school: School): boolean {
 }
 
 /**
- * Drive one login attempt in `context`: start at the school's login page and wait until
+ * Watch one login attempt in `tab`, which opened on the school's login page: wait until
  * the browser is signed in to D2L and a page has made an authenticated API call.
  */
-async function captureSession(context: BrowserContext, school: School, timeoutMs: number): Promise<Session | null> {
-  const page = context.pages()[0] ?? (await context.newPage());
+async function captureSession(tab: Tab, school: School, timeoutMs: number): Promise<Session | null> {
   let token = "";
-  const onRequest = (request: { url(): string; headers(): Record<string, string> }) => {
-    const auth = request.headers()["authorization"];
-    if (request.url().includes("/d2l/api/") && auth?.startsWith("Bearer ")) token = auth.slice(7);
-  };
-  page.on("request", onRequest);
+  tab.onRequest((url, headers) => {
+    const auth = headers["Authorization"] ?? headers["authorization"];
+    if (url.includes("/d2l/api/") && auth?.startsWith("Bearer ")) token = auth.slice(7);
+  });
 
   const deadline = Date.now() + timeoutMs;
-  try {
-    await page.goto(school.loginUrl ?? `https://${school.host}/d2l/home`, { waitUntil: "domcontentloaded" }).catch(() => {});
-    let visitedHome = false;
-    while (Date.now() < deadline && !page.isClosed()) {
-      if (token) break;
-      if (isSignedIn(page.url(), school) && !visitedHome) {
-        // The home page's widgets call the API with a Bearer token we can capture
-        visitedHome = true;
-        if (!new URL(page.url()).pathname.startsWith("/d2l/home")) {
-          await page.goto(`https://${school.host}/d2l/home`, { waitUntil: "domcontentloaded" }).catch(() => {});
-        }
-      }
-      await page.waitForTimeout(500).catch(() => {});
+  let visitedHome = false;
+  while (Date.now() < deadline && !tab.isClosed() && !token) {
+    const url = await tab.url().catch(() => "");
+    if (isSignedIn(url, school) && !visitedHome) {
+      // The home page's widgets call the API with a Bearer token we can capture
+      visitedHome = true;
+      if (!new URL(url).pathname.startsWith("/d2l/home")) await tab.goto(`https://${school.host}/d2l/home`).catch(() => {});
     }
-    if (!token) return null;
-    const cookies = (await context.cookies(`https://${school.host}`)).map((c) => `${c.name}=${c.value}`).join("; ");
-    return { token, expiresAt: tokenExpiry(token), cookies };
+    await new Promise((resolve) => setTimeout(resolve, 500));
+  }
+  if (!token) return null;
+  return { token, expiresAt: tokenExpiry(token), cookies: await tab.cookieHeader(`https://${school.host}`) };
+}
+
+const startUrl = (school: School) => school.loginUrl ?? `https://${school.host}/d2l/home`;
+
+async function attempt(school: School, headless: boolean, timeoutMs: number): Promise<Session | null> {
+  const profile = await openProfile(headless, startUrl(school));
+  try {
+    return await captureSession(profile.tab, school, timeoutMs);
   } finally {
-    if (!page.isClosed()) page.off("request", onRequest);
+    await profile.close().catch(() => {});
   }
 }
 
 /** How logins actually happen; swapped out in tests. */
 export const driver = {
-  async silent(school: School): Promise<Session | null> {
-    const context = await openProfile(true);
-    try {
-      return await captureSession(context, school, SILENT_TIMEOUT_MS);
-    } finally {
-      await context.close().catch(() => {});
-    }
-  },
+  silent: (school: School) => attempt(school, true, SILENT_TIMEOUT_MS),
   async interactive(school: School): Promise<Session | null> {
     if (!canShowWindow()) {
       throw new Error("Logging in needs a desktop session with a display. Run `amicooked login` from your desktop.");
     }
-    const context = await openProfile(false);
-    try {
-      return await captureSession(context, school, INTERACTIVE_TIMEOUT_MS);
-    } finally {
-      await context.close().catch(() => {});
-    }
+    return attempt(school, false, INTERACTIVE_TIMEOUT_MS);
   },
 };
 
