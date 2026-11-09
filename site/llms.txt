@@ -1,25 +1,29 @@
 # Am I Cooked
 
-> Am I Cooked is a free, open-source (MIT) MCP server that runs on a student's laptop and lets Claude Desktop, Claude Code or ChatGPT read their D2L Brightspace courses: grades, assignments and due dates, announcements, course content and files. Not affiliated with or endorsed by D2L or any university.
+> Am I Cooked is a free, open-source (MIT) MCP server that runs on a student's laptop and connects Claude Desktop, Claude Code or ChatGPT to their D2L Brightspace courses: grades, assignments and due dates, announcements, course content and files. Every tool is read-only. Not affiliated with or endorsed by D2L or any university.
 
-The student logs in to their school in a real browser window; Am I Cooked keeps the session locally in `~/.amicooked` and never sees their password. ChatGPT reaches the laptop through a private tunnel and needs developer mode. Setup has presets for Ontario Brightspace schools and accepts any Brightspace URL; it is tested at McMaster University. It reads courses and does not submit work.
+The student signs in on their school's own login page in a real browser window. Am I Cooked keeps the session in `~/.amicooked` on the laptop and never sees the password. Downloaded files go to `~/Downloads/amicooked`. Setup has presets for McMaster, Waterloo, Western, Queen's, Guelph, Laurier, TMU, uOttawa, Carleton, Brock, Windsor, Laurentian and Lakehead, and accepts any Brightspace URL. Login is tested at McMaster.
 
-## Install
+## Setting it up
 
-- [SKILL.md](https://amicooked.app/SKILL.md): step-by-step setup instructions written for AI agents. Start here if a user asks you to set up Am I Cooked.
+- [SKILL.md](https://amicooked.app/SKILL.md): setup instructions written for AI agents. Start here if a user asks you to set up Am I Cooked. Ask which school they go to; never ask for their password.
 - macOS and Linux: `curl -fsSL https://amicooked.app/install.sh | sh`
 - Windows (PowerShell): `irm https://amicooked.app/install.ps1 | iex`
-- With Node.js: `npx -y amicooked setup`
-- Uninstall: `amicooked uninstall`
+- With Node.js 22 or newer: `npx -y amicooked@0 setup`
+- ChatGPT: `amicooked setup --clients chatgpt`, then add the address in ChatGPT under Settings, Apps & Connectors (Developer mode), and enter the pairing code (`amicooked pair` makes a new one). Works while the laptop is on and awake.
+- Uninstall: `amicooked uninstall` (`--purge` also deletes login and settings)
 
 ## Tools
 
-- `am_i_cooked`: overall heat score for the coming days, labelled raw, warming up, toasty, cooked or well done
-- `get_my_grades`: current grades per course
-- `get_assignments`: assignments and due dates
-- `get_announcements`: course announcements
-- `get_course_content`: course content tree (modules, topics, files)
-- `download_file`: download a course file to the laptop
+- `am_i_cooked`: every current course at once (grade so far, what's due, overdue work, new announcements) plus a heat score from 0 to 10 labelled raw, warming up, toasty, cooked or well done
+- `get_my_courses`: the student's courses
+- `get_my_grades`: grade items and feedback for a course
+- `get_upcoming_due_dates`: calendar deadlines, for one course or all
+- `get_announcements`: instructor announcements
+- `get_assignments`: assignments with due dates and submission status
+- `get_course_content`: modules, lectures and files
+- `download_file`: save a course file and read its text (PDF, Word, PowerPoint)
+- `read_file`: read a file that was already downloaded
 
 ## Links
 
