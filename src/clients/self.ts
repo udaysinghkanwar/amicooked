@@ -35,6 +35,6 @@ export function selfCommand(extraArgs: string[], rt: Runtime = currentRuntime())
   const pkg = ["-y", "amicooked@0", ...extraArgs];
   if (rt.platform === "win32") return { command: "cmd", args: ["/c", "npx", ...pkg] };
   // GUI apps don't inherit the shell's PATH (nvm, Homebrew), and npx's shebang needs `node` on it
-  const binDir = path.dirname(rt.execPath);
-  return { command: path.join(binDir, "npx"), args: pkg, env: { PATH: `${binDir}:/usr/bin:/bin` } };
+  const binDir = path.posix.dirname(rt.execPath);
+  return { command: path.posix.join(binDir, "npx"), args: pkg, env: { PATH: `${binDir}:/usr/bin:/bin` } };
 }
