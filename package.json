@@ -1,0 +1,54 @@
+{
+  "name": "amicooked",
+  "version": "0.1.0",
+  "description": "Ask your AI if you're cooked. A local MCP server for D2L Brightspace: grades, deadlines and announcements in Claude and ChatGPT.",
+  "type": "module",
+  "bin": {
+    "amicooked": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "skill"
+  ],
+  "engines": {
+    "node": ">=18.17"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepack": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "d2l",
+    "brightspace",
+    "students",
+    "claude",
+    "chatgpt"
+  ],
+  "author": "Uday Singh Kanwar",
+  "contributors": [
+    "Hamza Ammar (https://github.com/hamzakammar)",
+    "Bence Redmond (https://github.com/General-Mudkip)",
+    "alanxue1 (https://github.com/alanxue1)"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/udaysinghkanwar/amicooked"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.2",
+    "jszip": "^3.10.1",
+    "mammoth": "^1.11.0",
+    "pdf-parse": "^1.1.1",
+    "playwright-core": "1.65.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "typescript": "^5.9.3",
+    "vitest": "^5.1.0"
+  }
+}
