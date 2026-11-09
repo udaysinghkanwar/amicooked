@@ -1,0 +1,27 @@
+# Am I Cooked
+
+> Am I Cooked is a free, open-source (MIT) MCP server that runs on a student's laptop and lets Claude Desktop, Claude Code or ChatGPT read their D2L Brightspace courses: grades, assignments and due dates, announcements, course content and files. Not affiliated with or endorsed by D2L or any university.
+
+The student logs in to their school in a real browser window; Am I Cooked keeps the session locally in `~/.amicooked` and never sees their password. ChatGPT reaches the laptop through a private tunnel and needs developer mode. Setup has presets for Ontario Brightspace schools and accepts any Brightspace URL; it is tested at McMaster University. It reads courses and does not submit work.
+
+## Install
+
+- [SKILL.md](https://amicooked.app/SKILL.md): step-by-step setup instructions written for AI agents. Start here if a user asks you to set up Am I Cooked.
+- macOS and Linux: `curl -fsSL https://amicooked.app/install.sh | sh`
+- Windows (PowerShell): `irm https://amicooked.app/install.ps1 | iex`
+- With Node.js: `npx -y amicooked setup`
+- Uninstall: `amicooked uninstall`
+
+## Tools
+
+- `am_i_cooked`: overall heat score for the coming days, labelled raw, warming up, toasty, cooked or well done
+- `get_my_grades`: current grades per course
+- `get_assignments`: assignments and due dates
+- `get_announcements`: course announcements
+- `get_course_content`: course content tree (modules, topics, files)
+- `download_file`: download a course file to the laptop
+
+## Links
+
+- [Source code](https://github.com/udaysinghkanwar/amicooked)
+- [Website](https://amicooked.app/)
