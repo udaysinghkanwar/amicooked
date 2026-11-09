@@ -40,6 +40,7 @@
     "url": "https://github.com/udaysinghkanwar/amicooked"
   },
   "dependencies": {
+    "@clack/prompts": "^1.8.1",
     "@modelcontextprotocol/sdk": "1.32.2",
     "jszip": "^3.10.1",
     "mammoth": "^1.11.0",
