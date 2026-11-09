@@ -40,6 +40,18 @@ export async function listCourses(): Promise<Course[]> {
   return courses;
 }
 
+const DAY = 24 * 60 * 60 * 1000;
+
+/**
+ * This term's courses: active, not ended more than two weeks ago, and pinned or opened
+ * in the last four months. D2L often leaves EndDate empty, so recency does most of the work.
+ */
+export function currentCourses(courses: Course[], now = Date.now()): Course[] {
+  const active = courses.filter((c) => c.isActive && (!c.endDate || Date.parse(c.endDate) > now - 14 * DAY));
+  const recent = active.filter((c) => c.pinned || (c.lastAccessed && Date.parse(c.lastAccessed) > now - 120 * DAY));
+  return recent.length ? recent : active;
+}
+
 export function clearCourseCache(): void {
   cache = null;
 }

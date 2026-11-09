@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { matchCourses, type Course } from "../../src/courseResolver.js";
+import { currentCourses, matchCourses, type Course } from "../../src/courseResolver.js";
 
 const course = (id: number, code: string, name: string, isActive = true): Course => ({
   id, code, name, isActive, lastAccessed: null, endDate: null, pinned: false,
@@ -30,5 +30,30 @@ describe("matchCourses", () => {
 
   it("returns nothing for unknown courses", () => {
     expect(matchCourses(courses, "4HC3")).toEqual([]);
+  });
+});
+
+describe("currentCourses", () => {
+  const now = Date.parse("2026-11-09T12:00:00Z");
+  const at = (daysAgo: number) => new Date(now - daysAgo * 86400000).toISOString();
+
+  it("keeps active courses opened recently or pinned", () => {
+    const list = [
+      { ...course(1, "A_1", "A"), lastAccessed: at(3) },
+      { ...course(2, "B_1", "B"), pinned: true },
+      { ...course(3, "C_1", "C"), lastAccessed: at(400) },
+      { ...course(4, "D_1", "D", false), lastAccessed: at(1) },
+    ];
+    expect(currentCourses(list, now).map((c) => c.id)).toEqual([1, 2]);
+  });
+
+  it("drops courses that ended weeks ago", () => {
+    const list = [{ ...course(1, "A_1", "A"), pinned: true, endDate: at(30) }];
+    expect(currentCourses(list, now)).toEqual([]);
+  });
+
+  it("falls back to all active courses when none look recent", () => {
+    const list = [{ ...course(1, "A_1", "A"), lastAccessed: at(300) }];
+    expect(currentCourses(list, now).map((c) => c.id)).toEqual([1]);
   });
 });
