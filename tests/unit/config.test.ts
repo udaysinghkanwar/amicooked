@@ -29,7 +29,8 @@ describe("config", () => {
   it("round-trips the school through config.json with private permissions", () => {
     writeConfig({ school: mcmaster });
     expect(getSchool().host).toBe("avenue.cllmcmaster.ca");
-    expect(fs.statSync(paths().config).mode & 0o777).toBe(0o600);
+    // Windows has no Unix permission bits
+    if (process.platform !== "win32") expect(fs.statSync(paths().config).mode & 0o777).toBe(0o600);
   });
 
   it("keeps existing keys when writing a partial update", () => {
