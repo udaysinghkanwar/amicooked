@@ -4,344 +4,137 @@
   every [data-domain] span, so switching to amicooked-mcp.vercel.app is a
   one-line change here. The literal domain inside those spans is the no-JS
   fallback. The og:image URL and llms.txt hard-code it and need a manual edit.
+  When styles.css or main.js change, bump the ?v= number on their links.
 -->
-<html lang="en" data-site-domain="amicooked.app">
+<html lang="en" class="no-js" data-site-domain="amicooked.app">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Am I Cooked? Ask your AI about your D2L Brightspace courses</title>
-  <meta name="description" content="Ask Claude or ChatGPT. It reads your D2L Brightspace grades, deadlines and announcements and tells you straight. Free, open source, runs on your laptop.">
-  <meta name="theme-color" content="#FBFBF9">
+  <meta name="description" content="Ask Claude or ChatGPT. It checks your D2L Brightspace grades and deadlines, then tells you straight. Free, open source, runs on your laptop.">
+  <meta name="theme-color" content="#0E0C0B">
+  <meta name="color-scheme" content="dark">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Am I cooked?">
-  <meta property="og:description" content="Ask Claude or ChatGPT. It reads your grades, deadlines and announcements and tells you straight.">
+  <meta property="og:description" content="Ask Claude or ChatGPT. It checks your grades and deadlines, then tells you straight.">
   <meta property="og:image" content="https://amicooked.app/og.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="/fonts/archivo-expanded-black-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/bricolage-grotesque-latin-opsz.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="/styles.css?v=2">
+  <link rel="stylesheet" href="/styles.css?v=3">
   <link rel="alternate" type="text/markdown" href="/SKILL.md" title="Setup instructions for AI agents">
-  <script src="/main.js?v=2" defer></script>
+  <script>document.documentElement.classList.replace("no-js", "js");</script>
+  <script src="/main.js?v=3" defer></script>
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
 
-  <header class="site-header wrap">
-    <a class="wordmark" href="/">am i cooked?</a>
-    <a class="header-link" href="https://github.com/udaysinghkanwar/amicooked">GitHub</a>
-  </header>
+  <div class="field" aria-hidden="true"></div>
 
-  <main id="main">
-    <section class="hero wrap" aria-labelledby="hero-title">
-      <div class="hero-copy">
-        <h1 id="hero-title">Am I cooked?</h1>
-        <p class="lede">Ask Claude or ChatGPT. It reads your grades, deadlines and announcements and tells you straight.</p>
+  <div class="wrap">
+    <header class="site-header">
+      <a class="wordmark" href="/">am i cooked?</a>
+      <a class="header-link" href="https://github.com/udaysinghkanwar/amicooked">GitHub</a>
+    </header>
 
-        <div class="install" id="install">
-          <div class="tabs tabs-os" role="tablist" aria-label="Your computer">
-            <button class="tab" type="button" role="tab" id="os-mac-1" data-os="mac" aria-controls="os-mac-1-panel" aria-selected="true">macOS &amp; Linux</button>
-            <button class="tab" type="button" role="tab" id="os-win-1" data-os="win" aria-controls="os-win-1-panel" aria-selected="false" tabindex="-1">Windows</button>
-          </div>
-          <div class="install-panel" role="tabpanel" id="os-mac-1-panel" aria-labelledby="os-mac-1">
-            <div class="cmd">
-              <code><span class="prompt" aria-hidden="true">$</span> <span id="cmd-mac-1">curl -fsSL <span class="nw">https://<span data-domain>amicooked.app</span>/install.sh | sh</span></span></code>
-              <button class="copy copy-primary" type="button" data-copy="cmd-mac-1" aria-label="Copy the macOS and Linux install command"><svg aria-hidden="true"><use href="#i-copy"/></svg><span class="copy-label">Copy</span></button>
+    <main id="main">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <h1 id="hero-title">Am I cooked?</h1>
+          <p class="lede">Ask Claude or ChatGPT. It checks your grades and deadlines, then tells you straight.</p>
+
+          <div class="install">
+            <div class="tabs" role="tablist" aria-label="Your computer">
+              <button class="tab" type="button" role="tab" id="os-mac" aria-controls="os-mac-panel" aria-selected="true">Mac</button>
+              <button class="tab" type="button" role="tab" id="os-win" aria-controls="os-win-panel" aria-selected="false" tabindex="-1">Windows</button>
             </div>
-            <a class="script-link" href="/install.sh">View install script<svg aria-hidden="true"><use href="#i-out"/></svg></a>
-          </div>
-          <div class="install-panel" role="tabpanel" id="os-win-1-panel" aria-labelledby="os-win-1" hidden>
-            <div class="cmd">
-              <code><span class="prompt" aria-hidden="true">&gt;</span> <span id="cmd-win-1">irm <span class="nw">https://<span data-domain>amicooked.app</span>/install.ps1 | iex</span></span></code>
-              <button class="copy copy-primary" type="button" data-copy="cmd-win-1" aria-label="Copy the Windows install command"><svg aria-hidden="true"><use href="#i-copy"/></svg><span class="copy-label">Copy</span></button>
+            <div class="cmd" role="tabpanel" id="os-mac-panel" aria-labelledby="os-mac">
+              <code id="cmd-mac">curl -fsSL https://<span data-domain>amicooked.app</span>/install.sh | sh</code>
+              <button class="copy" type="button" data-copy="cmd-mac" aria-label="Copy the Mac install command">Copy</button>
             </div>
-            <a class="script-link" href="/install.ps1">View install script<svg aria-hidden="true"><use href="#i-out"/></svg></a>
+            <div class="cmd" role="tabpanel" id="os-win-panel" aria-labelledby="os-win" hidden>
+              <code id="cmd-win">irm https://<span data-domain>amicooked.app</span>/install.ps1 | iex</code>
+              <button class="copy" type="button" data-copy="cmd-win" aria-label="Copy the Windows install command">Copy</button>
+            </div>
           </div>
-        </div>
-        <noscript><p class="noscript">On Windows, open PowerShell and run <code>irm https://amicooked.app/install.ps1 | iex</code></p></noscript>
 
-        <div class="agent-line">
-          <div class="agent-text">
-            <p class="agent-ask">Already use an AI agent? Copy this prompt.</p>
-            <p class="agent-prompt" id="agent-prompt-1">Set up Am I Cooked from https://<span data-domain>amicooked.app</span>/SKILL.md. Ask me which school I go to. Never ask for my password.</p>
-          </div>
-          <button class="copy" type="button" data-copy="agent-prompt-1" aria-label="Copy prompt for your AI agent"><svg aria-hidden="true"><use href="#i-copy"/></svg><span class="copy-label">Copy prompt</span></button>
+          <p class="agent">Use an AI agent? <button class="text-button" type="button" data-copy="agent-prompt">Copy the setup prompt</button></p>
+          <p class="sr-only" id="agent-prompt">Set up Am I Cooked from https://<span data-domain>amicooked.app</span>/SKILL.md. Ask me which school I go to. Never ask for my password.</p>
         </div>
 
-        <p class="trust">Free <span aria-hidden="true">·</span> open source <span aria-hidden="true">·</span> your login stays on your laptop</p>
-      </div>
+        <figure class="verdict" id="verdict" aria-label="Sample answer">
+          <p class="bubble">am i cooked?</p>
 
-      <div class="hero-demo">
-        <figure class="verdict" id="verdict" aria-labelledby="verdict-cap">
-          <p class="bubble bubble-user">am i cooked?</p>
-          <div class="answer">
-            <div class="meter" role="img" aria-labelledby="meter-text">
-              <p class="meter-head" id="meter-text">
-                <span class="meter-label"><span class="swatch" aria-hidden="true"></span><span data-heat-label>toasty</span></span>
-                <span class="meter-value"><span data-heat-value>5</span>/10</span>
-              </p>
-              <div class="meter-bar" aria-hidden="true">
-                <span class="meter-rest"></span>
-                <span class="meter-marker"></span>
-              </div>
-              <ol class="meter-scale" aria-hidden="true">
-                <li>raw</li><li>warming up</li><li class="is-on">toasty</li><li>cooked</li><li>well done</li>
-              </ol>
-            </div>
-            <p class="verdict-line" data-heat-line>Not cooked yet, but it’s getting warm.</p>
-            <ol class="actions">
-              <li><b>3XA3</b> lab report due tomorrow 11:59 pm, not submitted</li>
-              <li><b>2C03</b> assignment 2 due Thursday</li>
-              <li><b>2XB3</b> is at 64% (estimate). Office hours Wednesday.</li>
-            </ol>
+          <div class="verdict-head">
+            <span class="verdict-label"><span class="swatch" aria-hidden="true"></span><span data-label>toasty</span></span>
+            <span class="verdict-score"><span data-heat>4</span>/10</span>
           </div>
-          <figcaption class="verdict-cap" id="verdict-cap">Sample answer with made-up courses.</figcaption>
+
+          <div class="meter">
+            <div class="meter-bar" aria-hidden="true">
+              <span class="meter-rest"></span>
+              <span class="meter-tick" style="--at: 0"></span>
+              <span class="meter-tick" style="--at: 2"></span>
+              <span class="meter-tick" style="--at: 4"></span>
+              <span class="meter-tick" style="--at: 7"></span>
+              <span class="meter-tick" style="--at: 10"></span>
+              <span class="meter-marker"></span>
+            </div>
+            <input class="meter-range js-only" type="range" min="0" max="10" step="0.1" value="4" aria-label="Sample week" aria-valuetext="Midterms week, 4 out of 10, toasty">
+          </div>
+
+          <div class="weeks" role="group" aria-label="Sample weeks">
+            <button class="week" type="button" style="--at: 0" data-week="0" aria-pressed="false">Chill</button>
+            <button class="week" type="button" style="--at: 2" data-week="1" aria-pressed="false">Busy</button>
+            <button class="week" type="button" style="--at: 4" data-week="2" aria-pressed="true">Midterms<span class="week-progress" aria-hidden="true"></span></button>
+            <button class="week" type="button" style="--at: 7" data-week="3" aria-pressed="false">Missed lab</button>
+            <button class="week" type="button" style="--at: 10" data-week="4" aria-pressed="false">Finals</button>
+          </div>
+
+          <div class="verdict-foot">
+            <div>
+              <p class="verdict-line" data-line>Not cooked yet. Getting warm.</p>
+              <p class="verdict-why" data-why>0 overdue · 3 due soon · 64% low</p>
+            </div>
+            <button class="play js-only" type="button" aria-label="Pause the weeks">
+              <svg class="icon-pause" aria-hidden="true" width="14" height="14" viewBox="0 0 16 16"><rect x="3.5" y="3" width="3" height="10" rx="1" fill="currentColor"/><rect x="9.5" y="3" width="3" height="10" rx="1" fill="currentColor"/></svg>
+              <svg class="icon-play" aria-hidden="true" width="14" height="14" viewBox="0 0 16 16"><path d="M5 3.2v9.6a.7.7 0 0 0 1.06.6l7.6-4.8a.7.7 0 0 0 0-1.2l-7.6-4.8A.7.7 0 0 0 5 3.2z" fill="currentColor"/></svg>
+            </button>
+          </div>
         </figure>
+      </section>
 
-        <div class="slider">
-          <label for="heat-slider">Drag to see other verdicts</label>
-          <input type="range" id="heat-slider" min="0" max="10" step="1" value="5" aria-valuetext="5 out of 10, toasty">
-        </div>
-      </div>
-    </section>
+      <section class="more" aria-label="What else you can ask">
+        <p>More than “am I cooked?” <span>Ask about your grades, what’s due, what you submitted, lecture slides or new announcements.</span></p>
+      </section>
 
-    <section class="section wrap ask" aria-labelledby="ask-title">
-      <div class="section-intro">
-        <h2 id="ask-title">What you can ask</h2>
-        <p>Talk to it like a friend who can see your course page. It looks things up before it answers.</p>
-      </div>
-      <div class="chat">
-        <div class="exchange">
-          <p class="bubble bubble-user">what’s my grade in 2XB3 so far?</p>
-          <p class="reply">64%, estimated from the seven graded items. The midterm is pulling it down and the labs are holding it up.</p>
-          <p class="chips"><code class="chip">get_my_grades</code></p>
-        </div>
-        <div class="exchange exchange-follow">
-          <p class="bubble bubble-user">did I submit lab 4?</p>
-          <p class="reply">Yes, Tuesday at 10:42 pm. Lab 5 isn’t in yet, and it’s due Friday.</p>
-          <p class="chips"><code class="chip">get_assignments</code></p>
-        </div>
-        <div class="exchange">
-          <p class="bubble bubble-user">what’s due before Sunday?</p>
-          <p class="reply">Three things: assignment 2 on Thursday, lab 5 on Friday at 11:59 pm, quiz 4 on Sunday.</p>
-          <p class="chips"><code class="chip">get_upcoming_due_dates</code></p>
-        </div>
-        <div class="exchange">
-          <p class="bubble bubble-user">summarize the week 7 slides</p>
-          <p class="reply">Got <span class="file">Week7-Graphs.pdf</span>. Five ideas, plus the two your prof said will be on the midterm.</p>
-          <p class="chips"><code class="chip">get_course_content</code><code class="chip">download_file</code></p>
-        </div>
-        <div class="exchange">
-          <p class="bubble bubble-user">anything new from my profs?</p>
-          <p class="reply">Two posts since Monday. 2C03 moved office hours to Thursday, and 3XA3 gave lab 5 an extra day.</p>
-          <p class="chips"><code class="chip">get_announcements</code></p>
-        </div>
-        <div class="exchange exchange-follow">
-          <p class="bubble bubble-user">what’s on the midterm?</p>
-          <p class="reply">Chapters 4 to 7, 90 minutes, no calculators. That’s from Friday’s announcement and the review sheet you downloaded.</p>
-          <p class="chips"><code class="chip">get_announcements</code><code class="chip">read_file</code></p>
-        </div>
-      </div>
-    </section>
+      <section class="row" aria-label="How to set it up">
+        <ol class="steps">
+          <li><span class="num">01</span>Paste one command.</li>
+          <li><span class="num">02</span>Log in on your school’s page.</li>
+          <li><span class="num">03</span>Ask: am I cooked?</li>
+        </ol>
+      </section>
 
-    <section class="section wrap" id="setup" aria-labelledby="setup-title">
-      <h2 id="setup-title">Set up in a minute</h2>
-      <ol class="steps">
-        <li>
-          <h3>Paste the install command</h3>
-          <p>In Terminal on a Mac, or PowerShell on Windows. It downloads one small app and starts setup.</p>
-        </li>
-        <li>
-          <h3>Pick your school and log in</h3>
-          <p>A browser window opens your school’s own login page. Sign in like you always do.</p>
-        </li>
-        <li>
-          <h3>Ask your AI “am I cooked?”</h3>
-          <p>Setup connects the apps you use. Then just ask.</p>
-        </li>
-      </ol>
-
-      <div class="apps">
-        <p class="apps-lead" id="apps-lead">The exact steps for the app you use.</p>
-        <div class="tabs tabs-apps" role="tablist" aria-label="Your AI app">
-          <button class="tab" type="button" role="tab" id="app-desktop" aria-controls="app-desktop-panel" aria-selected="true">Claude Desktop</button>
-          <button class="tab" type="button" role="tab" id="app-code" aria-controls="app-code-panel" aria-selected="false" tabindex="-1">Claude Code</button>
-          <button class="tab" type="button" role="tab" id="app-chatgpt" aria-controls="app-chatgpt-panel" aria-selected="false" tabindex="-1">ChatGPT</button>
-          <button class="tab" type="button" role="tab" id="app-agent" aria-controls="app-agent-panel" aria-selected="false" tabindex="-1">Any agent</button>
-        </div>
-
-        <div class="app-panel" role="tabpanel" id="app-desktop-panel" aria-labelledby="app-desktop">
-          <ol>
-            <li>Install <a href="https://claude.ai/download">Claude Desktop</a> if you don’t have it.</li>
-            <li>Run the install command. When setup asks where you want to use it, pick Claude Desktop.</li>
-            <li>Quit and reopen Claude Desktop, then ask: am I cooked?</li>
-          </ol>
-        </div>
-        <div class="app-panel" role="tabpanel" id="app-code-panel" aria-labelledby="app-code" hidden>
-          <ol>
-            <li>Run the install command and pick Claude Code. Setup adds Am I Cooked for every project and installs its skill.</li>
-            <li>Start Claude Code in any folder and ask: am I cooked?</li>
-          </ol>
-        </div>
-        <div class="app-panel" role="tabpanel" id="app-chatgpt-panel" aria-labelledby="app-chatgpt" hidden>
-          <ol>
-            <li>Run <code>amicooked setup --clients chatgpt</code>. It gives your laptop a private web address and keeps Am I Cooked running in the background.</li>
-            <li>In ChatGPT on the web, open Settings, then Apps &amp; Connectors, then Advanced settings, and turn on Developer mode.</li>
-            <li>Back in Apps &amp; Connectors, choose Create. Name it Am I Cooked, paste the address from setup, and pick OAuth.</li>
-            <li>When ChatGPT asks for a code, enter the pairing code from setup. Codes last 10 minutes; <code>amicooked pair</code> makes a new one.</li>
-          </ol>
-          <p class="app-note">You link it once. After that, ChatGPT can reach Am I Cooked whenever your laptop is on and awake.</p>
-        </div>
-        <div class="app-panel" role="tabpanel" id="app-agent-panel" aria-labelledby="app-agent" hidden>
-          <p>Paste this into Claude Code, Codex, Cursor or any agent that can run commands. It reads the setup guide, asks for your school and does the rest.</p>
-          <div class="prompt-box">
-            <p id="agent-prompt-2">Set up Am I Cooked from https://<span data-domain>amicooked.app</span>/SKILL.md. Ask me which school I go to. Never ask for my password.</p>
-            <button class="copy" type="button" data-copy="agent-prompt-2" aria-label="Copy prompt for your AI agent"><svg aria-hidden="true"><use href="#i-copy"/></svg><span class="copy-label">Copy prompt</span></button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="section wrap how" aria-labelledby="how-title">
-      <h2 id="how-title">How it works</h2>
-      <div class="how-grid">
-        <figure class="diagram">
-          <svg class="diagram-wide" viewBox="0 0 720 168" role="img" aria-labelledby="dia-title">
-            <title id="dia-title">You ask Claude or ChatGPT, which asks Am I Cooked on your laptop, which reads your school’s D2L.</title>
-            <g class="d-line">
-              <path d="M128 92H178"/><path d="M308 92H358"/><path d="M542 92H592"/>
-            </g>
-            <g class="d-head">
-              <path d="M172 87l7 5-7 5"/><path d="M352 87l7 5-7 5"/><path d="M586 87l7 5-7 5"/>
-            </g>
-            <rect class="d-laptop" x="366" y="28" width="168" height="124" rx="14"/>
-            <text class="d-tag" x="380" y="48">your laptop</text>
-            <rect class="d-node" x="8" y="62" width="120" height="60" rx="10"/>
-            <rect class="d-node" x="188" y="62" width="120" height="60" rx="10"/>
-            <rect class="d-node d-node-strong" x="380" y="62" width="140" height="60" rx="10"/>
-            <rect class="d-node" x="600" y="62" width="112" height="60" rx="10"/>
-            <text class="d-name" x="68" y="97" text-anchor="middle">You</text>
-            <text class="d-name" x="248" y="89" text-anchor="middle">Claude or</text>
-            <text class="d-name" x="248" y="108" text-anchor="middle">ChatGPT</text>
-            <text class="d-name" x="450" y="97" text-anchor="middle">Am I Cooked</text>
-            <text class="d-name" x="656" y="89" text-anchor="middle">Your school’s</text>
-            <text class="d-name" x="656" y="108" text-anchor="middle">D2L</text>
-          </svg>
-          <svg class="diagram-tall" viewBox="0 0 320 400" role="img" aria-labelledby="dia-title-2">
-            <title id="dia-title-2">You ask Claude or ChatGPT, which asks Am I Cooked on your laptop, which reads your school’s D2L.</title>
-            <g class="d-line">
-              <path d="M160 64V100"/><path d="M160 164V204"/><path d="M160 290V326"/>
-            </g>
-            <g class="d-head">
-              <path d="M155 94l5 7 5-7"/><path d="M155 198l5 7 5-7"/><path d="M155 320l5 7 5-7"/>
-            </g>
-            <rect class="d-laptop" x="40" y="188" width="240" height="112" rx="14"/>
-            <text class="d-tag" x="56" y="208">your laptop</text>
-            <rect class="d-node" x="60" y="8" width="200" height="56" rx="10"/>
-            <rect class="d-node" x="60" y="108" width="200" height="56" rx="10"/>
-            <rect class="d-node d-node-strong" x="60" y="222" width="200" height="56" rx="10"/>
-            <rect class="d-node" x="60" y="334" width="200" height="56" rx="10"/>
-            <text class="d-name" x="160" y="42" text-anchor="middle">You</text>
-            <text class="d-name" x="160" y="142" text-anchor="middle">Claude or ChatGPT</text>
-            <text class="d-name" x="160" y="256" text-anchor="middle">Am I Cooked</text>
-            <text class="d-name" x="160" y="368" text-anchor="middle">Your school’s D2L</text>
-          </svg>
-        </figure>
+      <section class="row" aria-label="Privacy">
         <ul class="promises">
-          <li><b>Runs on your laptop.</b> Nothing is stored on our servers.</li>
-          <li><b>You log in on your school’s real page.</b> We never see your password.</li>
-          <li><b>Read-only.</b> It never submits work for you.</li>
+          <li><b>Runs on your laptop.</b> Nothing stored on our servers.</li>
+          <li><b>Your password stays with your school.</b> We never see it.</li>
+          <li><b>Read-only.</b> It never submits anything.</li>
         </ul>
-      </div>
-      <p class="how-foot">Open source under the MIT license. Read every line on <a href="https://github.com/udaysinghkanwar/amicooked">GitHub</a>.</p>
-    </section>
+      </section>
+    </main>
 
-    <section class="section wrap schools" aria-labelledby="schools-title">
-      <h2 id="schools-title">Works with</h2>
-      <p class="school-list">McMaster, Waterloo, Western, Queen’s, Guelph, Laurier, TMU, Ottawa, Carleton, Brock, Windsor, Laurentian, Lakehead <span class="school-more">and any D2L Brightspace school.</span></p>
-      <p class="school-note">Login is tested at McMaster. If your school misbehaves, <a href="https://github.com/udaysinghkanwar/amicooked/issues">open an issue</a>.</p>
-    </section>
-
-    <section class="section wrap faq" aria-labelledby="faq-title">
-      <h2 id="faq-title">Questions</h2>
-      <div class="faq-list">
-        <details>
-          <summary>Which schools work?</summary>
-          <p>Any school on D2L Brightspace. Setup has presets for 13 Ontario schools, and any other Brightspace school works with the address you log in through. Login is tested at McMaster.</p>
-        </details>
-        <details>
-          <summary>Is this official?</summary>
-          <p>No. Am I Cooked is an independent project. It isn’t affiliated with or endorsed by D2L or any university. Brightspace is a trademark of D2L Corporation.</p>
-        </details>
-        <details>
-          <summary>Does it submit work or change anything?</summary>
-          <p>No. Every tool is read-only. It reads your grades, deadlines, announcements and course files, and that’s it.</p>
-        </details>
-        <details>
-          <summary>What does ChatGPT need?</summary>
-          <p>A one-time link: run <code>amicooked setup --clients chatgpt</code>, add the address in ChatGPT with Developer mode on, and enter the pairing code. Developer mode is required for now. ChatGPT can reach Am I Cooked while your laptop is on and awake.</p>
-        </details>
-        <details>
-          <summary>Where are my files saved?</summary>
-          <p>Course files you download go to <code>~/Downloads/amicooked</code>. Your settings and school login live in <code>~/.amicooked</code>. Nothing is stored on our servers.</p>
-        </details>
-        <details>
-          <summary>How do I uninstall?</summary>
-          <p>Run <code>amicooked uninstall</code> to disconnect it from your AI apps. Add <code>--purge</code> to delete your login and settings too.</p>
-        </details>
-      </div>
-    </section>
-
-    <section class="section wrap closing" aria-labelledby="closing-title">
-      <h2 id="closing-title">Find out.</h2>
-      <div class="install">
-        <div class="tabs tabs-os" role="tablist" aria-label="Your computer">
-          <button class="tab" type="button" role="tab" id="os-mac-2" data-os="mac" aria-controls="os-mac-2-panel" aria-selected="true">macOS &amp; Linux</button>
-          <button class="tab" type="button" role="tab" id="os-win-2" data-os="win" aria-controls="os-win-2-panel" aria-selected="false" tabindex="-1">Windows</button>
-        </div>
-        <div class="install-panel" role="tabpanel" id="os-mac-2-panel" aria-labelledby="os-mac-2">
-          <div class="cmd">
-            <code><span class="prompt" aria-hidden="true">$</span> <span id="cmd-mac-2">curl -fsSL <span class="nw">https://<span data-domain>amicooked.app</span>/install.sh | sh</span></span></code>
-            <button class="copy copy-primary" type="button" data-copy="cmd-mac-2" aria-label="Copy the macOS and Linux install command"><svg aria-hidden="true"><use href="#i-copy"/></svg><span class="copy-label">Copy</span></button>
-          </div>
-          <a class="script-link" href="/install.sh">View install script<svg aria-hidden="true"><use href="#i-out"/></svg></a>
-        </div>
-        <div class="install-panel" role="tabpanel" id="os-win-2-panel" aria-labelledby="os-win-2" hidden>
-          <div class="cmd">
-            <code><span class="prompt" aria-hidden="true">&gt;</span> <span id="cmd-win-2">irm <span class="nw">https://<span data-domain>amicooked.app</span>/install.ps1 | iex</span></span></code>
-            <button class="copy copy-primary" type="button" data-copy="cmd-win-2" aria-label="Copy the Windows install command"><svg aria-hidden="true"><use href="#i-copy"/></svg><span class="copy-label">Copy</span></button>
-          </div>
-          <a class="script-link" href="/install.ps1">View install script<svg aria-hidden="true"><use href="#i-out"/></svg></a>
-        </div>
-      </div>
-      <p class="closing-alt">Have Node 22 or newer? <code>npx -y amicooked@0 setup</code> works too.</p>
-    </section>
-  </main>
-
-  <footer class="site-footer wrap">
-    <p class="agent-note">Are you an AI agent? Read <a href="/SKILL.md"><span data-domain>amicooked.app</span>/SKILL.md</a></p>
-    <ul class="footer-links">
-      <li><a href="https://github.com/udaysinghkanwar/amicooked">GitHub</a></li>
-      <li><a href="https://github.com/udaysinghkanwar/amicooked/blob/main/LICENSE">MIT license</a></li>
-      <li><a href="/llms.txt">llms.txt</a></li>
-    </ul>
-    <p class="legal">Not affiliated with D2L or any university. Brightspace is a trademark of D2L Corporation. Sample answers use made-up courses.</p>
-  </footer>
+    <footer class="site-footer">
+      <p>Works with McMaster, Waterloo, Western, Queen’s, Guelph, Laurier, TMU, Ottawa, Carleton, Brock, Windsor, Laurentian, Lakehead and any D2L Brightspace school.</p>
+      <p>AI agent? Read <a href="/SKILL.md"><span data-domain>amicooked.app</span>/SKILL.md</a></p>
+      <p class="legal">Free and open source (<a href="https://github.com/udaysinghkanwar/amicooked/blob/main/LICENSE">MIT</a>). Not affiliated with D2L or any university. Sample weeks use made-up courses.</p>
+    </footer>
+  </div>
 
   <p class="sr-only" aria-live="polite" id="live"></p>
-
-  <svg class="sr-only" aria-hidden="true" focusable="false">
-    <symbol id="i-copy" viewBox="0 0 20 20">
-      <rect x="6.75" y="6.75" width="9.5" height="9.5" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/>
-      <path d="M13.25 6.5V5.25a1.5 1.5 0 0 0-1.5-1.5h-6.5a1.5 1.5 0 0 0-1.5 1.5v6.5a1.5 1.5 0 0 0 1.5 1.5H6.5" fill="none" stroke="currentColor" stroke-width="1.5"/>
-    </symbol>
-    <symbol id="i-check" viewBox="0 0 20 20">
-      <path d="M4.5 10.5l3.5 3.5 7.5-8" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
-    </symbol>
-    <symbol id="i-out" viewBox="0 0 20 20">
-      <path d="M7 13l6.5-6.5M8.5 6.5h5v5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-    </symbol>
-  </svg>
 </body>
 </html>
