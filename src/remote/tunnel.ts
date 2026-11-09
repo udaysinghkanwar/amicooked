@@ -51,9 +51,10 @@ export async function heartbeat(tunnel: Tunnel): Promise<void> {
 // ---- cloudflared ----
 
 const CLOUDFLARED_VERSION = "2026.10.3";
+// SHA-256 of each release asset as downloaded (GitHub's asset digest; the release notes hash the binary inside the .tgz)
 const CLOUDFLARED_ASSETS: Record<string, { asset: string; sha256: string }> = {
-  "darwin-arm64": { asset: "cloudflared-darwin-arm64.tgz", sha256: "f249139e0541fa589c987397d867cc16c83ab1236d31eb6782f2e4552ee9cf80" },
-  "darwin-x64": { asset: "cloudflared-darwin-amd64.tgz", sha256: "947e2942d6a59922d80190d23b12f3ade8da16e23e3bd937182a48993b7c00db" },
+  "darwin-arm64": { asset: "cloudflared-darwin-arm64.tgz", sha256: "1165d14b6f6360a3b8c283d7d1100024d6ec7cd9bc9e32519e96150645f3ec55" },
+  "darwin-x64": { asset: "cloudflared-darwin-amd64.tgz", sha256: "81b7b85f2376815c4f59b1aa323887b62e16ce8b67555c2e1577dc23f2a82000" },
   "linux-x64": { asset: "cloudflared-linux-amd64", sha256: "053b80b0a23031a038fdbf3c073f59f82b8f1f152aa67971d7383ffafc0dbab0" },
   "win32-x64": { asset: "cloudflared-windows-amd64.exe", sha256: "76b2805253d0d6ffacb092a7acfbee99e7af6917835c0c5410e23f3ef5052da2" },
 };
@@ -72,8 +73,14 @@ export async function ensureCloudflared(): Promise<string> {
   const spec = CLOUDFLARED_ASSETS[key];
   if (!spec) throw new Error(`ChatGPT support isn't available on ${key} yet.`);
   const url = `https://github.com/cloudflare/cloudflared/releases/download/${CLOUDFLARED_VERSION}/${spec.asset}`;
-  const res = await fetch(url, { signal: AbortSignal.timeout(120000) });
-  if (!res.ok) throw new Error(`Couldn't download cloudflared (${res.status}).`);
+  // GitHub's download CDN sometimes answers 5xx; retry a couple of times before giving up
+  let res: Response | null = null;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    res = await fetch(url, { signal: AbortSignal.timeout(120000) }).catch(() => null);
+    if (res?.ok) break;
+    await new Promise((resolve) => setTimeout(resolve, attempt * 2000));
+  }
+  if (!res?.ok) throw new Error(`Couldn't download cloudflared (${res?.status ?? "network error"}). Check your connection and try again.`);
   const data = Buffer.from(await res.arrayBuffer());
   if (createHash("sha256").update(data).digest("hex") !== spec.sha256) throw new Error("cloudflared download failed its checksum; not using it.");
 
