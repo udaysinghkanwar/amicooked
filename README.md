@@ -18,7 +18,7 @@ Windows (PowerShell):
 irm https://amicooked.app/install.ps1 | iex
 ```
 
-With Node.js 18+: `npx -y amicooked@0 setup`
+With Node.js 22+: `npx -y amicooked@0 setup`
 
 Setup asks for your school, opens a browser window to sign in, and connects the AI apps you use. Then ask: **am I cooked?**
 

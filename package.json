@@ -11,7 +11,7 @@
     "skill"
   ],
   "engines": {
-    "node": ">=18.17"
+    "node": ">=22"
   },
   "scripts": {
     "sync:skill": "node scripts/sync-skill.mjs",
@@ -45,7 +45,6 @@
     "@modelcontextprotocol/sdk": "1.32.2",
     "jszip": "^3.10.1",
     "mammoth": "^1.11.0",
-    "playwright-core": "1.65.0",
     "unpdf": "^1.9.1",
     "zod": "^3.25.76"
   },

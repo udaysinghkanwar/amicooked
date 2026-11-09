@@ -1,6 +1,6 @@
 # Am I Cooked: agent guide
 
-A local MCP server that lets students' AI apps read their D2L Brightspace courses. TypeScript, Node 18+, compiled to standalone binaries with Bun.
+A local MCP server that lets students' AI apps read their D2L Brightspace courses. TypeScript, Node 22+, compiled to standalone binaries with Bun.
 
 ## Map
 
