@@ -352,11 +352,16 @@ export interface MarshalledSubmission {
   feedback: string | null;
 }
 
+/** D2L dropbox status: 0 unsubmitted, 1 submitted, 2 draft, 3 feedback published (so also submitted). */
+export function isSubmitted(s: RawSubmission): boolean {
+  return s.Status === 1 || s.Status === 3 || (s.Submissions?.length ?? 0) > 0;
+}
+
 export function marshalSubmissions(submissions: RawSubmission[]): MarshalledSubmission[] {
   return submissions.map((s) => {
     const latestSubmission = s.Submissions?.[0];
     return removeEmpty({
-      submitted: s.Status === 1,
+      submitted: isSubmitted(s),
       submittedBy: s.Entity.DisplayName,
       submissionDate: formatDate(latestSubmission?.SubmissionDate),
       submissionDateRelative: formatRelativeDate(latestSubmission?.SubmissionDate),
