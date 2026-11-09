@@ -11,6 +11,12 @@ describe("skill", () => {
     if (existsSync("site/SKILL.md")) expect(readFileSync("site/SKILL.md", "utf8")).toBe(source);
   });
 
+  it("serves the same install scripts the repo ships", () => {
+    for (const name of ["install.sh", "install.ps1"]) {
+      if (existsSync(`site/${name}`)) expect(readFileSync(`site/${name}`, "utf8")).toBe(readFileSync(`install/${name}`, "utf8"));
+    }
+  });
+
   it("gives the server instructions without the setup section", () => {
     const instructions = serverInstructions();
     expect(instructions).toContain("am_i_cooked");
