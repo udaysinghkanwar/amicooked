@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 import { parseArgs } from "util";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { loginCommand, statusCommand, uninstallCommand } from "./cli/manage.js";
+import { loginCommand, pairCommand, statusCommand, uninstallCommand } from "./cli/manage.js";
+import { serveCommand } from "./cli/serve.js";
 import { setup } from "./cli/setup.js";
 import { serverInstructions } from "./instructions.js";
 import { createServer } from "./server.js";
@@ -16,9 +17,11 @@ Usage: amicooked <command>
                --clients <list>        desktop,code,chatgpt
                --yes                   accept the detected apps without asking
   login        Sign in to your school again
+  pair         Get a new code for connecting ChatGPT
   status       Show what's set up (--json for machines)
   uninstall    Disconnect your AI apps (--purge also deletes your login and settings)
   mcp          Run the MCP server over stdio (AI apps run this for you)
+  serve        Run the ChatGPT server (the background service runs this for you)
 `;
 
 async function runMcp(): Promise<number> {
@@ -41,6 +44,9 @@ async function main(argv: string[]): Promise<number> {
       "no-login": { type: "boolean" },
       json: { type: "boolean" },
       purge: { type: "boolean" },
+      quick: { type: "boolean" },
+      local: { type: "boolean" },
+      port: { type: "string" },
       help: { type: "boolean", short: "h" },
       version: { type: "boolean", short: "v" },
     },
@@ -57,6 +63,11 @@ async function main(argv: string[]): Promise<number> {
       return setup({ school: values.school, clients: values.clients, yes: values.yes, login: !values["no-login"] });
     case "login":
       return loginCommand();
+    case "pair":
+      return pairCommand();
+    case "serve":
+      // --quick (a throwaway trycloudflare URL) and --local are for development
+      return serveCommand({ quick: values.quick, local: values.local, port: values.port ? Number(values.port) : undefined });
     case "status":
       return statusCommand(Boolean(values.json));
     case "uninstall":
