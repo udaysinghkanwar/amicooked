@@ -1,0 +1,21 @@
+{
+  "name": "amicooked-tunnel-worker",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Provisions per-student Cloudflare named tunnels for Am I Cooked.",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "types": "wrangler types"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.23.0",
+    "@cloudflare/workers-types": "^5.20261109.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.12",
+    "wrangler": "^4.124.0"
+  }
+}

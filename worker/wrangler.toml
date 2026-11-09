@@ -1,0 +1,53 @@
+name = "amicooked-tunnels"
+main = "src/index.ts"
+compatibility_date = "2026-08-15"
+
+# Set this (or export CLOUDFLARE_ACCOUNT_ID) before `wrangler deploy`.
+# account_id = "<YOUR_ACCOUNT_ID>"
+
+# Serve the API from a hostname on the zone once amicooked.app is on Cloudflare.
+# Until then the Worker is reachable on its workers.dev URL.
+# routes = [{ pattern = "tunnels.amicooked.app", custom_domain = true }]
+
+# No request logging: the Worker never writes IPs or request details anywhere.
+[observability]
+enabled = false
+
+[vars]
+# Zone the student subdomains live under. Must be the zone CF_ZONE_ID points to.
+TUNNEL_DOMAIN = "amicooked.app"
+# Where cloudflared forwards traffic on the student's laptop.
+ORIGIN_SERVICE = "http://127.0.0.1:8787"
+# POST /tunnels allowed per client IP per UTC day.
+RATE_LIMIT_PER_DAY = "5"
+# Refuse new tunnels past this many. Each tunnel needs one DNS record, and a
+# Free zone allows 200 records. Raise to 1000 (the per-account tunnel limit) on
+# a Pro or higher zone. See README "Limits".
+MAX_TUNNELS = "200"
+# Tunnels with no heartbeat for this many days are deleted by the daily cron.
+STALE_AFTER_DAYS = "30"
+# Tunnels removed per cron run. Each removal costs 3 subrequests, so keep this
+# at 15 on the Workers Free plan (50 subrequests per invocation).
+CLEANUP_BATCH_SIZE = "15"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "amicooked-tunnels"
+database_id = "00000000-0000-0000-0000-000000000000" # replace with `wrangler d1 create` output
+migrations_dir = "migrations"
+
+[[durable_objects.bindings]]
+name = "RATE_LIMITER"
+class_name = "RateLimiter"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["RateLimiter"]
+
+[triggers]
+crons = ["17 4 * * *"] # daily at 04:17 UTC
+
+# Secrets (set with `wrangler secret put <NAME>`; never commit them):
+#   CF_API_TOKEN   Account > Cloudflare Tunnel > Edit, Zone > DNS > Edit (this zone only)
+#   CF_ACCOUNT_ID  account that owns the tunnels
+#   CF_ZONE_ID     zone ID of TUNNEL_DOMAIN
