@@ -37,18 +37,26 @@ describe("currentCourses", () => {
   const now = Date.parse("2026-11-09T12:00:00Z");
   const at = (daysAgo: number) => new Date(now - daysAgo * 86400000).toISOString();
 
-  it("keeps active courses opened recently or pinned", () => {
+  it("keeps active courses opened in the last six weeks, ignoring old pins", () => {
     const list = [
       { ...course(1, "A_1", "A"), lastAccessed: at(3) },
-      { ...course(2, "B_1", "B"), pinned: true },
-      { ...course(3, "C_1", "C"), lastAccessed: at(400) },
+      { ...course(2, "B_1", "B"), pinned: true, lastAccessed: at(700) },
+      { ...course(3, "C_1", "C"), lastAccessed: at(58) },
       { ...course(4, "D_1", "D", false), lastAccessed: at(1) },
     ];
-    expect(currentCourses(list, now).map((c) => c.id)).toEqual([1, 2]);
+    expect(currentCourses(list, now).map((c) => c.id)).toEqual([1]);
+  });
+
+  it("widens to four months when nothing was opened lately", () => {
+    const list = [
+      { ...course(1, "A_1", "A"), lastAccessed: at(60) },
+      { ...course(2, "B_1", "B"), lastAccessed: at(400) },
+    ];
+    expect(currentCourses(list, now).map((c) => c.id)).toEqual([1]);
   });
 
   it("drops courses that ended weeks ago", () => {
-    const list = [{ ...course(1, "A_1", "A"), pinned: true, endDate: at(30) }];
+    const list = [{ ...course(1, "A_1", "A"), lastAccessed: at(1), endDate: at(30) }];
     expect(currentCourses(list, now)).toEqual([]);
   });
 
