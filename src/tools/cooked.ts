@@ -310,7 +310,9 @@ export async function amICooked(args: { daysAhead?: number; overdueDaysBack?: nu
   const selected = args.courses?.length
     ? [...new Map(args.courses.flatMap((q) => matchCourses(all, q)).map((c) => [c.id, c])).values()]
     : currentCourses(all);
-  const skipped = all.filter((c) => c.isActive && !selected.some((s) => s.id === c.id)).map((c) => ({ code: c.code, reason: "not this term" }));
+  // Students accumulate years of old courses; a count and a few names are enough to explain the gap
+  const skippedCodes = all.filter((c) => c.isActive && !selected.some((s) => s.id === c.id)).map((c) => c.code);
+  const skipped = { count: skippedCodes.length, examples: skippedCodes.slice(-5), howToInclude: 'Pass courses: ["CODE"] to include one.' };
 
   const courses = await Promise.all(selected.map(async (c) => buildCourseReport(c, await fetchCourseData(c, w), w)));
   const { heat, heatLabel, reasons } = heatScore(courses);
