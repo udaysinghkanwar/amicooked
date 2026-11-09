@@ -18,7 +18,8 @@
     "build": "node scripts/sync-skill.mjs && tsc",
     "test": "vitest run",
     "test:watch": "vitest",
-    "prepack": "npm run build"
+    "prepack": "npm run build",
+    "build:bin": "node scripts/sync-skill.mjs && node scripts/build-binaries.mjs"
   },
   "keywords": [
     "mcp",
