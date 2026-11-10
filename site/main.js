@@ -454,13 +454,16 @@ win.addEventListener("pointerleave", () => { hovering = false; });
 win.addEventListener("focusin", () => { focused = true; });
 win.addEventListener("focusout", (e) => { if (!win.contains(e.relatedTarget)) focused = false; });
 
+// The window now sits in the hero, so the first question waits for its entrance to land before typing
+const landed = Promise.all(win.parentElement.getAnimations().map((a) => a.finished)).catch(() => {});
+
 let started = false;
 new IntersectionObserver(([entry]) => {
   visible = entry.isIntersecting;
-  // The first answer plays once the window comes into view
+  // The first answer plays once the window comes into view, unless someone already picked a chat
   if (visible && !started) {
     started = true;
-    restart(0);
+    landed.then(() => { if (run === 0) restart(0); });
   }
 }, { threshold: 0.35 }).observe(win);
 
