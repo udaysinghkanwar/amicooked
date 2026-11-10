@@ -91,6 +91,26 @@ a:hover { text-decoration-color: var(--ink); }
 .skip:focus { top: 12px; }
 .skip:hover { color: var(--bg); }
 
+/* Edge light: both sides glow in the heat of the verdict in the window. Each heat is its own
+   pre-coloured layer and they crossfade on opacity, so a change never repaints a gradient. */
+
+.heat-light { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; --glow-w: 380px; --glow-h: 540px; --glow: 0.18; }
+.heat-light span {
+  position: absolute; inset: 0; opacity: 0;
+  background:
+    radial-gradient(var(--glow-w) var(--glow-h) at calc(var(--glow-w) * -0.24) 50%, var(--c), transparent),
+    radial-gradient(var(--glow-w) var(--glow-h) at calc(100% + var(--glow-w) * 0.24) 50%, var(--c), transparent);
+  transition: opacity 1600ms var(--in-out);
+}
+.heat-light [data-heat="raw"] { --c: var(--raw); }
+.heat-light [data-heat="warming"] { --c: var(--warming); }
+.heat-light [data-heat="toasty"] { --c: var(--toasty); }
+.heat-light [data-heat="cooked"] { --c: var(--cooked); }
+.heat-light [data-heat="welldone"] { --c: var(--welldone); }
+.heat-light [data-heat="none"] { --c: var(--faint); }
+.heat-light .is-on, .no-js .heat-light [data-heat="toasty"] { opacity: var(--glow); }
+@media (max-width: 760px) { .heat-light { --glow-w: 170px; --glow-h: 360px; --glow: 0.12; } }
+
 /* Entrance: one wave on load. The headline leads, the window lands last. */
 
 @keyframes rise {
