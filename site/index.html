@@ -26,65 +26,49 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="/fonts/archivo-expanded-black-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/bricolage-grotesque-latin-opsz.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="/styles.css?v=12">
+  <link rel="stylesheet" href="/styles.css?v=13">
   <link rel="alternate" type="text/markdown" href="/SKILL.md" title="Setup instructions for AI agents">
   <script>document.documentElement.classList.replace("no-js", "js");</script>
-  <script src="/main.js?v=14" defer></script>
+  <script src="/main.js?v=15" defer></script>
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
 
 
   <main id="main">
-    <section class="hero" aria-labelledby="hero-title">
-      <!-- The wall: a week of course clutter drifting upward, the mess the page answers. Decorative; main.js builds it. -->
-      <div class="wall" id="wall" aria-hidden="true"></div>
-      <div class="hero-inner wrap">
-      <div class="hero-copy">
-        <p class="eyebrow enter enter-1">For students on D2L Brightspace</p>
-        <h1 id="hero-title" class="enter enter-1">Am I cooked?</h1>
-        <p class="lede enter enter-2">Ask Claude or ChatGPT. It reads your grades and deadlines, then tells you straight.</p>
+    <section class="hero wrap" aria-labelledby="hero-title">
+      <p class="eyebrow enter enter-1">For students on D2L Brightspace</p>
+      <h1 id="hero-title" class="enter enter-1">Am I cooked?</h1>
+      <p class="lede enter enter-2">Ask Claude or ChatGPT. It reads your grades and deadlines, then tells you straight.</p>
 
-      </div>
-        <div class="get enter enter-3">
-          <div class="get-row">
-            <h2 class="get-label">Install</h2>
-            <div class="segmented" role="tablist" aria-label="Your computer">
-              <button type="button" role="tab" id="os-mac" aria-controls="os-mac-panel" aria-selected="true">macOS &amp; Linux</button>
-              <button type="button" role="tab" id="os-win" aria-controls="os-win-panel" aria-selected="false" tabindex="-1">Windows</button>
-            </div>
-          </div>
-          <div class="cmd" role="tabpanel" id="os-mac-panel" aria-labelledby="os-mac">
-            <code id="cmd-mac">curl -fsSL https://<span data-domain>amicooked-mcp.vercel.app</span>/install.sh | sh</code>
-            <button class="icon-button" type="button" data-copy="cmd-mac" aria-label="Copy the macOS and Linux install command">
-              <svg class="i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i-check" aria-hidden="true"><use href="#i-check"/></svg>
-            </button>
-          </div>
-          <div class="cmd" role="tabpanel" id="os-win-panel" aria-labelledby="os-win" hidden>
-            <code id="cmd-win">irm https://<span data-domain>amicooked-mcp.vercel.app</span>/install.ps1 | iex</code>
-            <button class="icon-button" type="button" data-copy="cmd-win" aria-label="Copy the Windows install command">
-              <svg class="i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i-check" aria-hidden="true"><use href="#i-check"/></svg>
-            </button>
-          </div>
-
-          <h2 class="get-label get-label-agent">Using an AI agent?</h2>
-          <div class="cmd cmd-prompt">
-            <code class="truncate" id="agent-prompt">Set up Am I Cooked from https://<span data-domain>amicooked-mcp.vercel.app</span>/SKILL.md. Ask me which school I go to. Never ask for my password.</code>
-            <button class="icon-button" type="button" data-copy="agent-prompt" aria-label="Copy the setup prompt for your AI agent">
-              <svg class="i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i-check" aria-hidden="true"><use href="#i-check"/></svg>
-            </button>
-          </div>
-          <details class="full-prompt">
-            <summary>Show full prompt</summary>
-            <div class="full-prompt-body">
-              <p>Set up Am I Cooked from https://<span data-domain>amicooked-mcp.vercel.app</span>/SKILL.md. Ask me which school I go to. Never ask for my password.</p>
-            </div>
-          </details>
-
-          <p class="trust">Free <span aria-hidden="true">·</span> open source <span aria-hidden="true">·</span> your login stays on your laptop <span aria-hidden="true">·</span> <a href="https://github.com/udaysinghkanwar/amicooked/blob/main/install/install.sh">view install script</a></p>
+      <!-- One box, three ways in: the command for your computer, or a prompt for your AI agent -->
+      <div class="get enter enter-3">
+        <h2 class="sr-only">Install</h2>
+        <div class="segmented" role="tablist" aria-label="How to install">
+          <button type="button" role="tab" id="os-mac" aria-controls="os-mac-panel" aria-selected="true">macOS &amp; Linux</button>
+          <button type="button" role="tab" id="os-win" aria-controls="os-win-panel" aria-selected="false" tabindex="-1">Windows</button>
+          <button type="button" role="tab" id="os-agent" aria-controls="os-agent-panel" aria-selected="false" tabindex="-1">AI agent</button>
         </div>
+        <div class="cmd" role="tabpanel" id="os-mac-panel" aria-labelledby="os-mac">
+          <code id="cmd-mac">curl -fsSL https://<span data-domain>amicooked-mcp.vercel.app</span>/install.sh | sh</code>
+          <button class="icon-button" type="button" data-copy="cmd-mac" aria-label="Copy the macOS and Linux install command">
+            <svg class="i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i-check" aria-hidden="true"><use href="#i-check"/></svg>
+          </button>
+        </div>
+        <div class="cmd" role="tabpanel" id="os-win-panel" aria-labelledby="os-win" hidden>
+          <code id="cmd-win">irm https://<span data-domain>amicooked-mcp.vercel.app</span>/install.ps1 | iex</code>
+          <button class="icon-button" type="button" data-copy="cmd-win" aria-label="Copy the Windows install command">
+            <svg class="i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i-check" aria-hidden="true"><use href="#i-check"/></svg>
+          </button>
+        </div>
+        <div class="cmd cmd-prompt" role="tabpanel" id="os-agent-panel" aria-labelledby="os-agent" hidden>
+          <code id="agent-prompt">Set up Am I Cooked from https://<span data-domain>amicooked-mcp.vercel.app</span>/SKILL.md. Ask me which school I go to. Never ask for my password.</code>
+          <button class="icon-button" type="button" data-copy="agent-prompt" aria-label="Copy the setup prompt for your AI agent">
+            <svg class="i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i-check" aria-hidden="true"><use href="#i-check"/></svg>
+          </button>
+        </div>
+        <p class="trust">Free <span aria-hidden="true">·</span> open source <span aria-hidden="true">·</span> your login stays on your laptop <span aria-hidden="true">·</span> <a href="https://github.com/udaysinghkanwar/amicooked/blob/main/install/install.sh">view install script</a></p>
       </div>
-
     </section>
 
     <section class="showcase wrap" aria-label="Example conversations">

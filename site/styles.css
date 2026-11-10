@@ -91,40 +91,6 @@ a:hover { text-decoration-color: var(--ink); }
 .skip:focus { top: 12px; }
 .skip:hover { color: var(--bg); }
 
-/* The wall: a week of course clutter drifts slowly upward behind the hero. It is the problem the page answers.
-   Each column is one transform animation on a doubled track, so it loops without a seam. */
-
-.wall {
-  position: absolute; inset: 0; display: flex; gap: var(--wall-gap); padding-inline: var(--wall-gap); overflow: hidden;
-  --wall-gap: clamp(12px, 1.4vw, 20px);
-  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 14%, #000 100%);
-  mask-image: linear-gradient(to bottom, transparent, #000 14%, #000 100%);
-}
-.wall-col { flex: 1 1 0; min-width: 0; }
-.wall-col:nth-child(n + 3) { display: none; }
-@media (min-width: 560px) { .wall-col:nth-child(3), .wall-col:nth-child(4) { display: block; } }
-@media (min-width: 1100px) { .wall-col:nth-child(n + 5) { display: block; } }
-.wall-track { animation: drift var(--speed, 90s) linear infinite; will-change: transform; }
-.wall-col:nth-child(even) .wall-track { animation-delay: calc(var(--speed, 90s) * -0.37); }
-.wall-set { display: flex; flex-direction: column; gap: var(--wall-gap); padding-bottom: var(--wall-gap); }
-@keyframes drift { to { transform: translateY(-50%); } }
-
-/* One piece of clutter: a dropbox, a grade, an announcement. Neutral, except for its status. */
-.clip { display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; border: 1px solid var(--rule); border-radius: 12px; background: var(--window); font-size: 0.8125rem; line-height: 1.45; color: var(--muted); }
-.clip-head { display: flex; justify-content: space-between; gap: 12px; white-space: nowrap; overflow: hidden; font-family: var(--mono); font-size: 0.8125rem; color: var(--faint); }
-.clip-head span:first-child { text-transform: uppercase; letter-spacing: 0.06em; }
-.clip-title { font-size: 0.9375rem; font-weight: 700; line-height: 1.3; color: var(--ink); }
-.clip-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; margin-top: 4px; }
-.clip-status { padding: 2px 9px; border-radius: 999px; border: 1px solid currentColor; font-weight: 600; white-space: nowrap; }
-.clip-status.is-late { color: #F0705A; }
-.clip-status.is-soon { color: var(--warming); }
-.clip-status.is-done { color: #8FBFA6; }
-.clip-score { font-family: var(--mono); font-size: 1.0625rem; color: var(--ink); }
-.clip-bar { display: block; height: 3px; border-radius: 2px; background: var(--rule-strong); overflow: hidden; }
-.clip-bar::after { content: ""; display: block; height: 100%; background: var(--soft); transform-origin: left; transform: scaleX(var(--pct, 0)); }
-.clip-row { display: flex; gap: 12px; }
-.clip-row span:first-child { flex: none; width: 2.2em; font-family: var(--mono); color: var(--faint); }
-
 /* Entrance: one wave on load. The headline leads, the window lands last. */
 
 @keyframes rise {
@@ -136,15 +102,13 @@ a:hover { text-decoration-color: var(--ink); }
 .js .enter-3 { --rise: 6px; --dur: 520ms; --delay: 170ms; }
 .js .enter-4 { --rise: 16px; --dur: 820ms; --delay: 300ms; }
 
-/* Hero: the wall fills the screen; the pitch sits at the bottom on the fade, headline left, install right */
+/* Hero: centered and quiet. One soft light from above, the question, one box to copy from. */
 
-.hero { position: relative; isolation: isolate; display: flex; flex-direction: column; justify-content: flex-end; min-height: max(100svh, 720px); overflow: hidden; }
-.hero::after {
-  content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
-  background: linear-gradient(to bottom, transparent 20%, rgba(14, 12, 11, 0.9) 48%, var(--bg) 64%);
+.hero { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; padding-block: clamp(72px, 14vh, 152px) clamp(48px, 7vw, 88px); }
+.hero::before {
+  content: ""; position: absolute; z-index: -1; left: 50%; top: -30vh; width: min(1100px, 120vw); height: 80vh; margin-left: calc(min(1100px, 120vw) / -2);
+  border-radius: 50%; background: radial-gradient(closest-side, rgba(244, 241, 236, 0.075), transparent); pointer-events: none;
 }
-.hero-inner { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 40px; padding-top: 38svh; padding-bottom: 48px; }
-.hero-copy { display: flex; flex-direction: column; align-items: center; width: 100%; text-align: center; }
 h1 {
   font-family: var(--display); font-weight: 900; font-stretch: 125%;
   font-size: clamp(2.75rem, 8vw, 6rem); line-height: 0.95; letter-spacing: -0.035em;
@@ -156,10 +120,8 @@ h1 {
 }
 .lede { margin-top: 24px; max-width: 30ch; font-size: clamp(1.1875rem, 2vw, 1.375rem); line-height: 1.4; color: var(--muted); text-wrap: balance; }
 
-.get { width: 100%; max-width: 600px; text-align: left; }
-.get-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
-.get-label { font-size: 1rem; font-weight: 700; letter-spacing: -0.01em; }
-.get-label-agent { margin: 28px 0 12px; }
+.get { display: flex; flex-direction: column; align-items: center; gap: 14px; width: 100%; max-width: 600px; margin-top: 44px; }
+.get .cmd { width: 100%; text-align: left; }
 
 .segmented { display: inline-flex; padding: 3px; border-radius: 999px; background: var(--raised); border: 1px solid var(--rule); }
 .segmented button {
@@ -177,7 +139,6 @@ h1 {
 .cmd[hidden] { display: none; }
 .cmd code { flex: 1; min-width: 0; padding-block: 10px; font-size: 0.875rem; line-height: 1.5; color: var(--ink); overflow-wrap: anywhere; }
 .cmd-prompt code { color: var(--soft); }
-.truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .icon-button {
   appearance: none; flex: none; position: relative; display: inline-grid; place-items: center;
@@ -192,32 +153,12 @@ h1 {
 .icon-button:active, .segmented button:active, .with-toggle:active { transform: scale(0.97); }
 .icon-button.is-done .i-check { opacity: 1; transform: none; color: var(--ink); }
 
-.full-prompt summary {
-  display: inline-flex; align-items: center; gap: 8px; min-height: 40px; cursor: pointer; list-style: none;
-  font-size: 0.8125rem; color: var(--muted);
-}
-.full-prompt summary::-webkit-details-marker { display: none; }
-.full-prompt summary::before {
-  content: ""; width: 0; height: 0;
-  border-left: 5px solid currentColor; border-top: 4px solid transparent; border-bottom: 4px solid transparent;
-  transition: transform 200ms var(--out);
-}
-.full-prompt[open] summary::before { transform: rotate(90deg); }
-.full-prompt summary:hover { color: var(--ink); }
-.full-prompt-body p {
-  padding: 14px 16px; border-radius: 12px; background: var(--raised); border: 1px solid var(--rule);
-  font-family: var(--mono); font-size: 0.8125rem; line-height: 1.6; color: var(--soft);
-}
-/* Opening fades the prompt in and settles it; no height animation, which would reflow the page */
-@keyframes settle { from { opacity: 0; transform: translateY(-4px); } }
-.full-prompt[open] .full-prompt-body { animation: settle 200ms var(--out); }
-
 .trust a { color: var(--muted); }
-.trust { margin-top: 24px; text-align: center; font-size: 0.875rem; color: var(--faint); }
+.trust { margin-top: 10px; text-align: center; font-size: 0.875rem; color: var(--faint); }
 
 /* The window: a generic AI chat app replaying real questions */
 
-.showcase { padding-block: clamp(56px, 8vw, 104px) clamp(72px, 10vw, 128px); }
+.showcase { padding-bottom: clamp(72px, 10vw, 128px); }
 .window {
   container-type: inline-size;
   max-width: 1040px; margin-inline: auto;
@@ -331,27 +272,6 @@ h1 {
 .window-title, .with-toggle span { white-space: nowrap; }
 @container (max-width: 420px) { .window-title { display: none; } }
 
-/* Stacked layouts are taller than the screen, so the wall fades out before the headline starts */
-@media (max-width: 1099px) {
-  .hero::after { background: linear-gradient(to bottom, transparent 40px, rgba(14, 12, 11, 0.92) calc(38svh - 56px), var(--bg) calc(38svh + 40px)); }
-}
-
-/* Wide screens: headline bottom left, install bottom right, the wall above both */
-@media (min-width: 1100px) {
-  .hero-inner { flex-direction: row; align-items: flex-end; justify-content: space-between; gap: 64px; max-width: calc(1344px + 2 * var(--gutter)); padding-top: 0; padding-bottom: 56px; }
-  .hero-copy { align-items: flex-start; width: auto; text-align: left; }
-  .hero h1 { font-size: clamp(4rem, 6.2vw, 5.75rem); white-space: nowrap; }
-  .lede { max-width: 32ch; }
-  .get {
-    flex: none; width: 38.5rem; padding: 20px 22px 16px; border: 1px solid var(--rule); border-radius: 20px;
-    background: rgba(20, 17, 16, 0.72); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px);
-    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 24px 48px -24px rgba(0, 0, 0, 0.7);
-  }
-  .get .cmd { background: rgba(14, 12, 11, 0.6); }
-  .cmd code { font-size: 0.8125rem; }
-  .trust { text-align: left; }
-}
-
 /* Band: how it works */
 
 .band { padding-bottom: clamp(64px, 9vw, 112px); }
@@ -377,8 +297,6 @@ h1 {
 @keyframes fade { from { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) {
   .js .enter { animation: fade 200ms var(--out) both; }
-  .wall-track { animation: none; }
-  .full-prompt[open] .full-prompt-body { animation: fade 200ms var(--out); }
   .tool.is-running > span:first-of-type { animation: none; -webkit-mask-image: none; mask-image: none; color: var(--muted); }
   .w, .line, .pop, .thread.is-leaving > *, .tool svg, .icon-button svg { filter: none !important; transform: none !important; }
   .with-toggle::before { transition: none; }
