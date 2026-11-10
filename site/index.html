@@ -26,7 +26,7 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="/fonts/archivo-expanded-black-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/bricolage-grotesque-latin-opsz.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="/styles.css?v=7">
+  <link rel="stylesheet" href="/styles.css?v=8">
   <link rel="alternate" type="text/markdown" href="/SKILL.md" title="Setup instructions for AI agents">
   <script>document.documentElement.classList.replace("no-js", "js");</script>
   <script src="/main.js?v=10" defer></script>
@@ -46,99 +46,101 @@
 
   <main id="main">
     <section class="hero wrap" aria-labelledby="hero-title">
-      <h1 id="hero-title" class="enter enter-1">Am I cooked?</h1>
-      <p class="lede enter enter-2">Ask Claude or ChatGPT. It reads your grades and deadlines, then tells you straight.</p>
+      <div class="hero-copy">
+        <h1 id="hero-title" class="enter enter-1">Am I cooked?</h1>
+        <p class="lede enter enter-2">Ask Claude or ChatGPT. It reads your grades and deadlines, then tells you straight.</p>
 
-      <div class="get enter enter-3">
-        <div class="get-row">
-          <h2 class="get-label">Install</h2>
-          <div class="segmented" role="tablist" aria-label="Your computer">
-            <button type="button" role="tab" id="os-mac" aria-controls="os-mac-panel" aria-selected="true">macOS &amp; Linux</button>
-            <button type="button" role="tab" id="os-win" aria-controls="os-win-panel" aria-selected="false" tabindex="-1">Windows</button>
+        <div class="get enter enter-3">
+          <div class="get-row">
+            <h2 class="get-label">Install</h2>
+            <div class="segmented" role="tablist" aria-label="Your computer">
+              <button type="button" role="tab" id="os-mac" aria-controls="os-mac-panel" aria-selected="true">macOS &amp; Linux</button>
+              <button type="button" role="tab" id="os-win" aria-controls="os-win-panel" aria-selected="false" tabindex="-1">Windows</button>
+            </div>
           </div>
-        </div>
-        <div class="cmd" role="tabpanel" id="os-mac-panel" aria-labelledby="os-mac">
-          <code id="cmd-mac">curl -fsSL https://<span data-domain>amicooked-mcp.vercel.app</span>/install.sh | sh</code>
-          <button class="icon-button" type="button" data-copy="cmd-mac" aria-label="Copy the macOS and Linux install command">
-            <svg class="i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i-check" aria-hidden="true"><use href="#i-check"/></svg>
-          </button>
-        </div>
-        <div class="cmd" role="tabpanel" id="os-win-panel" aria-labelledby="os-win" hidden>
-          <code id="cmd-win">irm https://<span data-domain>amicooked-mcp.vercel.app</span>/install.ps1 | iex</code>
-          <button class="icon-button" type="button" data-copy="cmd-win" aria-label="Copy the Windows install command">
-            <svg class="i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i-check" aria-hidden="true"><use href="#i-check"/></svg>
-          </button>
-        </div>
-        <p class="script-link"><a href="https://github.com/udaysinghkanwar/amicooked/blob/main/install/install.sh">View install script<svg aria-hidden="true"><use href="#i-out"/></svg></a></p>
-
-        <h2 class="get-label get-label-agent">Using an AI agent?</h2>
-        <div class="cmd cmd-prompt">
-          <code class="truncate" id="agent-prompt">Set up Am I Cooked from https://<span data-domain>amicooked-mcp.vercel.app</span>/SKILL.md. Ask me which school I go to. Never ask for my password.</code>
-          <button class="icon-button" type="button" data-copy="agent-prompt" aria-label="Copy the setup prompt for your AI agent">
-            <svg class="i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i-check" aria-hidden="true"><use href="#i-check"/></svg>
-          </button>
-        </div>
-        <details class="full-prompt">
-          <summary>Show full prompt</summary>
-          <div class="full-prompt-body">
-            <p>Set up Am I Cooked from https://<span data-domain>amicooked-mcp.vercel.app</span>/SKILL.md. Ask me which school I go to. Never ask for my password.</p>
+          <div class="cmd" role="tabpanel" id="os-mac-panel" aria-labelledby="os-mac">
+            <code id="cmd-mac">curl -fsSL https://<span data-domain>amicooked-mcp.vercel.app</span>/install.sh | sh</code>
+            <button class="icon-button" type="button" data-copy="cmd-mac" aria-label="Copy the macOS and Linux install command">
+              <svg class="i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i-check" aria-hidden="true"><use href="#i-check"/></svg>
+            </button>
           </div>
-        </details>
+          <div class="cmd" role="tabpanel" id="os-win-panel" aria-labelledby="os-win" hidden>
+            <code id="cmd-win">irm https://<span data-domain>amicooked-mcp.vercel.app</span>/install.ps1 | iex</code>
+            <button class="icon-button" type="button" data-copy="cmd-win" aria-label="Copy the Windows install command">
+              <svg class="i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i-check" aria-hidden="true"><use href="#i-check"/></svg>
+            </button>
+          </div>
+          <p class="script-link"><a href="https://github.com/udaysinghkanwar/amicooked/blob/main/install/install.sh">View install script<svg aria-hidden="true"><use href="#i-out"/></svg></a></p>
 
-        <p class="trust">Free <span aria-hidden="true">·</span> open source <span aria-hidden="true">·</span> your login stays on your laptop</p>
+          <h2 class="get-label get-label-agent">Using an AI agent?</h2>
+          <div class="cmd cmd-prompt">
+            <code class="truncate" id="agent-prompt">Set up Am I Cooked from https://<span data-domain>amicooked-mcp.vercel.app</span>/SKILL.md. Ask me which school I go to. Never ask for my password.</code>
+            <button class="icon-button" type="button" data-copy="agent-prompt" aria-label="Copy the setup prompt for your AI agent">
+              <svg class="i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i-check" aria-hidden="true"><use href="#i-check"/></svg>
+            </button>
+          </div>
+          <details class="full-prompt">
+            <summary>Show full prompt</summary>
+            <div class="full-prompt-body">
+              <p>Set up Am I Cooked from https://<span data-domain>amicooked-mcp.vercel.app</span>/SKILL.md. Ask me which school I go to. Never ask for my password.</p>
+            </div>
+          </details>
+
+          <p class="trust">Free <span aria-hidden="true">·</span> open source <span aria-hidden="true">·</span> your login stays on your laptop</p>
+        </div>
       </div>
-    </section>
 
-    <section class="demo wrap" aria-label="Example conversations">
-      <div class="window enter enter-4" id="window" role="group" aria-label="Example: a student asks their AI about their courses">
-        <div class="window-bar">
-          <span class="dots" aria-hidden="true"><span></span><span></span><span></span></span>
-          <span class="window-title">Your AI</span>
-          <div class="bar-end">
-            <button class="with-toggle js-only" type="button" role="switch" aria-checked="true" aria-label="With Am I Cooked">
-              <span class="with-on">With Am I Cooked</span><span class="with-off">Without</span>
-            </button>
-            <button class="icon-button play js-only" type="button" aria-label="Pause the examples">
-              <svg class="i-pause" aria-hidden="true"><use href="#i-pause"/></svg><svg class="i-play" aria-hidden="true"><use href="#i-play"/></svg>
-            </button>
+      <div class="demo enter enter-4">
+        <div class="window" id="window" role="group" aria-label="Example: a student asks their AI about their courses">
+          <div class="window-bar">
+            <span class="dots" aria-hidden="true"><span></span><span></span><span></span></span>
+            <span class="window-title">Your AI</span>
+            <div class="bar-end">
+              <button class="with-toggle js-only" type="button" role="switch" aria-checked="true" aria-label="With Am I Cooked">
+                <span class="with-on">With Am I Cooked</span><span class="with-off">Without</span>
+              </button>
+              <button class="icon-button play js-only" type="button" aria-label="Pause the examples">
+                <svg class="i-pause" aria-hidden="true"><use href="#i-pause"/></svg><svg class="i-play" aria-hidden="true"><use href="#i-play"/></svg>
+              </button>
+            </div>
           </div>
-        </div>
 
-        <div class="window-body">
-          <nav class="rail" aria-label="Example questions">
-            <p class="rail-title">Chats</p>
-            <ul>
-              <li><button type="button" data-ex="0" aria-current="true">am i cooked?<span class="rail-progress" aria-hidden="true"></span></button></li>
-              <li><button type="button" data-ex="1">did I submit lab 4?</button></li>
-              <li><button type="button" data-ex="2">summarize the week 7 slides</button></li>
-              <li><button type="button" data-ex="3">what’s on the midterm?</button></li>
-              <li><button type="button" data-ex="4">how bad is finals week?</button></li>
-            </ul>
-          </nav>
+          <div class="window-body">
+            <nav class="rail" aria-label="Example questions">
+              <p class="rail-title">Chats</p>
+              <ul>
+                <li><button type="button" data-ex="0" aria-current="true">am i cooked?<span class="rail-progress" aria-hidden="true"></span></button></li>
+                <li><button type="button" data-ex="1">did I submit lab 4?</button></li>
+                <li><button type="button" data-ex="2">summarize the week 7 slides</button></li>
+                <li><button type="button" data-ex="3">what’s on the midterm?</button></li>
+                <li><button type="button" data-ex="4">how bad is finals week?</button></li>
+              </ul>
+            </nav>
 
-          <div class="chat">
-            <div class="thread" id="thread">
-              <!-- No-JS fallback: the first exchange, finished. main.js renders the rest. -->
-              <p class="msg-user">am i cooked?</p>
-              <p class="tool is-done"><svg aria-hidden="true"><use href="#i-check"/></svg><span>Used Am I Cooked</span> <code>am_i_cooked</code> <span class="tool-note">read 4 courses</span></p>
-              <div class="answer">
-                <p class="answer-text"><strong>Toasty (4/10).</strong> Not cooked yet, but it’s getting warm.</p>
-                <ol class="reply-list">
-                  <li><strong>3XA3</strong> lab report due tomorrow at 11:59 pm, not submitted</li>
-                  <li><strong>2C03</strong> assignment 2 and a quiz, both by Friday</li>
-                  <li><strong>2XB3</strong> you’re at 64% (an estimate from graded items)</li>
-                </ol>
+            <div class="chat">
+              <div class="thread" id="thread">
+                <!-- No-JS fallback: the first exchange, finished. main.js renders the rest. -->
+                <p class="msg-user">am i cooked?</p>
+                <p class="tool is-done"><svg aria-hidden="true"><use href="#i-check"/></svg><span>Used Am I Cooked</span> <code>am_i_cooked</code> <span class="tool-note">read 4 courses</span></p>
+                <div class="answer">
+                  <p class="answer-text"><strong>Toasty (4/10).</strong> Not cooked yet, but it’s getting warm.</p>
+                  <ol class="reply-list">
+                    <li><strong>3XA3</strong> lab report due tomorrow at 11:59 pm, not submitted</li>
+                    <li><strong>2C03</strong> assignment 2 and a quiz, both by Friday</li>
+                    <li><strong>2XB3</strong> you’re at 64% (an estimate from graded items)</li>
+                  </ol>
+                </div>
+              </div>
+              <div class="composer" aria-hidden="true">
+                <span class="composer-text"></span><span class="composer-placeholder">Ask anything</span>
+                <svg class="composer-send"><use href="#i-send"/></svg>
               </div>
             </div>
-            <div class="composer" aria-hidden="true">
-              <span class="composer-text"></span><span class="composer-placeholder">Ask anything</span>
-              <svg class="composer-send"><use href="#i-send"/></svg>
-            </div>
           </div>
         </div>
-      </div>
 
-      <p class="caption">More than “am I cooked?” <span>Ask about grades, deadlines, submissions, slides or announcements.</span></p>
+        <p class="caption">More than “am I cooked?” <span>Ask about grades, deadlines, submissions, slides or announcements.</span></p>
+      </div>
     </section>
 
     <section class="band wrap" aria-label="How it works">

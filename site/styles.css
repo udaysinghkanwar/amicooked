@@ -133,9 +133,10 @@ a:hover { text-decoration-color: var(--ink); }
 .header-link { display: inline-flex; align-items: center; min-height: 44px; font-size: 0.9375rem; font-weight: 600; color: var(--muted); text-decoration: none; }
 .header-link:hover { color: var(--ink); }
 
-/* Hero, centered */
+/* Hero: the pitch and the live window. Stacked and centered on smaller screens, side by side on wide ones. */
 
-.hero { display: flex; flex-direction: column; align-items: center; text-align: center; padding-block: clamp(40px, 8vw, 104px) 56px; }
+.hero { display: flex; flex-direction: column; align-items: center; padding-block: clamp(40px, 8vw, 104px) clamp(72px, 10vw, 128px); }
+.hero-copy { display: flex; flex-direction: column; align-items: center; width: 100%; text-align: center; }
 h1 {
   font-family: var(--display); font-weight: 900; font-stretch: 125%;
   font-size: clamp(2.75rem, 8vw, 6rem); line-height: 0.95; letter-spacing: -0.035em;
@@ -207,8 +208,9 @@ h1 {
 
 /* The window: a generic AI chat app replaying real questions */
 
-.demo { padding-bottom: clamp(72px, 10vw, 128px); }
+.demo { width: 100%; margin-top: 56px; }
 .window {
+  container-type: inline-size;
   max-width: 1040px; margin-inline: auto;
   border: 1px solid var(--rule); border-radius: 20px; background: var(--window);
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 12px 32px -16px rgba(0, 0, 0, 0.6);
@@ -309,11 +311,24 @@ h1 {
 .caption { max-width: 34ch; margin: 40px auto 0; text-align: center; font-size: clamp(1.25rem, 2.4vw, 1.75rem); font-weight: 700; line-height: 1.3; letter-spacing: -0.015em; text-wrap: balance; }
 .caption span { color: var(--muted); }
 
-@media (max-width: 760px) {
+/* The chat list follows the window's own width, so it works both full width and beside the hero copy */
+@container (max-width: 760px) { .window-body { grid-template-columns: 190px minmax(0, 1fr); } }
+@container (max-width: 600px) {
   .window-body { grid-template-columns: minmax(0, 1fr); }
   .rail { display: none; }
   .chat { padding: 18px 16px 14px; }
-  .with-toggle span { padding: 6px 9px; }
+}
+@media (max-width: 760px) { .with-toggle span { padding: 6px 9px; } }
+
+/* Wide screens: copy on the left, the window on the right, both above the fold */
+@media (min-width: 1200px) {
+  .hero.wrap { max-width: calc(1280px + 2 * var(--gutter)); }
+  .hero { display: grid; grid-template-columns: minmax(0, 36.5rem) minmax(0, 1fr); align-items: center; gap: 48px; padding-top: clamp(40px, 5vw, 72px); }
+  .hero-copy { align-items: flex-start; text-align: left; }
+  .get { margin-top: 40px; max-width: none; }
+  .trust { text-align: left; }
+  .demo { margin-top: 0; }
+  .caption { max-width: none; margin-top: 20px; font-size: 1.0625rem; font-weight: 600; letter-spacing: 0; }
 }
 
 /* Band: how it works */
