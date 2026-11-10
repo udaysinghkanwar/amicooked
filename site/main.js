@@ -186,8 +186,9 @@ function buildAnswer(ex, mode) {
     const meter = el("span", "mini-meter");
     meter.setAttribute("role", "img");
     meter.setAttribute("aria-label", `Heat ${ex.verdict.heat} out of 10`);
-    meter.style.setProperty("--heat", 0);
-    meter.append(el("span", "mini-rest"), el("span", "mini-marker"));
+    const track = el("span", "mini-track");
+    track.append(el("span", "mini-rest"));
+    meter.append(track, el("span", "mini-marker"));
     row.append(verdict, meter);
     answer.append(row);
   }
@@ -213,6 +214,13 @@ function buildAnswer(ex, mode) {
   return answer;
 }
 
+// The meter moves with transforms set on its own parts: the grey rest shrinks from the right, the marker slides
+const METER_PX = 140;
+function setHeat(meter, heat) {
+  meter.querySelector(".mini-rest").style.transform = `scaleX(${1 - heat / 10})`;
+  meter.querySelector(".mini-marker").style.transform = `translateX(${(heat / 10) * METER_PX}px)`;
+}
+
 // A finished exchange, all at once (jumps, reduced motion, measuring)
 function renderFinal(ex, mode, target = thread) {
   target.replaceChildren(el("p", "msg-user", ex.q));
@@ -224,7 +232,7 @@ function renderFinal(ex, mode, target = thread) {
   const answer = buildAnswer(ex, mode);
   answer.querySelectorAll(".w, .line").forEach((n) => n.classList.add("is-in"));
   const meter = answer.querySelector(".mini-meter");
-  if (meter) meter.style.setProperty("--heat", ex.verdict.heat);
+  if (meter) setHeat(meter, ex.verdict.heat);
   target.append(answer);
 }
 
@@ -287,7 +295,7 @@ async function play(index, mode, id) {
   const heatWord = answer.querySelector(".heat-word");
   if (heatWord) {
     heatWord.classList.add("is-in");
-    answer.querySelector(".mini-meter").style.setProperty("--heat", ex.verdict.heat);
+    setHeat(answer.querySelector(".mini-meter"), ex.verdict.heat);
     await sleep(160, id);
   }
   await stream([...answer.querySelectorAll(".w:not(.heat-word)")], id);
@@ -302,27 +310,26 @@ async function play(index, mode, id) {
 
 const held = () => paused || hovering || focused || !visible;
 
-// Wait on the finished answer; the countdown only runs while nobody is reading or interacting
+// Wait on the finished answer. The rail line is a WAAPI animation (compositor, not per-frame style writes)
+// that doubles as the timer: it pauses while anyone is reading or interacting.
 async function hold(id) {
   // Verdicts carry more to read, so they stay up longer
   const duration = EXCHANGES[current].verdict ? HOLD_MS + 1400 : HOLD_MS;
-  let elapsed = 0;
-  let last = performance.now();
-  while (elapsed < duration) {
-    const now = await nextFrame();
-    if (id !== run) throw CANCEL;
-    if (!held()) elapsed += now - last;
-    last = now;
-    railProgress.style.setProperty("--progress", Math.min(elapsed / duration, 1).toFixed(3));
+  const timer = railProgress.animate([{ transform: "scaleX(0)" }, { transform: "scaleX(1)" }], { duration, fill: "forwards" });
+  while (timer.playState !== "finished") {
+    await nextFrame();
+    if (id !== run) { timer.cancel(); throw CANCEL; }
+    if (held() && timer.playState === "running") timer.pause();
+    else if (!held() && timer.playState === "paused") timer.play();
   }
 }
 
 function markRail(index) {
+  railProgress.getAnimations().forEach((a) => a.cancel());
   railButtons.forEach((b, i) => {
     if (i === index) { b.setAttribute("aria-current", "true"); b.append(railProgress); }
     else b.removeAttribute("aria-current");
   });
-  railProgress.style.setProperty("--progress", 0);
 }
 
 async function loop(id) {
@@ -368,11 +375,13 @@ function reserveHeight() {
   thread.style.setProperty("--thread-h", `${Math.ceil(tallest)}px`);
 }
 
-// The With/Without pill slides under whichever label is active
+// The With/Without pill is clipped to whichever label is active (the pill itself sits 3px inside the toggle)
 function placePill() {
   const active = withToggle.querySelector(withTool ? ".with-on" : ".with-off");
-  withToggle.style.setProperty("--pill-x", `${active.offsetLeft - 3}px`);
-  withToggle.style.setProperty("--pill-w", `${active.offsetWidth}px`);
+  const left = active.offsetLeft - 3;
+  const right = withToggle.clientWidth - 6 - left - active.offsetWidth;
+  withToggle.style.setProperty("--pill-l", `${left}px`);
+  withToggle.style.setProperty("--pill-r", `${Math.max(right, 0)}px`);
 }
 
 railButtons.forEach((b, i) => b.addEventListener("click", () => jump(i)));
