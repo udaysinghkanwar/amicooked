@@ -54,9 +54,9 @@
   --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --gutter: clamp(16px, 4vw, 48px);
 
-  /* One easing family for the whole page */
-  --out: cubic-bezier(0.22, 1, 0.36, 1);
-  --in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  /* One easing family for the whole page: strong ease-out for entering, strong ease-in-out for on-screen moves */
+  --out: cubic-bezier(0.23, 1, 0.32, 1);
+  --in-out: cubic-bezier(0.77, 0, 0.175, 1);
 
   color-scheme: dark;
 }
@@ -138,7 +138,7 @@ h1 {
 .segmented button {
   appearance: none; min-height: 36px; padding: 0 14px; border: 0; border-radius: 999px; cursor: pointer;
   font: 600 0.8125rem/1.3 var(--sans); color: var(--muted); background: transparent;
-  transition: background-color 200ms var(--out), color 200ms var(--out);
+  transition: background-color 200ms var(--out), color 200ms var(--out), transform 160ms var(--out);
 }
 .segmented button:hover { color: var(--ink); }
 .segmented [aria-selected="true"], .segmented [aria-pressed="true"] { color: var(--ink); background: var(--rule-strong); }
@@ -155,11 +155,14 @@ h1 {
 .icon-button {
   appearance: none; flex: none; position: relative; display: inline-grid; place-items: center;
   width: 44px; height: 44px; border: 0; border-radius: 10px; background: transparent; cursor: pointer; color: var(--muted);
-  transition: color 160ms var(--out), background-color 160ms var(--out);
+  transition: color 160ms var(--out), background-color 160ms var(--out), transform 160ms var(--out);
 }
 .icon-button:hover { color: var(--ink); background: var(--well); }
 .icon-button svg { grid-area: 1 / 1; width: 18px; height: 18px; transition: opacity 160ms var(--out), transform 160ms var(--out); }
-.icon-button .i-check, .icon-button.is-done .i-copy { opacity: 0; transform: scale(0.8); }
+.icon-button .i-check, .icon-button.is-done .i-copy { opacity: 0; transform: scale(0.9); }
+
+/* Every pressable thing acknowledges the press */
+.icon-button:active, .segmented button:active, .app-switch button:active, .with-toggle:active { transform: scale(0.97); }
 .icon-button.is-done .i-check { opacity: 1; transform: none; color: var(--ink); }
 
 .script-link { display: flex; justify-content: flex-end; }
@@ -182,12 +185,9 @@ h1 {
   padding: 14px 16px; border-radius: 12px; background: var(--raised); border: 1px solid var(--rule);
   font-family: var(--mono); font-size: 0.8125rem; line-height: 1.6; color: var(--soft);
 }
-/* Smooth open where supported; elsewhere it simply opens */
-@supports (interpolate-size: allow-keywords) {
-  .full-prompt { interpolate-size: allow-keywords; }
-  .full-prompt::details-content { height: 0; opacity: 0; overflow: clip; transition: height 300ms var(--out), opacity 300ms var(--out), content-visibility 300ms allow-discrete; }
-  .full-prompt[open]::details-content { height: auto; opacity: 1; }
-}
+/* Opening fades the prompt in and settles it; no height animation, which would reflow the page */
+@keyframes settle { from { opacity: 0; transform: translateY(-4px); } }
+.full-prompt[open] .full-prompt-body { animation: settle 200ms var(--out); }
 
 .trust { margin-top: 20px; text-align: center; font-size: 0.875rem; color: var(--faint); }
 
@@ -207,7 +207,7 @@ h1 {
 .app-switch button {
   appearance: none; min-height: 36px; padding: 0 12px; border: 0; border-radius: 8px; cursor: pointer;
   font: 600 0.8125rem/1.3 var(--sans); color: var(--faint); background: transparent;
-  transition: background-color 200ms var(--out), color 200ms var(--out);
+  transition: background-color 200ms var(--out), color 200ms var(--out), transform 160ms var(--out);
 }
 .app-switch button:hover { color: var(--ink); }
 .app-switch [aria-pressed="true"] { color: var(--ink); background: var(--well); }
@@ -217,16 +217,18 @@ h1 {
   appearance: none; position: relative; display: inline-grid; grid-template-columns: auto auto; align-items: center;
   min-height: 36px; padding: 3px; border-radius: 999px; border: 1px solid var(--rule); background: var(--raised); cursor: pointer;
   font: 600 0.8125rem/1.3 var(--sans);
+  transition: transform 160ms var(--out);
 }
 .with-toggle span { position: relative; z-index: 1; padding: 6px 12px; border-radius: 999px; color: var(--faint); transition: color 220ms var(--out); }
+/* A full-size pill, clipped to the active label: slides and resizes without reflowing anything */
 .with-toggle::before {
-  content: ""; position: absolute; top: 3px; bottom: 3px; left: 3px; width: var(--pill-w, 50%);
-  border-radius: 999px; background: var(--rule-strong); transform: translateX(var(--pill-x, 0));
-  transition: transform 260ms var(--out), width 260ms var(--out);
+  content: ""; position: absolute; inset: 3px; border-radius: 999px; background: var(--rule-strong);
+  clip-path: inset(0 var(--pill-r, 50%) 0 var(--pill-l, 0) round 999px);
+  transition: clip-path 240ms var(--out);
 }
 .with-toggle[aria-checked="true"] .with-on, .with-toggle[aria-checked="false"] .with-off { color: var(--ink); }
 
-.play .i-play, .play[data-paused="true"] .i-pause { opacity: 0; transform: scale(0.8); }
+.play .i-play, .play[data-paused="true"] .i-pause { opacity: 0; transform: scale(0.9); }
 .play[data-paused="true"] .i-play { opacity: 1; transform: none; }
 
 .window-body { display: grid; grid-template-columns: 220px minmax(0, 1fr); }
@@ -242,7 +244,7 @@ h1 {
 .rail button[aria-current="true"] { color: var(--ink); background: var(--well); }
 .rail-progress {
   position: absolute; left: 10px; right: 10px; bottom: 4px; height: 2px; border-radius: 1px;
-  background: var(--rule-strong); transform-origin: left; transform: scaleX(var(--progress, 0));
+  background: var(--rule-strong); transform-origin: left; transform: scaleX(0);
 }
 
 .chat { display: flex; flex-direction: column; min-width: 0; padding: 24px 28px 20px; }
@@ -257,7 +259,7 @@ h1 {
 .tool svg { width: 16px; height: 16px; flex: none; color: var(--faint); }
 .tool code { padding: 1px 6px; border-radius: 5px; background: var(--well); color: var(--soft); font-size: 0.8125rem; }
 .tool-note { color: var(--faint); }
-.tool svg { transform: scale(0.8); opacity: 0; transition: transform 200ms var(--out), opacity 200ms var(--out); }
+.tool svg { transform: scale(0.9); opacity: 0; transition: transform 200ms var(--out), opacity 200ms var(--out); }
 .tool.is-done svg { transform: none; opacity: 1; }
 /* While the tool runs, a band of brightness sweeps across its label (a mask over plain text) */
 .tool.is-running > span:first-of-type {
@@ -282,16 +284,17 @@ h1 {
 .bullets li::before { content: ""; position: absolute; left: 2px; top: 0.7em; width: 6px; height: 1.5px; background: var(--faint); }
 .file { font-family: var(--mono); font-size: 0.875em; color: var(--ink); }
 
-.mini-meter { position: relative; display: inline-block; width: 140px; height: 6px; border-radius: 3px; background: var(--heat-gradient); }
-.mini-rest, .mini-marker { position: absolute; left: calc(var(--heat, 0) * 10%); transition: left 700ms var(--in-out); }
-.mini-rest { top: 0; bottom: 0; right: 0; border-radius: 0 3px 3px 0; background: var(--rule); }
-.mini-marker { top: -5px; width: 4px; height: 16px; margin-left: -2px; border-radius: 2px; background: var(--ink); }
+/* 140px wide, so one heat point is 14px. Moved with transforms set straight on each part (see setHeat in main.js). */
+.mini-meter { position: relative; display: inline-block; width: 140px; height: 6px; }
+.mini-track { position: absolute; inset: 0; overflow: hidden; border-radius: 3px; background: var(--heat-gradient); }
+.mini-rest { position: absolute; inset: 0; background: var(--rule); transform-origin: right; transform: scaleX(1); transition: transform 700ms var(--in-out); }
+.mini-marker { position: absolute; top: -5px; left: -2px; width: 4px; height: 16px; border-radius: 2px; background: var(--ink); transition: transform 700ms var(--in-out); }
 
 /* Streaming reveal: words (and whole fact lines) fade up and un-blur */
 .w { display: inline-block; opacity: 0; transform: translateY(4px); filter: blur(4px); transition: opacity 320ms var(--out), transform 320ms var(--out), filter 320ms var(--out); }
 .w.is-in { opacity: 1; transform: none; filter: none; }
 .heat-word.w { transition-duration: 450ms; }
-.line { opacity: 0; transform: translateY(4px); transition: opacity 360ms var(--out), transform 360ms var(--out); }
+.line { opacity: 0; transform: translateY(4px); transition: opacity 300ms var(--out), transform 300ms var(--out); }
 .line.is-in { opacity: 1; transform: none; }
 .pop { opacity: 0; transform: translateY(6px); transition: opacity 260ms var(--out), transform 260ms var(--out); }
 .pop.is-in { opacity: 1; transform: none; }
@@ -338,9 +341,13 @@ h1 {
 .legal { font-size: 0.8125rem; color: var(--faint); }
 .legal a { color: var(--muted); }
 
+/* Reduced motion: keep the fades that explain what changed, drop movement, blur and glides */
+@keyframes fade { from { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) {
-  .js .enter, .tool.is-running > span:first-of-type { animation: none; }
-  .tool.is-running > span:first-of-type { -webkit-mask-image: none; mask-image: none; color: var(--muted); }
-  *, *::before, *::after { transition-duration: 1ms !important; }
-  .w, .line, .pop, .thread.is-leaving > * { filter: none !important; transform: none !important; }
+  .js .enter { animation: fade 200ms var(--out) both; }
+  .full-prompt[open] .full-prompt-body { animation: fade 200ms var(--out); }
+  .tool.is-running > span:first-of-type { animation: none; -webkit-mask-image: none; mask-image: none; color: var(--muted); }
+  .w, .line, .pop, .thread.is-leaving > *, .tool svg, .icon-button svg { filter: none !important; transform: none !important; }
+  .mini-rest, .mini-marker, .with-toggle::before { transition: none; }
+  .icon-button:active, .segmented button:active, .app-switch button:active, .with-toggle:active { transform: none; }
 }
