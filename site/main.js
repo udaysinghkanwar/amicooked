@@ -57,19 +57,22 @@ document.querySelectorAll("[data-copy]").forEach((btn) => {
 });
 
 // ---- The conversation replay ----
-// Each verdict's heat uses the same scoring as the am_i_cooked tool:
+// Replies are written the way an AI actually answers in chat: plain text, bold, lists. No coloured
+// widgets, because Claude and ChatGPT render the tool's data as text.
+// Verdicts follow the am_i_cooked tool's real scoring (src/tools/cooked.ts) and the skill's answer style:
 // +2 per overdue item, +1 per item due within 72h, +3/+2/+1 for a lowest grade under 50/60/70.
 // Bands: raw 0-1, warming up 2-3, toasty 4-5, cooked 6-7, well done 8-10.
 
 const EXCHANGES = [
   {
+    // 3 due within 72h (+3), lowest grade 64% (+1) = 4, toasty
     q: "am i cooked?",
     tools: ["am_i_cooked"], note: "read 4 courses",
-    verdict: { heat: 4, word: "Toasty.", rest: "Not cooked yet." },
-    facts: [
-      ["3XA3", "lab report due tomorrow, not submitted"],
-      ["2C03", "assignment 2 and a quiz due by Friday"],
-      ["2XB3", "at 64% (estimate)"],
+    lead: "Toasty (4/10).", text: "Not cooked yet, but it’s getting warm.",
+    list: [
+      ["3XA3", "lab report due tomorrow at 11:59 pm, not submitted"],
+      ["2C03", "assignment 2 and a quiz, both by Friday"],
+      ["2XB3", "you’re at 64% (an estimate from graded items)"],
     ],
     without: "I can’t see your Avenue account, so I don’t know what’s due. Check your course pages.",
   },
@@ -92,24 +95,23 @@ const EXCHANGES = [
   },
   {
     q: "what’s on the midterm?",
-    tools: ["get_announcements", "read_file"], note: "2XB3",
+    tools: ["get_announcements"], note: "2XB3",
     text: "Chapters 4 to 7, 90 minutes, no calculators. That’s from Friday’s announcement.",
     without: "I can’t see your course announcements. Check the course page or ask your prof.",
   },
   {
+    // 2 overdue (+4), 1 due within 72h (+1), lowest grade 47% (+3) = 8, well done
     q: "how bad is finals week?",
     tools: ["am_i_cooked"], note: "read 4 courses",
-    verdict: { heat: 8, word: "Well done.", rest: "Bad, but fixable." },
-    facts: [
-      ["3XA3", "two labs overdue, late window closes Sunday"],
+    lead: "Well done (8/10).", text: "Bad, but fixable. Start with the labs.",
+    list: [
+      ["3XA3", "two labs overdue. The late window closes Sunday, so submit those first"],
       ["2C03", "final project due Monday"],
-      ["2XB3", "at 47%. Email your prof today."],
+      ["2XB3", "you’re at 47%. Email your prof or go to office hours this week"],
     ],
     without: "I can’t see your deadlines or grades, so I can’t say. List what’s due and I’ll help you plan.",
   },
 ];
-const HEAT_TEXT = ["--raw-text", "--warming-text", "--toasty-text", "--cooked-text", "--welldone-text"];
-const levelIndex = (heat) => Math.min(Math.floor(heat / 2), 4);
 
 const win = document.getElementById("window");
 const thread = document.getElementById("thread");
@@ -119,7 +121,6 @@ const railButtons = [...win.querySelectorAll(".rail button")];
 const railProgress = win.querySelector(".rail-progress");
 const playButton = win.querySelector(".play");
 const withToggle = win.querySelector(".with-toggle");
-const appButtons = [...win.querySelectorAll(".app-switch button")];
 
 const HOLD_MS = 4200;
 const CANCEL = Symbol("cancel");
@@ -168,7 +169,7 @@ function buildTool(ex) {
   return tool;
 }
 
-// The answer, with every word and line hidden; `reveal` decides how they appear
+// The answer as chat text, with every word and line hidden until it streams in
 function buildAnswer(ex, mode) {
   const answer = el("div", "answer");
   if (mode === "without") {
@@ -177,34 +178,20 @@ function buildAnswer(ex, mode) {
     answer.append(p);
     return answer;
   }
-  if (ex.verdict) {
-    const row = el("div", "verdict-row");
-    const verdict = el("p", "verdict");
-    const word = el("b", "heat-word w", ex.verdict.word);
-    word.style.setProperty("--heat-text", `var(${HEAT_TEXT[levelIndex(ex.verdict.heat)]})`);
-    verdict.append(word, " ", words(ex.verdict.rest));
-    const meter = el("span", "mini-meter");
-    meter.setAttribute("role", "img");
-    meter.setAttribute("aria-label", `Heat ${ex.verdict.heat} out of 10`);
-    const track = el("span", "mini-track");
-    track.append(el("span", "mini-rest"));
-    meter.append(track, el("span", "mini-marker"));
-    row.append(verdict, meter);
-    answer.append(row);
-  }
-  if (ex.text) {
+  if (ex.lead || ex.text) {
     const p = el("p", "answer-text");
-    p.append(words(ex.text));
+    if (ex.lead) p.append(el("strong", "w", ex.lead), " ");
+    if (ex.text) p.append(words(ex.text));
     answer.append(p);
   }
-  if (ex.facts) {
-    const ul = el("ul", "facts");
-    ex.facts.forEach(([code, fact]) => {
+  if (ex.list) {
+    const ol = el("ol", "reply-list");
+    ex.list.forEach(([code, item]) => {
       const li = el("li", "line");
-      li.append(el("code", "", code), fact);
-      ul.append(li);
+      li.append(el("strong", "", code), ` ${item}`);
+      ol.append(li);
     });
-    answer.append(ul);
+    answer.append(ol);
   }
   if (ex.bullets) {
     const ul = el("ul", "bullets");
@@ -214,14 +201,7 @@ function buildAnswer(ex, mode) {
   return answer;
 }
 
-// The meter moves with transforms set on its own parts: the grey rest shrinks from the right, the marker slides
-const METER_PX = 140;
-function setHeat(meter, heat) {
-  meter.querySelector(".mini-rest").style.transform = `scaleX(${1 - heat / 10})`;
-  meter.querySelector(".mini-marker").style.transform = `translateX(${(heat / 10) * METER_PX}px)`;
-}
-
-// A finished exchange, all at once (jumps, reduced motion, measuring)
+// A finished exchange, all at once (reduced motion, measuring)
 function renderFinal(ex, mode, target = thread) {
   target.replaceChildren(el("p", "msg-user", ex.q));
   if (mode === "with") {
@@ -231,8 +211,6 @@ function renderFinal(ex, mode, target = thread) {
   }
   const answer = buildAnswer(ex, mode);
   answer.querySelectorAll(".w, .line").forEach((n) => n.classList.add("is-in"));
-  const meter = answer.querySelector(".mini-meter");
-  if (meter) setHeat(meter, ex.verdict.heat);
   target.append(answer);
 }
 
@@ -291,15 +269,14 @@ async function play(index, mode, id) {
   thread.append(answer);
   await nextFrame();
 
-  // The verdict word leads, and the meter slides with it
-  const heatWord = answer.querySelector(".heat-word");
-  if (heatWord) {
-    heatWord.classList.add("is-in");
-    setHeat(answer.querySelector(".mini-meter"), ex.verdict.heat);
-    await sleep(160, id);
+  // The bold verdict leads and gets a beat to itself, then the rest of the sentence streams
+  const lead = answer.querySelector("strong.w");
+  if (lead) {
+    lead.classList.add("is-in");
+    await sleep(180, id);
   }
-  await stream([...answer.querySelectorAll(".w:not(.heat-word)")], id);
-  // Fact lines arrive as whole lines, slightly overlapping
+  await stream([...answer.querySelectorAll(".w:not(strong)")], id);
+  // List items arrive as whole lines, slightly overlapping
   const lines = [...answer.querySelectorAll(".line")];
   if (lines.length) await sleep(60, id);
   for (const line of lines) {
@@ -314,7 +291,7 @@ const held = () => paused || hovering || focused || !visible;
 // that doubles as the timer: it pauses while anyone is reading or interacting.
 async function hold(id) {
   // Verdicts carry more to read, so they stay up longer
-  const duration = EXCHANGES[current].verdict ? HOLD_MS + 1400 : HOLD_MS;
+  const duration = EXCHANGES[current].list ? HOLD_MS + 1400 : HOLD_MS;
   const timer = railProgress.animate([{ transform: "scaleX(0)" }, { transform: "scaleX(1)" }], { duration, fill: "forwards" });
   while (timer.playState !== "finished") {
     await nextFrame();
@@ -345,19 +322,21 @@ async function loop(id) {
   }
 }
 
-// Jumping shows the finished exchange right away, then the loop carries on from there
-async function jump(index) {
+// Start an exchange from the top (picking a chat, flipping the toggle), then let the loop carry on.
+// Anything still playing for an older run stops at its next step.
+function restart(index) {
   const id = ++run;
   current = index;
   markRail(index);
   composerText.textContent = "";
   composer.classList.remove("has-text");
-  thread.classList.add("is-leaving");
-  await new Promise((r) => setTimeout(r, reducedMotion ? 0 : 160));
-  if (id !== run) return;
-  thread.classList.remove("is-leaving");
-  renderFinal(EXCHANGES[index], withTool ? "with" : "without");
-  loop(id);
+  const mode = withTool ? "with" : "without";
+  if (reducedMotion) {
+    renderFinal(EXCHANGES[index], mode);
+    loop(id);
+    return;
+  }
+  play(index, mode, id).then(() => loop(id), (e) => { if (e !== CANCEL) throw e; });
 }
 
 // Reserve the tallest exchange's height so the window never jumps between them
@@ -384,20 +363,15 @@ function placePill() {
   withToggle.style.setProperty("--pill-r", `${Math.max(right, 0)}px`);
 }
 
-railButtons.forEach((b, i) => b.addEventListener("click", () => jump(i)));
+railButtons.forEach((b, i) => b.addEventListener("click", () => restart(i)));
 
 withToggle.addEventListener("click", () => {
   withTool = !withTool;
   withToggle.setAttribute("aria-checked", withTool);
   withToggle.setAttribute("aria-label", withTool ? "With Am I Cooked" : "Without Am I Cooked");
   placePill();
-  jump(current);
+  restart(current);
 });
-
-appButtons.forEach((b) => b.addEventListener("click", () => {
-  appButtons.forEach((x) => x.setAttribute("aria-pressed", x === b));
-  win.querySelectorAll("[data-app-name]").forEach((n) => { n.textContent = b.dataset.app; });
-}));
 
 function setPaused(value) {
   paused = value;
@@ -417,9 +391,7 @@ new IntersectionObserver(([entry]) => {
   // The first answer plays once the window comes into view
   if (visible && !started) {
     started = true;
-    const id = ++run;
-    if (reducedMotion) { renderFinal(EXCHANGES[0], "with"); loop(id); return; }
-    play(0, "with", id).then(() => loop(id), (e) => { if (e !== CANCEL) throw e; });
+    restart(0);
   }
 }, { threshold: 0.35 }).observe(win);
 
