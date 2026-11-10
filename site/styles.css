@@ -91,12 +91,12 @@ a:hover { text-decoration-color: var(--ink); }
 .skip:focus { top: 12px; }
 .skip:hover { color: var(--bg); }
 
-/* The wall: columns of verdict swatches and small chats drift slowly upward behind the hero.
+/* The wall: a week of course clutter drifts slowly upward behind the hero. It is the problem the page answers.
    Each column is one transform animation on a doubled track, so it loops without a seam. */
 
 .wall {
   position: absolute; inset: 0; display: flex; gap: var(--wall-gap); padding-inline: var(--wall-gap); overflow: hidden;
-  --wall-gap: clamp(16px, 2.2vw, 32px);
+  --wall-gap: clamp(12px, 1.4vw, 20px);
   -webkit-mask-image: linear-gradient(to bottom, transparent, #000 14%, #000 100%);
   mask-image: linear-gradient(to bottom, transparent, #000 14%, #000 100%);
 }
@@ -109,28 +109,21 @@ a:hover { text-decoration-color: var(--ink); }
 .wall-set { display: flex; flex-direction: column; gap: var(--wall-gap); padding-bottom: var(--wall-gap); }
 @keyframes drift { to { transform: translateY(-50%); } }
 
-.tile-name, .tile-sub { display: block; font-family: var(--mono); font-size: 0.8125rem; line-height: 1.5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tile-name { margin-top: 10px; color: var(--soft); }
-.tile-sub { color: var(--faint); }
-
-/* A verdict swatch: the heat as a grainy gradient, textured three ways */
-.swatch { position: relative; aspect-ratio: var(--ratio, 1); border-radius: 14px; overflow: hidden; background: var(--paint); }
-.swatch::before { content: ""; position: absolute; inset: 0; background: var(--texture, none); }
-.swatch::after { content: ""; position: absolute; inset: 0; background: url("/grain.svg"); mix-blend-mode: overlay; opacity: 0.55; }
-.heat-raw { --paint: radial-gradient(120% 90% at 20% 15%, #d7eadb, transparent 55%), radial-gradient(90% 80% at 85% 90%, #17332c, transparent 70%), linear-gradient(160deg, #6E9E87, #2f5d50); }
-.heat-warming { --paint: radial-gradient(90% 70% at 75% 20%, #fbe7ae, transparent 60%), radial-gradient(100% 90% at 10% 100%, #6b3a0c, transparent 65%), linear-gradient(200deg, #E3A93B, #a8641a); }
-.heat-toasty { --paint: radial-gradient(80% 60% at 30% 80%, #ffd0a1, transparent 60%), radial-gradient(110% 90% at 95% 5%, #6a1f0c, transparent 65%), linear-gradient(140deg, #E57A35, #b3451a); }
-.heat-cooked { --paint: radial-gradient(70% 55% at 60% 35%, #ff9a6b, transparent 60%), radial-gradient(120% 100% at 0% 100%, #2a0806, transparent 70%), linear-gradient(180deg, #D2442A, #7c1d12); }
-.heat-welldone { --paint: radial-gradient(45% 35% at 70% 75%, #d2442a, transparent 70%), radial-gradient(90% 80% at 15% 10%, #7A5C50, transparent 70%), linear-gradient(170deg, #2a1e1a, #120d0b); }
-.tex-bars { --texture: repeating-linear-gradient(to right, rgba(0, 0, 0, 0.42) 0 5px, transparent 5px 9px, rgba(255, 255, 255, 0.1) 9px 10px, transparent 10px 16px); }
-.tex-dots { --texture: radial-gradient(circle at center, transparent 0 1.4px, rgba(14, 12, 11, 0.62) 1.9px) 0 0 / 7px 7px; }
-.tex-lines { --texture: repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0.3) 0 2px, transparent 2px 5px); }
-
-/* A small chat: one question, one straight answer */
-.mini { display: flex; flex-direction: column; gap: 10px; padding: 14px; border: 1px solid var(--rule); border-radius: 14px; background: var(--window); font-size: 0.8125rem; line-height: 1.45; }
-.mini-q { align-self: flex-end; max-width: 92%; padding: 6px 11px; border-radius: 12px 12px 4px 12px; background: var(--rule); color: var(--ink); }
-.mini-a { color: var(--muted); }
-.mini-a b { color: var(--ink); font-weight: 700; }
+/* One piece of clutter: a dropbox, a grade, an announcement. Neutral, except for its status. */
+.clip { display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; border: 1px solid var(--rule); border-radius: 12px; background: var(--window); font-size: 0.8125rem; line-height: 1.45; color: var(--muted); }
+.clip-head { display: flex; justify-content: space-between; gap: 12px; white-space: nowrap; overflow: hidden; font-family: var(--mono); font-size: 0.8125rem; color: var(--faint); }
+.clip-head span:first-child { text-transform: uppercase; letter-spacing: 0.06em; }
+.clip-title { font-size: 0.9375rem; font-weight: 700; line-height: 1.3; color: var(--ink); }
+.clip-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; margin-top: 4px; }
+.clip-status { padding: 2px 9px; border-radius: 999px; border: 1px solid currentColor; font-weight: 600; white-space: nowrap; }
+.clip-status.is-late { color: #F0705A; }
+.clip-status.is-soon { color: var(--warming); }
+.clip-status.is-done { color: #8FBFA6; }
+.clip-score { font-family: var(--mono); font-size: 1.0625rem; color: var(--ink); }
+.clip-bar { display: block; height: 3px; border-radius: 2px; background: var(--rule-strong); overflow: hidden; }
+.clip-bar::after { content: ""; display: block; height: 100%; background: var(--soft); transform-origin: left; transform: scaleX(var(--pct, 0)); }
+.clip-row { display: flex; gap: 12px; }
+.clip-row span:first-child { flex: none; width: 2.2em; font-family: var(--mono); color: var(--faint); }
 
 /* Entrance: one wave on load. The headline leads, the window lands last. */
 

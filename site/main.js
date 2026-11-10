@@ -63,67 +63,75 @@ document.querySelectorAll("[data-copy]").forEach((btn) => {
 // +2 per overdue item, +1 per item due within 72h, +3/+2/+1 for a lowest grade under 50/60/70.
 // Bands: raw 0-1, warming up 2-3, toasty 4-5, cooked 6-7, well done 8-10.
 
-// The wall behind the hero: verdict swatches (the heat as a grainy gradient) and small chats.
-// Built here because it is decoration; without JS the hero is simply dark.
-const SWATCHES = [
-  ["toasty", "bars", "Toasty, 4/10", "3 due within 72h", "4 / 5"],
-  ["raw", "", "Raw, 0/10", "nothing due for 5 days", "1"],
-  ["cooked", "dots", "Cooked, 7/10", "1 overdue, midterm Friday", "3 / 4"],
-  ["warming", "lines", "Warming up, 2/10", "2 due this week", "4 / 3"],
-  ["welldone", "", "Well done, 9/10", "3 overdue", "1"],
-  ["cooked", "bars", "Cooked, 6/10", "lowest grade 58%", "5 / 4"],
-  ["raw", "dots", "Raw, 1/10", "1 quiz on Friday", "4 / 5"],
-  ["toasty", "", "Toasty, 5/10", "lab report due tomorrow", "3 / 4"],
-  ["warming", "bars", "Warming up, 3/10", "lowest grade 64%", "1"],
-  ["welldone", "lines", "Well done, 8/10", "finals week", "4 / 3"],
-];
-const MINIS = [
-  ["am i cooked?", "Toasty (4/10).", "Not yet, but it’s getting warm.", "am_i_cooked"],
-  ["did I submit lab 4?", "Yes,", "Tuesday at 10:42 pm.", "get_assignments"],
-  ["what’s on the midterm?", "Chapters 4 to 7.", "No calculators.", "get_announcements"],
-  ["what’s my grade in 2XB3?", "78%.", "An estimate from graded items.", "get_my_grades"],
-  ["what’s due this week?", "Three things.", "Lab 5 is first, on Friday.", "get_upcoming_due_dates"],
-  ["summarize week 7", "Graphs.", "BFS first, then Dijkstra.", "get_course_content"],
-  ["how bad is finals week?", "Well done (8/10).", "Bad, but fixable.", "am_i_cooked"],
-];
+// The wall behind the hero is the problem: everything a student's Brightspace throws at them in one week.
+// Dropboxes, grades, announcements and calendars, all made up, drifting past faster than anyone can track.
+// The only colour is status: late, due soon, done. Built here because it is decoration.
+const CLUTTER = {
+  d0: { kind: "Dropbox", course: "3XA3", title: "Lab 4 Report", meta: "Due Tue 11:59 PM", status: "2 days late", tone: "late" },
+  d1: { kind: "Dropbox", course: "2C03", title: "Assignment 2", meta: "Due Thu 11:59 PM", status: "Not submitted", tone: "soon" },
+  d2: { kind: "Dropbox", course: "3XA3", title: "Lab 5", meta: "Due Fri 5:00 PM", status: "Not submitted", tone: "soon" },
+  d3: { kind: "Dropbox", course: "2AA4", title: "Design Doc v1", meta: "Mon 9:14 PM", status: "Submitted", tone: "done" },
+  d4: { kind: "Dropbox", course: "2XB3", title: "Problem Set 6", meta: "Due Mon 9:00 AM", status: "Not submitted", tone: "soon" },
+  g0: { kind: "Grade", course: "2XB3", title: "Midterm 1", score: "58 / 100", pct: 58 },
+  g1: { kind: "Grade", course: "2C03", title: "Quiz 3", score: "6.5 / 10", pct: 65 },
+  g2: { kind: "Grade", course: "3XA3", title: "Lab 3", score: "18 / 20", pct: 90 },
+  g3: { kind: "Grade", course: "2AA4", title: "Tutorial 5", score: "Not graded yet", pct: 0 },
+  a0: { kind: "Announcement", course: "2XB3", title: "Midterm 2 covers chapters 4 to 7", body: "No calculators. 90 minutes. Bring your student card." },
+  a1: { kind: "Announcement", course: "3XA3", title: "Lab 4 dropbox reopened until tonight", body: "Late submissions take the 10% penalty." },
+  a2: { kind: "Announcement", course: "2C03", title: "Friday’s lecture is moved online", body: "The link is under Content, Week 9." },
+  a3: { kind: "Announcement", course: "2AA4", title: "Office hours cancelled this week", body: "Email your TA with questions." },
+  a4: { kind: "Announcement", course: "2C03", title: "Quiz 4 opens Monday", body: "Closes Wednesday at 11:59 PM. One attempt." },
+  c0: { kind: "Calendar", course: "This week", rows: [["Thu", "2C03 Assignment 2"], ["Fri", "3XA3 Lab 5"], ["Fri", "2XB3 Midterm 2"]] },
+  c1: { kind: "Calendar", course: "Next week", rows: [["Mon", "2XB3 Problem Set 6"], ["Wed", "2C03 Quiz 4"], ["Fri", "2AA4 Design Doc v2"]] },
+  u0: { kind: "Updates", course: "4 courses", title: "14 unread updates", body: "3 dropboxes, 6 grades, 5 announcements." },
+  u1: { kind: "Syllabus", course: "2C03", title: "Late policy", body: "Late work loses 10% per day, for up to 3 days." },
+};
 (function buildWall() {
   const wall = document.getElementById("wall");
   if (!wall) return;
   const node = (tag, cls, text) => { const n = document.createElement(tag); n.className = cls; if (text) n.textContent = text; return n; };
-  const caption = (name, sub) => [node("span", "tile-name", name), node("span", "tile-sub", sub)];
-  const swatch = ([heat, tex, name, sub, ratio]) => {
-    const tile = node("div", "tile");
-    const art = node("div", `swatch heat-${heat}${tex ? ` tex-${tex}` : ""}`);
-    art.style.setProperty("--ratio", ratio);
-    tile.append(art, ...caption(name, sub));
+  const card = (c) => {
+    const tile = node("div", "clip");
+    const head = node("p", "clip-head");
+    head.append(node("span", "", c.kind), node("span", "", c.course));
+    tile.append(head);
+    if (c.title) tile.append(node("p", "clip-title", c.title));
+    if (c.body) tile.append(node("p", "clip-body", c.body));
+    if (c.meta || c.status) {
+      const foot = node("p", "clip-foot");
+      if (c.meta) foot.append(node("span", "", c.meta));
+      if (c.status) foot.append(node("span", `clip-status is-${c.tone}`, c.status));
+      tile.append(foot);
+    }
+    if (c.score) {
+      tile.append(node("p", "clip-score", c.score));
+      const bar = node("span", "clip-bar");
+      bar.style.setProperty("--pct", c.pct / 100);
+      tile.append(bar);
+    }
+    if (c.rows) c.rows.forEach(([day, what]) => {
+      const row = node("p", "clip-row");
+      row.append(node("span", "", day), node("span", "", what));
+      tile.append(row);
+    });
     return tile;
   };
-  const mini = ([q, lead, rest, tool]) => {
-    const tile = node("div", "tile");
-    const card = node("div", "mini");
-    const a = node("p", "mini-a");
-    a.append(node("b", "", lead), ` ${rest}`);
-    card.append(node("p", "mini-q", q), a);
-    tile.append(card, ...caption(tool, "Used Am I Cooked"));
-    return tile;
-  };
-  // Six columns, each with its own mix (s = swatch, m = mini chat) and its own speed, so no two line up
+  // Six columns, each its own mix at its own speed, so no two line up
   const COLUMNS = [
-    ["s0", "m1", "s4", "s7", "m4"],
-    ["s5", "s2", "m0", "s8", "s1"],
-    ["m3", "s3", "s9", "m6", "s6"],
-    ["s8", "m5", "s4", "s5", "m2"],
-    ["s2", "s7", "m6", "s3", "s9"],
-    ["m4", "s4", "s1", "m0", "s6"],
+    ["d0", "a0", "g1", "c0", "u1", "d3"],
+    ["g0", "d1", "a2", "u0", "d4", "a3"],
+    ["a1", "c1", "d2", "g2", "a4", "g3"],
+    ["u0", "g1", "d0", "a3", "c0", "d1"],
+    ["d4", "a4", "g0", "d3", "a0", "c1"],
+    ["a2", "d2", "u1", "g2", "d0", "a1"],
   ];
   COLUMNS.forEach((recipe, col) => {
-    const tiles = recipe.map((id) => () => (id[0] === "s" ? swatch(SWATCHES[id[1]]) : mini(MINIS[id[1]])));
     const track = node("div", "wall-track");
     track.style.setProperty("--speed", `${[96, 124, 84, 138, 104, 118][col]}s`);
     // The set is doubled so the track can loop by moving up exactly half its height
     for (let half = 0; half < 2; half++) {
       const set = node("div", "wall-set");
-      tiles.forEach((make) => set.append(make()));
+      recipe.forEach((id) => set.append(card(CLUTTER[id])));
       track.append(set);
     }
     const column = node("div", "wall-col");
