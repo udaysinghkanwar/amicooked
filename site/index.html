@@ -11,12 +11,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Am I Cooked? Ask your AI about your D2L Brightspace courses</title>
-  <meta name="description" content="Ask Claude or ChatGPT. It checks your D2L Brightspace grades and deadlines, then tells you straight. Free, open source, runs on your laptop.">
+  <meta name="description" content="Ask Claude or ChatGPT. It reads your D2L Brightspace grades and deadlines, then tells you straight. Free, open source, runs on your laptop.">
   <meta name="theme-color" content="#0E0C0B">
   <meta name="color-scheme" content="dark">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Am I cooked?">
-  <meta property="og:description" content="Ask Claude or ChatGPT. It checks your grades and deadlines, then tells you straight.">
+  <meta property="og:description" content="Ask Claude or ChatGPT. It reads your grades and deadlines, then tells you straight.">
   <meta property="og:image" content="https://amicooked.app/og.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
@@ -24,117 +24,154 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="/fonts/archivo-expanded-black-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/bricolage-grotesque-latin-opsz.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="/styles.css?v=3">
+  <link rel="stylesheet" href="/styles.css?v=4">
   <link rel="alternate" type="text/markdown" href="/SKILL.md" title="Setup instructions for AI agents">
   <script>document.documentElement.classList.replace("no-js", "js");</script>
-  <script src="/main.js?v=3" defer></script>
+  <script src="/main.js?v=4" defer></script>
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
 
-  <div class="field" aria-hidden="true"></div>
+  <header class="site-header wrap">
+    <a class="wordmark" href="/">am i cooked?</a>
+    <a class="header-link" href="https://github.com/udaysinghkanwar/amicooked">GitHub</a>
+  </header>
 
-  <div class="wrap">
-    <header class="site-header">
-      <a class="wordmark" href="/">am i cooked?</a>
-      <a class="header-link" href="https://github.com/udaysinghkanwar/amicooked">GitHub</a>
-    </header>
+  <main id="main">
+    <section class="hero wrap" aria-labelledby="hero-title">
+      <h1 id="hero-title" class="enter enter-1">Am I cooked?</h1>
+      <p class="lede enter enter-2">Ask Claude or ChatGPT. It reads your grades and deadlines, then tells you straight.</p>
 
-    <main id="main">
-      <section class="hero" aria-labelledby="hero-title">
-        <div class="hero-copy">
-          <h1 id="hero-title">Am I cooked?</h1>
-          <p class="lede">Ask Claude or ChatGPT. It checks your grades and deadlines, then tells you straight.</p>
-
-          <div class="install">
-            <div class="tabs" role="tablist" aria-label="Your computer">
-              <button class="tab" type="button" role="tab" id="os-mac" aria-controls="os-mac-panel" aria-selected="true">Mac</button>
-              <button class="tab" type="button" role="tab" id="os-win" aria-controls="os-win-panel" aria-selected="false" tabindex="-1">Windows</button>
-            </div>
-            <div class="cmd" role="tabpanel" id="os-mac-panel" aria-labelledby="os-mac">
-              <code id="cmd-mac">curl -fsSL https://<span data-domain>amicooked.app</span>/install.sh | sh</code>
-              <button class="copy" type="button" data-copy="cmd-mac" aria-label="Copy the Mac install command">Copy</button>
-            </div>
-            <div class="cmd" role="tabpanel" id="os-win-panel" aria-labelledby="os-win" hidden>
-              <code id="cmd-win">irm https://<span data-domain>amicooked.app</span>/install.ps1 | iex</code>
-              <button class="copy" type="button" data-copy="cmd-win" aria-label="Copy the Windows install command">Copy</button>
-            </div>
+      <div class="get enter enter-3">
+        <div class="get-row">
+          <h2 class="get-label">Install</h2>
+          <div class="segmented" role="tablist" aria-label="Your computer">
+            <button type="button" role="tab" id="os-mac" aria-controls="os-mac-panel" aria-selected="true">macOS &amp; Linux</button>
+            <button type="button" role="tab" id="os-win" aria-controls="os-win-panel" aria-selected="false" tabindex="-1">Windows</button>
           </div>
-
-          <p class="agent">Use an AI agent? <button class="text-button" type="button" data-copy="agent-prompt">Copy the setup prompt</button></p>
-          <p class="sr-only" id="agent-prompt">Set up Am I Cooked from https://<span data-domain>amicooked.app</span>/SKILL.md. Ask me which school I go to. Never ask for my password.</p>
         </div>
+        <div class="cmd" role="tabpanel" id="os-mac-panel" aria-labelledby="os-mac">
+          <code id="cmd-mac">curl -fsSL https://<span data-domain>amicooked.app</span>/install.sh | sh</code>
+          <button class="icon-button" type="button" data-copy="cmd-mac" aria-label="Copy the macOS and Linux install command">
+            <svg class="i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i-check" aria-hidden="true"><use href="#i-check"/></svg>
+          </button>
+        </div>
+        <div class="cmd" role="tabpanel" id="os-win-panel" aria-labelledby="os-win" hidden>
+          <code id="cmd-win">irm https://<span data-domain>amicooked.app</span>/install.ps1 | iex</code>
+          <button class="icon-button" type="button" data-copy="cmd-win" aria-label="Copy the Windows install command">
+            <svg class="i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i-check" aria-hidden="true"><use href="#i-check"/></svg>
+          </button>
+        </div>
+        <p class="script-link"><a href="https://github.com/udaysinghkanwar/amicooked/blob/main/install/install.sh">View install script<svg aria-hidden="true"><use href="#i-out"/></svg></a></p>
 
-        <figure class="verdict" id="verdict" aria-label="Sample answer">
-          <p class="bubble">am i cooked?</p>
-
-          <div class="verdict-head">
-            <span class="verdict-label"><span class="swatch" aria-hidden="true"></span><span data-label>toasty</span></span>
-            <span class="verdict-score"><span data-heat>4</span>/10</span>
+        <h2 class="get-label get-label-agent">Using an AI agent?</h2>
+        <div class="cmd cmd-prompt">
+          <code class="truncate" id="agent-prompt">Set up Am I Cooked from https://<span data-domain>amicooked.app</span>/SKILL.md. Ask me which school I go to. Never ask for my password.</code>
+          <button class="icon-button" type="button" data-copy="agent-prompt" aria-label="Copy the setup prompt for your AI agent">
+            <svg class="i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i-check" aria-hidden="true"><use href="#i-check"/></svg>
+          </button>
+        </div>
+        <details class="full-prompt">
+          <summary>Show full prompt</summary>
+          <div class="full-prompt-body">
+            <p>Set up Am I Cooked from https://<span data-domain>amicooked.app</span>/SKILL.md. Ask me which school I go to. Never ask for my password.</p>
           </div>
+        </details>
 
-          <div class="meter">
-            <div class="meter-bar" aria-hidden="true">
-              <span class="meter-rest"></span>
-              <span class="meter-tick" style="--at: 0"></span>
-              <span class="meter-tick" style="--at: 2"></span>
-              <span class="meter-tick" style="--at: 4"></span>
-              <span class="meter-tick" style="--at: 7"></span>
-              <span class="meter-tick" style="--at: 10"></span>
-              <span class="meter-marker"></span>
-            </div>
-            <input class="meter-range js-only" type="range" min="0" max="10" step="0.1" value="4" aria-label="Sample week" aria-valuetext="Midterms week, 4 out of 10, toasty">
+        <p class="trust">Free <span aria-hidden="true">·</span> open source <span aria-hidden="true">·</span> your login stays on your laptop</p>
+      </div>
+    </section>
+
+    <section class="demo wrap" aria-label="Example conversations">
+      <div class="window enter enter-4" id="window" role="group" aria-label="Example: a student asks their AI about their courses">
+        <div class="window-bar">
+          <span class="dots" aria-hidden="true"><span></span><span></span><span></span></span>
+          <div class="app-switch js-only" role="group" aria-label="AI app">
+            <button type="button" aria-pressed="true" data-app="Claude">Claude</button>
+            <button type="button" aria-pressed="false" data-app="ChatGPT">ChatGPT</button>
           </div>
-
-          <div class="weeks" role="group" aria-label="Sample weeks">
-            <button class="week" type="button" style="--at: 0" data-week="0" aria-pressed="false">Chill</button>
-            <button class="week" type="button" style="--at: 2" data-week="1" aria-pressed="false">Busy</button>
-            <button class="week" type="button" style="--at: 4" data-week="2" aria-pressed="true">Midterms<span class="week-progress" aria-hidden="true"></span></button>
-            <button class="week" type="button" style="--at: 7" data-week="3" aria-pressed="false">Missed lab</button>
-            <button class="week" type="button" style="--at: 10" data-week="4" aria-pressed="false">Finals</button>
-          </div>
-
-          <div class="verdict-foot">
-            <div>
-              <p class="verdict-line" data-line>Not cooked yet. Getting warm.</p>
-              <p class="verdict-why" data-why>0 overdue · 3 due soon · 64% low</p>
-            </div>
-            <button class="play js-only" type="button" aria-label="Pause the weeks">
-              <svg class="icon-pause" aria-hidden="true" width="14" height="14" viewBox="0 0 16 16"><rect x="3.5" y="3" width="3" height="10" rx="1" fill="currentColor"/><rect x="9.5" y="3" width="3" height="10" rx="1" fill="currentColor"/></svg>
-              <svg class="icon-play" aria-hidden="true" width="14" height="14" viewBox="0 0 16 16"><path d="M5 3.2v9.6a.7.7 0 0 0 1.06.6l7.6-4.8a.7.7 0 0 0 0-1.2l-7.6-4.8A.7.7 0 0 0 5 3.2z" fill="currentColor"/></svg>
+          <div class="bar-end">
+            <button class="with-toggle js-only" type="button" role="switch" aria-checked="true" aria-label="With Am I Cooked">
+              <span class="with-on">With Am I Cooked</span><span class="with-off">Without</span>
+            </button>
+            <button class="icon-button play js-only" type="button" aria-label="Pause the examples">
+              <svg class="i-pause" aria-hidden="true"><use href="#i-pause"/></svg><svg class="i-play" aria-hidden="true"><use href="#i-play"/></svg>
             </button>
           </div>
-        </figure>
-      </section>
+        </div>
 
-      <section class="more" aria-label="What else you can ask">
-        <p>More than “am I cooked?” <span>Ask about your grades, what’s due, what you submitted, lecture slides or new announcements.</span></p>
-      </section>
+        <div class="window-body">
+          <nav class="rail" aria-label="Example questions">
+            <p class="rail-title"><span data-app-name>Claude</span> · Chats</p>
+            <ul>
+              <li><button type="button" data-ex="0" aria-current="true">am i cooked?<span class="rail-progress" aria-hidden="true"></span></button></li>
+              <li><button type="button" data-ex="1">did I submit lab 4?</button></li>
+              <li><button type="button" data-ex="2">summarize the week 7 slides</button></li>
+              <li><button type="button" data-ex="3">what’s on the midterm?</button></li>
+              <li><button type="button" data-ex="4">how bad is finals week?</button></li>
+            </ul>
+          </nav>
 
-      <section class="row" aria-label="How to set it up">
-        <ol class="steps">
-          <li><span class="num">01</span>Paste one command.</li>
-          <li><span class="num">02</span>Log in on your school’s page.</li>
-          <li><span class="num">03</span>Ask: am I cooked?</li>
-        </ol>
-      </section>
+          <div class="chat">
+            <div class="thread" id="thread">
+              <!-- No-JS fallback: the first exchange, finished. main.js renders the rest. -->
+              <p class="msg-user">am i cooked?</p>
+              <p class="tool is-done"><svg aria-hidden="true"><use href="#i-check"/></svg><span>Used Am I Cooked</span> <code>am_i_cooked</code> <span class="tool-note">read 4 courses</span></p>
+              <div class="answer">
+                <div class="verdict-row">
+                  <p class="verdict"><b class="heat-word" style="--heat-text: var(--toasty-text)">Toasty.</b> Not cooked yet.</p>
+                  <span class="mini-meter" style="--heat: 4" role="img" aria-label="Heat 4 out of 10"><span class="mini-rest"></span><span class="mini-marker"></span></span>
+                </div>
+                <ul class="facts">
+                  <li><code>3XA3</code> lab report due tomorrow, not submitted</li>
+                  <li><code>2C03</code> assignment 2 due Thursday</li>
+                  <li><code>2XB3</code> at 64% (estimate)</li>
+                </ul>
+              </div>
+            </div>
+            <div class="composer" aria-hidden="true">
+              <span class="composer-text"></span><span class="composer-placeholder">Ask anything</span>
+              <svg class="composer-send"><use href="#i-send"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      <section class="row" aria-label="Privacy">
-        <ul class="promises">
-          <li><b>Runs on your laptop.</b> Nothing stored on our servers.</li>
-          <li><b>Your password stays with your school.</b> We never see it.</li>
-          <li><b>Read-only.</b> It never submits anything.</li>
-        </ul>
-      </section>
-    </main>
+      <p class="caption">More than “am I cooked?” <span>Ask about grades, deadlines, submissions, slides or announcements.</span></p>
+    </section>
 
-    <footer class="site-footer">
-      <p>Works with McMaster, Waterloo, Western, Queen’s, Guelph, Laurier, TMU, Ottawa, Carleton, Brock, Windsor, Laurentian, Lakehead and any D2L Brightspace school.</p>
-      <p>AI agent? Read <a href="/SKILL.md"><span data-domain>amicooked.app</span>/SKILL.md</a></p>
-      <p class="legal">Free and open source (<a href="https://github.com/udaysinghkanwar/amicooked/blob/main/LICENSE">MIT</a>). Not affiliated with D2L or any university. Sample weeks use made-up courses.</p>
-    </footer>
-  </div>
+    <section class="band wrap" aria-label="How it works">
+      <ol class="steps">
+        <li><span class="num">1</span>Paste one command</li>
+        <li><span class="num">2</span>Log in on your school’s page</li>
+        <li><span class="num">3</span>Ask: am I cooked?</li>
+      </ol>
+      <ul class="promises">
+        <li><svg aria-hidden="true"><use href="#i-laptop"/></svg><p><b>Runs on your laptop.</b> Nothing stored on our servers.</p></li>
+        <li><svg aria-hidden="true"><use href="#i-lock"/></svg><p><b>Your password stays with your school.</b> We never see it.</p></li>
+        <li><svg aria-hidden="true"><use href="#i-eye"/></svg><p><b>Read-only.</b> It never submits anything.</p></li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="site-footer wrap">
+    <p>Works with McMaster, Waterloo, Western, Queen’s, Guelph, Laurier, TMU, Ottawa, Carleton, Brock, Windsor, Laurentian, Lakehead and any D2L Brightspace school.</p>
+    <p class="agent-note">Are you an AI agent? Read <a href="/SKILL.md"><span data-domain>amicooked.app</span>/SKILL.md</a></p>
+    <p class="legal"><a href="https://github.com/udaysinghkanwar/amicooked">GitHub</a> <span aria-hidden="true">·</span> <a href="https://github.com/udaysinghkanwar/amicooked/blob/main/LICENSE">MIT</a> <span aria-hidden="true">·</span> Not affiliated with D2L or any university. Sample answers use made-up courses.</p>
+  </footer>
 
   <p class="sr-only" aria-live="polite" id="live"></p>
+
+  <svg class="sr-only" aria-hidden="true" focusable="false">
+    <symbol id="i-copy" viewBox="0 0 20 20"><rect x="6.75" y="6.75" width="9.5" height="9.5" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M13.25 6.5V5.25a1.5 1.5 0 0 0-1.5-1.5h-6.5a1.5 1.5 0 0 0-1.5 1.5v6.5a1.5 1.5 0 0 0 1.5 1.5H6.5" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+    <symbol id="i-check" viewBox="0 0 20 20"><path d="M4.5 10.5l3.5 3.5 7.5-8" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-out" viewBox="0 0 20 20"><path d="M7 13l6.5-6.5M8.5 6.5h5v5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 16 16"><rect x="3.5" y="3" width="3" height="10" rx="1" fill="currentColor"/><rect x="9.5" y="3" width="3" height="10" rx="1" fill="currentColor"/></symbol>
+    <symbol id="i-play" viewBox="0 0 16 16"><path d="M5 3.2v9.6a.7.7 0 0 0 1.06.6l7.6-4.8a.7.7 0 0 0 0-1.2l-7.6-4.8A.7.7 0 0 0 5 3.2z" fill="currentColor"/></symbol>
+    <symbol id="i-send" viewBox="0 0 20 20"><path d="M10 15.5v-11M5.5 9L10 4.5 14.5 9" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-laptop" viewBox="0 0 24 24"><rect x="4.5" y="5" width="15" height="10.5" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M2.75 18.5h18.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="9.5" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.75 12S6.25 5.75 12 5.75 21.25 12 21.25 12 17.75 18.25 12 18.25 2.75 12 2.75 12z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="12" cy="12" r="2.75" fill="none" stroke="currentColor" stroke-width="1.5"/></symbol>
+  </svg>
 </body>
 </html>
