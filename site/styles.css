@@ -312,6 +312,8 @@ h1 {
   .chat { padding: 18px 16px 14px; }
 }
 @media (max-width: 760px) { .with-toggle span { padding: 6px 9px; } }
+.window-title, .with-toggle span { white-space: nowrap; }
+@container (max-width: 420px) { .window-title { display: none; } }
 
 /* Wide screens: copy on the left, the window on the right, both above the fold */
 @media (min-width: 1200px) {
