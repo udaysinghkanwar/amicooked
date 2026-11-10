@@ -115,13 +115,13 @@ const EXCHANGES = [
         ],
       },
     ],
-    without: "I can’t see your Avenue account, so I don’t know what’s due. Check your course pages.",
+    without: "bro i can’t even see your avenue 😭 u might be cooked lil bro idk",
   },
   {
     q: "did I submit lab 4?",
     tools: ["get_assignments"], note: "3XA3",
     text: "Yes, Tuesday at 10:42 pm. Lab 5 isn’t in yet, and it’s due Friday.",
-    without: "I don’t have access to your submissions. Check the lab 4 dropbox on Avenue.",
+    without: "bro how would i know 😭 check your email or pray",
   },
   {
     q: "summarize the week 7 slides",
@@ -132,13 +132,13 @@ const EXCHANGES = [
       "BFS finds shortest paths when edges have no weights.",
       "Dijkstra needs non-negative weights. Your prof said this is on the midterm.",
     ],
-    without: "I can’t open your course files. Paste the slides here and I’ll summarize them.",
+    without: "i don’t have them 😭 but trust me it’s important, the prof said so",
   },
   {
     q: "what’s on the midterm?",
     tools: ["get_announcements"], note: "2XB3",
     text: "Chapters 4 to 7, 90 minutes, no calculators. That’s from Friday’s announcement.",
-    without: "I can’t see your course announcements. Check the course page or ask your prof.",
+    without: "everything bro 💀 that’s always the answer",
   },
   {
     // 2 overdue (+4), 1 due within 72h (+1), lowest grade 47% (+3) = 8, well done
@@ -150,7 +150,7 @@ const EXCHANGES = [
       ["2C03", "final project due Monday"],
       ["2XB3", "you’re at 47%. Email your prof or go to office hours this week"],
     ],
-    without: "I can’t see your deadlines or grades, so I can’t say. List what’s due and I’ll help you plan.",
+    without: "no clue fr, but drink water, sleep, and maybe start today 💀🙏",
   },
 ];
 
