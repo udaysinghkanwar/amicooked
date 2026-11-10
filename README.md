@@ -9,13 +9,13 @@ It runs on your own computer. You sign in to your school in a normal browser win
 macOS / Linux:
 
 ```sh
-curl -fsSL https://amicooked.app/install.sh | sh
+curl -fsSL https://amicooked-mcp.vercel.app/install.sh | sh
 ```
 
 Windows (PowerShell):
 
 ```powershell
-irm https://amicooked.app/install.ps1 | iex
+irm https://amicooked-mcp.vercel.app/install.ps1 | iex
 ```
 
 With Node.js 22+: `npx -y amicooked@0 setup`

@@ -11,8 +11,8 @@ Am I Cooked connects an AI assistant to a student's D2L Brightspace account (Ave
 
 1. Ask the student which school they go to. Presets: mcmaster, waterloo, western, queens, guelph, laurier, tmu, uottawa, carleton, brock, windsor, laurentian, lakehead. Any other Brightspace school works with the URL they log in through.
 2. Install it:
-   - macOS / Linux: `curl -fsSL https://amicooked.app/install.sh | sh -s -- --no-setup`
-   - Windows (PowerShell): `$env:AMICOOKED_NO_SETUP=1; irm https://amicooked.app/install.ps1 | iex`
+   - macOS / Linux: `curl -fsSL https://amicooked-mcp.vercel.app/install.sh | sh -s -- --no-setup`
+   - Windows (PowerShell): `$env:AMICOOKED_NO_SETUP=1; irm https://amicooked-mcp.vercel.app/install.ps1 | iex`
    - With Node.js installed, `npx -y amicooked@0` works in place of `amicooked` below.
 3. Run setup with flags, and a long command timeout (at least 5 minutes), because the student signs in through a browser window that opens:
    `amicooked setup --school mcmaster --clients desktop,code`

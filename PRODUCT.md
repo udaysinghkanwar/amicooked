@@ -24,7 +24,7 @@ It runs on the student's own laptop and their school login never leaves it. The 
 
 ## Operating Context
 
-Students install with one command (`curl ... | sh` on macOS and Linux, `irm ... | iex` on Windows, or `npx -y amicooked@0 setup` with Node 22+), pick their school, and sign in on their school's own login page in a real browser window. ChatGPT reaches the laptop through a private tunnel and needs Developer mode plus a pairing code; the laptop must be on and awake. Agents can set it up from `amicooked.app/SKILL.md`.
+Students install with one command (`curl ... | sh` on macOS and Linux, `irm ... | iex` on Windows, or `npx -y amicooked@0 setup` with Node 22+), pick their school, and sign in on their school's own login page in a real browser window. ChatGPT reaches the laptop through a private tunnel and needs Developer mode plus a pairing code; the laptop must be on and awake. Agents can set it up from `amicooked-mcp.vercel.app/SKILL.md`.
 
 ## Capabilities and Constraints
 
