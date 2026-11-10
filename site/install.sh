@@ -76,11 +76,16 @@ case ":$PATH:" in
 esac
 
 if [ "$RUN_SETUP" = 1 ]; then
-  # When piped from curl, stdin is the script; read answers from the terminal instead
-  if [ -r /dev/tty ]; then
-    "$INSTALL_DIR/amicooked" setup </dev/tty
-  else
+  # When piped from curl, stdin is the script, so setup reads the keyboard through the terminal that
+  # stdout or stderr is already attached to. Not /dev/tty: the binary cannot poll that on macOS and crashes.
+  if [ -t 0 ]; then
     "$INSTALL_DIR/amicooked" setup
+  elif [ -t 1 ]; then
+    "$INSTALL_DIR/amicooked" setup <&1
+  elif [ -t 2 ]; then
+    "$INSTALL_DIR/amicooked" setup <&2
+  else
+    say "Next: run \"$INSTALL_DIR/amicooked\" setup"
   fi
 else
   say "Next: run \"$INSTALL_DIR/amicooked\" setup"
