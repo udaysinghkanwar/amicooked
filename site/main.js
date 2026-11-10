@@ -71,7 +71,7 @@ const EXCHANGES = [
     variants: [
       {
         // nothing overdue or due within 72h, lowest grade 86% = 0, raw
-        heat: "raw", lead: "Raw (0/10).", text: "Nothing due for five days. Go outside.",
+        lead: "Raw (0/10).", text: "Nothing due for five days. Go outside.",
         list: [
           ["2C03", "assignment 3 opens Monday"],
           ["3XA3", "no new announcements this week"],
@@ -80,7 +80,7 @@ const EXCHANGES = [
       },
       {
         // 2 due within 72h (+2), lowest grade 78% = 2, warming up
-        heat: "warming", lead: "Warming up (2/10).", text: "Two things this week. Start one tonight.",
+        lead: "Warming up (2/10).", text: "Two things this week. Start one tonight.",
         list: [
           ["2C03", "assignment 2 due Thursday at 11:59 pm"],
           ["3XA3", "lab 5 due Friday"],
@@ -89,7 +89,7 @@ const EXCHANGES = [
       },
       {
         // 3 due within 72h (+3), lowest grade 64% (+1) = 4, toasty
-        heat: "toasty", lead: "Toasty (4/10).", text: "Not cooked yet, but it’s getting warm.",
+        lead: "Toasty (4/10).", text: "Not cooked yet, but it’s getting warm.",
         list: [
           ["3XA3", "lab report due tomorrow at 11:59 pm, not submitted"],
           ["2C03", "assignment 2 and a quiz, both by Friday"],
@@ -98,7 +98,7 @@ const EXCHANGES = [
       },
       {
         // 1 overdue (+2), 3 due within 72h (+3), lowest grade 58% (+2) = 7, cooked
-        heat: "cooked", lead: "Cooked (7/10).", text: "One overdue lab and a midterm Friday. Today, not tomorrow.",
+        lead: "Cooked (7/10).", text: "One overdue lab and a midterm Friday. Today, not tomorrow.",
         list: [
           ["3XA3", "lab 4 is 2 days late, but the dropbox is open until tonight"],
           ["2XB3", "midterm Friday, and you’re at 58% (estimate)"],
@@ -107,7 +107,7 @@ const EXCHANGES = [
       },
       {
         // 3 overdue (+6), lowest grade 47% (+3) = 9, well done
-        heat: "welldone", lead: "Well done (9/10).", text: "Three things overdue. Email your profs today; some late windows are still open.",
+        lead: "Well done (9/10).", text: "Three things overdue. Email your profs today; some late windows are still open.",
         list: [
           ["3XA3", "two labs overdue, late window closes Sunday"],
           ["2C03", "assignment 3 is a week late"],
@@ -144,7 +144,7 @@ const EXCHANGES = [
     // 2 overdue (+4), 1 due within 72h (+1), lowest grade 47% (+3) = 8, well done
     q: "how bad is finals week?",
     tools: ["am_i_cooked"], note: "read 4 courses",
-    heat: "welldone", lead: "Well done (8/10).", text: "Bad, but fixable. Start with the labs.",
+    lead: "Well done (8/10).", text: "Bad, but fixable. Start with the labs.",
     list: [
       ["3XA3", "two labs overdue. The late window closes Sunday, so submit those first"],
       ["2C03", "final project due Monday"],
@@ -186,16 +186,6 @@ function pickVariant(ex) {
 }
 // Every version an exchange can show, for measuring the tallest
 const allVersions = (ex) => (ex.variants ? ex.variants.map((v) => ({ ...ex, ...v })) : [ex]);
-
-// The edge light takes the heat of the answer in the window. Answers without a verdict keep the last
-// one; without Am I Cooked there's nothing to read, so it drains to grey.
-const lights = [...document.querySelectorAll(".heat-light span")];
-let lastHeat = "toasty";
-function setHeat(ex, mode) {
-  if (mode === "with" && ex?.heat) lastHeat = ex.heat;
-  const heat = mode === "without" ? "none" : lastHeat;
-  lights.forEach((l) => l.classList.toggle("is-on", l.dataset.heat === heat));
-}
 
 const el = (tag, cls, text) => {
   const node = document.createElement(tag);
@@ -333,9 +323,7 @@ async function play(index, mode, id) {
   thread.append(answer);
   await nextFrame();
 
-  // The bold verdict leads and gets a beat to itself, then the rest of the sentence streams.
-  // The edge light changes with it.
-  setHeat(ex, mode);
+  // The bold verdict leads and gets a beat to itself, then the rest of the sentence streams
   const lead = answer.querySelector("strong.w");
   if (lead) {
     lead.classList.add("is-in");
@@ -401,7 +389,6 @@ function restart(index) {
   if (reducedMotion) {
     const ex = pickVariant(EXCHANGES[index]);
     renderFinal(ex, mode);
-    setHeat(ex, mode);
     loop(id);
     return;
   }
@@ -469,8 +456,6 @@ new IntersectionObserver(([entry]) => {
 
 setPaused(paused);
 placePill();
-// The light eases in with the page, warm until the first verdict lands
-requestAnimationFrame(() => requestAnimationFrame(() => setHeat(null, "with")));
 thread.replaceChildren();
 reserveHeight();
 document.fonts.ready.then(() => { reserveHeight(); placePill(); });

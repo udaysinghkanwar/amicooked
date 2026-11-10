@@ -91,25 +91,25 @@ a:hover { text-decoration-color: var(--ink); }
 .skip:focus { top: 12px; }
 .skip:hover { color: var(--bg); }
 
-/* Edge light: both sides glow in the heat of the verdict in the window. Each heat is its own
-   pre-coloured layer and they crossfade on opacity, so a change never repaints a gradient. */
+/* Backdrop: a faint grid that fades away from the top, under one soft light that breathes slowly.
+   Neutral on purpose, so the page's only colour is the content. */
 
-.heat-light { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; --glow-w: 380px; --glow-h: 540px; --glow: 0.18; }
-.heat-light span {
-  position: absolute; inset: 0; opacity: 0;
-  background:
-    radial-gradient(var(--glow-w) var(--glow-h) at calc(var(--glow-w) * -0.24) 50%, var(--c), transparent),
-    radial-gradient(var(--glow-w) var(--glow-h) at calc(100% + var(--glow-w) * 0.24) 50%, var(--c), transparent);
-  transition: opacity 1600ms var(--in-out);
+.backdrop { position: absolute; inset: 0 0 auto; height: max(100vh, 760px); z-index: -1; overflow: hidden; pointer-events: none; }
+.backdrop::before {
+  content: ""; position: absolute; inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(244, 241, 236, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(244, 241, 236, 0.05) 1px, transparent 1px);
+  background-size: 64px 64px; background-position: center top;
+  -webkit-mask-image: radial-gradient(ellipse 75% 85% at 50% 0%, #000 10%, transparent 72%);
+  mask-image: radial-gradient(ellipse 75% 85% at 50% 0%, #000 10%, transparent 72%);
 }
-.heat-light [data-heat="raw"] { --c: var(--raw); }
-.heat-light [data-heat="warming"] { --c: var(--warming); }
-.heat-light [data-heat="toasty"] { --c: var(--toasty); }
-.heat-light [data-heat="cooked"] { --c: var(--cooked); }
-.heat-light [data-heat="welldone"] { --c: var(--welldone); }
-.heat-light [data-heat="none"] { --c: var(--faint); }
-.heat-light .is-on, .no-js .heat-light [data-heat="toasty"] { opacity: var(--glow); }
-@media (max-width: 760px) { .heat-light { --glow-w: 170px; --glow-h: 360px; --glow: 0.12; } }
+.backdrop::after {
+  content: ""; position: absolute; left: 50%; top: -45vh; width: min(1400px, 110vw); height: 90vh; margin-left: calc(min(1400px, 110vw) / -2);
+  border-radius: 50%; background: radial-gradient(closest-side, rgba(244, 241, 236, 0.09), transparent);
+  animation: breathe 12s var(--in-out) infinite alternate;
+}
+@keyframes breathe { to { transform: scale(1.1); opacity: 0.65; } }
 
 /* Entrance: one wave on load. The headline leads, the window lands last. */
 
@@ -173,10 +173,6 @@ h1 {
 .icon-button:active, .segmented button:active, .with-toggle:active { transform: scale(0.97); }
 .icon-button.is-done .i-check { opacity: 1; transform: none; color: var(--ink); }
 
-.script-link { display: flex; justify-content: flex-end; }
-.script-link a { display: inline-flex; align-items: center; gap: 4px; min-height: 40px; font-size: 0.8125rem; color: var(--muted); }
-.script-link svg { width: 14px; height: 14px; }
-
 .full-prompt summary {
   display: inline-flex; align-items: center; gap: 8px; min-height: 40px; cursor: pointer; list-style: none;
   font-size: 0.8125rem; color: var(--muted);
@@ -197,7 +193,8 @@ h1 {
 @keyframes settle { from { opacity: 0; transform: translateY(-4px); } }
 .full-prompt[open] .full-prompt-body { animation: settle 200ms var(--out); }
 
-.trust { margin-top: 20px; text-align: center; font-size: 0.875rem; color: var(--faint); }
+.trust a { color: var(--muted); }
+.trust { margin-top: 24px; text-align: center; font-size: 0.875rem; color: var(--faint); }
 
 /* The window: a generic AI chat app replaying real questions */
 
@@ -358,6 +355,7 @@ h1 {
 @keyframes fade { from { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) {
   .js .enter { animation: fade 200ms var(--out) both; }
+  .backdrop::after { animation: none; }
   .full-prompt[open] .full-prompt-body { animation: fade 200ms var(--out); }
   .tool.is-running > span:first-of-type { animation: none; -webkit-mask-image: none; mask-image: none; color: var(--muted); }
   .w, .line, .pop, .thread.is-leaving > *, .tool svg, .icon-button svg { filter: none !important; transform: none !important; }
