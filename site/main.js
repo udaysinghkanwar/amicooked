@@ -65,14 +65,55 @@ document.querySelectorAll("[data-copy]").forEach((btn) => {
 
 const EXCHANGES = [
   {
-    // 3 due within 72h (+3), lowest grade 64% (+1) = 4, toasty
+    // One verdict per heat level; a different one is picked every time this chat plays
     q: "am i cooked?",
     tools: ["am_i_cooked"], note: "read 4 courses",
-    lead: "Toasty (4/10).", text: "Not cooked yet, but it’s getting warm.",
-    list: [
-      ["3XA3", "lab report due tomorrow at 11:59 pm, not submitted"],
-      ["2C03", "assignment 2 and a quiz, both by Friday"],
-      ["2XB3", "you’re at 64% (an estimate from graded items)"],
+    variants: [
+      {
+        // nothing overdue or due within 72h, lowest grade 86% = 0, raw
+        lead: "Raw (0/10).", text: "Nothing due for five days. Go outside.",
+        list: [
+          ["2C03", "assignment 3 opens Monday"],
+          ["3XA3", "no new announcements this week"],
+          ["2XB3", "you’re at 86% so far"],
+        ],
+      },
+      {
+        // 2 due within 72h (+2), lowest grade 78% = 2, warming up
+        lead: "Warming up (2/10).", text: "Two things this week. Start one tonight.",
+        list: [
+          ["2C03", "assignment 2 due Thursday at 11:59 pm"],
+          ["3XA3", "lab 5 due Friday"],
+          ["2XB3", "you’re at 78%"],
+        ],
+      },
+      {
+        // 3 due within 72h (+3), lowest grade 64% (+1) = 4, toasty
+        lead: "Toasty (4/10).", text: "Not cooked yet, but it’s getting warm.",
+        list: [
+          ["3XA3", "lab report due tomorrow at 11:59 pm, not submitted"],
+          ["2C03", "assignment 2 and a quiz, both by Friday"],
+          ["2XB3", "you’re at 64% (an estimate from graded items)"],
+        ],
+      },
+      {
+        // 1 overdue (+2), 3 due within 72h (+3), lowest grade 58% (+2) = 7, cooked
+        lead: "Cooked (7/10).", text: "One overdue lab and a midterm Friday. Today, not tomorrow.",
+        list: [
+          ["3XA3", "lab 4 is 2 days late, but the dropbox is open until tonight"],
+          ["2XB3", "midterm Friday, and you’re at 58% (estimate)"],
+          ["2C03", "assignment 2 and a quiz, both by Friday"],
+        ],
+      },
+      {
+        // 3 overdue (+6), lowest grade 47% (+3) = 9, well done
+        lead: "Well done (9/10).", text: "Three things overdue. Email your profs today; some late windows are still open.",
+        list: [
+          ["3XA3", "two labs overdue, late window closes Sunday"],
+          ["2C03", "assignment 3 is a week late"],
+          ["2XB3", "you’re at 47%. Book office hours this week"],
+        ],
+      },
     ],
     without: "I can’t see your Avenue account, so I don’t know what’s due. Check your course pages.",
   },
@@ -132,6 +173,19 @@ let paused = reducedMotion; // no autoplay for people who asked for less motion
 let hovering = false;
 let focused = false;
 let visible = false;
+
+// An exchange with variants gets a random one each time it plays, never the one shown last
+let lastVariant = -1;
+function pickVariant(ex) {
+  if (!ex.variants) return ex;
+  let i;
+  do i = Math.floor(Math.random() * ex.variants.length);
+  while (ex.variants.length > 1 && i === lastVariant);
+  lastVariant = i;
+  return { ...ex, ...ex.variants[i] };
+}
+// Every version an exchange can show, for measuring the tallest
+const allVersions = (ex) => (ex.variants ? ex.variants.map((v) => ({ ...ex, ...v })) : [ex]);
 
 const el = (tag, cls, text) => {
   const node = document.createElement(tag);
@@ -244,7 +298,7 @@ async function stream(nodes, id, first = 46, last = 22) {
 }
 
 async function play(index, mode, id) {
-  const ex = EXCHANGES[index];
+  const ex = pickVariant(EXCHANGES[index]);
   await clearThread(id);
   await typeQuestion(ex.q, id);
 
@@ -291,7 +345,8 @@ const held = () => paused || hovering || focused || !visible;
 // that doubles as the timer: it pauses while anyone is reading or interacting.
 async function hold(id) {
   // Verdicts carry more to read, so they stay up longer
-  const duration = EXCHANGES[current].list ? HOLD_MS + 1400 : HOLD_MS;
+  const ex = EXCHANGES[current];
+  const duration = ex.list || ex.variants ? HOLD_MS + 1400 : HOLD_MS;
   const timer = railProgress.animate([{ transform: "scaleX(0)" }, { transform: "scaleX(1)" }], { duration, fill: "forwards" });
   while (timer.playState !== "finished") {
     await nextFrame();
@@ -332,7 +387,7 @@ function restart(index) {
   composer.classList.remove("has-text");
   const mode = withTool ? "with" : "without";
   if (reducedMotion) {
-    renderFinal(EXCHANGES[index], mode);
+    renderFinal(pickVariant(EXCHANGES[index]), mode);
     loop(id);
     return;
   }
@@ -346,7 +401,7 @@ function reserveHeight() {
   Object.assign(probe.style, { position: "absolute", visibility: "hidden", width: `${thread.clientWidth}px`, minHeight: "0" });
   thread.parentElement.append(probe);
   let tallest = 0;
-  EXCHANGES.forEach((ex) => ["with", "without"].forEach((mode) => {
+  EXCHANGES.flatMap(allVersions).forEach((ex) => ["with", "without"].forEach((mode) => {
     renderFinal(ex, mode, probe);
     tallest = Math.max(tallest, probe.offsetHeight);
   }));
