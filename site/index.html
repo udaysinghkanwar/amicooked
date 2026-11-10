@@ -1,14 +1,14 @@
 <!doctype html>
 <!--
   The site's domain lives in data-site-domain below. main.js writes it into
-  every [data-domain] span, so switching to amicooked-mcp.vercel.app is a
+  every [data-domain] span, so moving to another domain is a
   one-line change here. The literal domain inside those spans is the no-JS
   fallback. The og:image URL and llms.txt hard-code it and need a manual edit.
   When styles.css or main.js change, bump the ?v= number on their links.
   The inline no-js script is allowed by its sha256 in vercel.json's CSP, so
   if it changes, update that hash too.
 -->
-<html lang="en" class="no-js" data-site-domain="amicooked.app">
+<html lang="en" class="no-js" data-site-domain="amicooked-mcp.vercel.app">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -19,7 +19,7 @@
   <meta property="og:type" content="website">
   <meta property="og:title" content="Am I cooked?">
   <meta property="og:description" content="Ask Claude or ChatGPT. It reads your grades and deadlines, then tells you straight.">
-  <meta property="og:image" content="https://amicooked.app/og.png">
+  <meta property="og:image" content="https://amicooked-mcp.vercel.app/og.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
@@ -29,7 +29,7 @@
   <link rel="stylesheet" href="/styles.css?v=7">
   <link rel="alternate" type="text/markdown" href="/SKILL.md" title="Setup instructions for AI agents">
   <script>document.documentElement.classList.replace("no-js", "js");</script>
-  <script src="/main.js?v=9" defer></script>
+  <script src="/main.js?v=10" defer></script>
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -58,13 +58,13 @@
           </div>
         </div>
         <div class="cmd" role="tabpanel" id="os-mac-panel" aria-labelledby="os-mac">
-          <code id="cmd-mac">curl -fsSL https://<span data-domain>amicooked.app</span>/install.sh | sh</code>
+          <code id="cmd-mac">curl -fsSL https://<span data-domain>amicooked-mcp.vercel.app</span>/install.sh | sh</code>
           <button class="icon-button" type="button" data-copy="cmd-mac" aria-label="Copy the macOS and Linux install command">
             <svg class="i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i-check" aria-hidden="true"><use href="#i-check"/></svg>
           </button>
         </div>
         <div class="cmd" role="tabpanel" id="os-win-panel" aria-labelledby="os-win" hidden>
-          <code id="cmd-win">irm https://<span data-domain>amicooked.app</span>/install.ps1 | iex</code>
+          <code id="cmd-win">irm https://<span data-domain>amicooked-mcp.vercel.app</span>/install.ps1 | iex</code>
           <button class="icon-button" type="button" data-copy="cmd-win" aria-label="Copy the Windows install command">
             <svg class="i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i-check" aria-hidden="true"><use href="#i-check"/></svg>
           </button>
@@ -73,7 +73,7 @@
 
         <h2 class="get-label get-label-agent">Using an AI agent?</h2>
         <div class="cmd cmd-prompt">
-          <code class="truncate" id="agent-prompt">Set up Am I Cooked from https://<span data-domain>amicooked.app</span>/SKILL.md. Ask me which school I go to. Never ask for my password.</code>
+          <code class="truncate" id="agent-prompt">Set up Am I Cooked from https://<span data-domain>amicooked-mcp.vercel.app</span>/SKILL.md. Ask me which school I go to. Never ask for my password.</code>
           <button class="icon-button" type="button" data-copy="agent-prompt" aria-label="Copy the setup prompt for your AI agent">
             <svg class="i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i-check" aria-hidden="true"><use href="#i-check"/></svg>
           </button>
@@ -81,7 +81,7 @@
         <details class="full-prompt">
           <summary>Show full prompt</summary>
           <div class="full-prompt-body">
-            <p>Set up Am I Cooked from https://<span data-domain>amicooked.app</span>/SKILL.md. Ask me which school I go to. Never ask for my password.</p>
+            <p>Set up Am I Cooked from https://<span data-domain>amicooked-mcp.vercel.app</span>/SKILL.md. Ask me which school I go to. Never ask for my password.</p>
           </div>
         </details>
 
@@ -157,7 +157,7 @@
 
   <footer class="site-footer wrap">
     <p>Works with McMaster, Waterloo, Western, Queen’s, Guelph, Laurier, TMU, Ottawa, Carleton, Brock, Windsor, Laurentian, Lakehead and any D2L Brightspace school.</p>
-    <p class="agent-note">Are you an AI agent? Read <a href="/SKILL.md"><span data-domain>amicooked.app</span>/SKILL.md</a></p>
+    <p class="agent-note">Are you an AI agent? Read <a href="/SKILL.md"><span data-domain>amicooked-mcp.vercel.app</span>/SKILL.md</a></p>
     <p class="legal"><a href="https://github.com/udaysinghkanwar/amicooked">GitHub</a> <span aria-hidden="true">·</span> <a href="https://github.com/udaysinghkanwar/amicooked/blob/main/LICENSE">MIT</a> <span aria-hidden="true">·</span> Not affiliated with D2L or any university. Sample answers use made-up courses.</p>
   </footer>
 

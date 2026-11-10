@@ -6,9 +6,9 @@ The student signs in on their school's own login page in a real browser window. 
 
 ## Setting it up
 
-- [SKILL.md](https://amicooked.app/SKILL.md): setup instructions written for AI agents. Start here if a user asks you to set up Am I Cooked. Ask which school they go to; never ask for their password.
-- macOS and Linux: `curl -fsSL https://amicooked.app/install.sh | sh`
-- Windows (PowerShell): `irm https://amicooked.app/install.ps1 | iex`
+- [SKILL.md](https://amicooked-mcp.vercel.app/SKILL.md): setup instructions written for AI agents. Start here if a user asks you to set up Am I Cooked. Ask which school they go to; never ask for their password.
+- macOS and Linux: `curl -fsSL https://amicooked-mcp.vercel.app/install.sh | sh`
+- Windows (PowerShell): `irm https://amicooked-mcp.vercel.app/install.ps1 | iex`
 - With Node.js 22 or newer: `npx -y amicooked@0 setup`
 - ChatGPT: `amicooked setup --clients chatgpt`, then add the address in ChatGPT under Settings, Apps & Connectors (Developer mode), and enter the pairing code (`amicooked pair` makes a new one). Works while the laptop is on and awake.
 - Uninstall: `amicooked uninstall` (`--purge` also deletes login and settings)
@@ -28,4 +28,4 @@ The student signs in on their school's own login page in a real browser window. 
 ## Links
 
 - [Source code](https://github.com/udaysinghkanwar/amicooked)
-- [Website](https://amicooked.app/)
+- [Website](https://amicooked-mcp.vercel.app/)

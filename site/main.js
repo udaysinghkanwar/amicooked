@@ -1,5 +1,5 @@
 // Domain lives on <html data-site-domain>; change it there to repoint the page.
-const DOMAIN = document.documentElement.dataset.siteDomain || "amicooked.app";
+const DOMAIN = document.documentElement.dataset.siteDomain || "amicooked-mcp.vercel.app";
 document.querySelectorAll("[data-domain]").forEach((el) => { el.textContent = DOMAIN; });
 
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
