@@ -26,24 +26,26 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="/fonts/archivo-expanded-black-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/bricolage-grotesque-latin-opsz.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="/styles.css?v=10">
+  <link rel="stylesheet" href="/styles.css?v=11">
   <link rel="alternate" type="text/markdown" href="/SKILL.md" title="Setup instructions for AI agents">
   <script>document.documentElement.classList.replace("no-js", "js");</script>
-  <script src="/main.js?v=12" defer></script>
+  <script src="/main.js?v=13" defer></script>
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
 
-  <!-- Backdrop: a faint grid that fades out, under a soft light from the top -->
-  <div class="backdrop" aria-hidden="true"></div>
 
   <main id="main">
-    <section class="hero wrap" aria-labelledby="hero-title">
+    <section class="hero" aria-labelledby="hero-title">
+      <!-- The wall: verdict swatches and small chats drifting upward. Decorative; main.js builds it. -->
+      <div class="wall" id="wall" aria-hidden="true"></div>
+      <div class="hero-inner wrap">
       <div class="hero-copy">
         <p class="eyebrow enter enter-1">For students on D2L Brightspace</p>
         <h1 id="hero-title" class="enter enter-1">Am I cooked?</h1>
         <p class="lede enter enter-2">Ask Claude or ChatGPT. It reads your grades and deadlines, then tells you straight.</p>
 
+      </div>
         <div class="get enter enter-3">
           <div class="get-row">
             <h2 class="get-label">Install</h2>
@@ -83,7 +85,10 @@
         </div>
       </div>
 
-      <div class="demo enter enter-4">
+    </section>
+
+    <section class="showcase wrap" aria-label="Example conversations">
+      <div class="demo">
         <div class="window" id="window" role="group" aria-label="Example: a student asks their AI about their courses">
           <div class="window-bar">
             <span class="dots" aria-hidden="true"><span></span><span></span><span></span></span>
