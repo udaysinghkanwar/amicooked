@@ -1,0 +1,3 @@
+# Only the static site is deployed; Vercel builds from site/ (Root Directory)
+/*
+!/site

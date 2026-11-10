@@ -8,3 +8,4 @@ coverage/
 .env
 DESIGN_PROMPT.md
 .vercel/
+.env*.local
