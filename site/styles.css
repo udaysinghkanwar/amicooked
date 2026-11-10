@@ -122,17 +122,6 @@ a:hover { text-decoration-color: var(--ink); }
 .js .enter-3 { --rise: 6px; --dur: 520ms; --delay: 170ms; }
 .js .enter-4 { --rise: 16px; --dur: 820ms; --delay: 300ms; }
 
-/* Header */
-
-.site-header { display: flex; align-items: center; justify-content: space-between; min-height: 72px; }
-.wordmark {
-  display: inline-flex; align-items: center; min-height: 44px;
-  font-family: var(--display); font-weight: 900; font-stretch: 125%; font-size: 1.125rem; letter-spacing: -0.03em;
-  color: var(--ink); text-decoration: none;
-}
-.header-link { display: inline-flex; align-items: center; min-height: 44px; font-size: 0.9375rem; font-weight: 600; color: var(--muted); text-decoration: none; }
-.header-link:hover { color: var(--ink); }
-
 /* Hero: the pitch and the live window. Stacked and centered on smaller screens, side by side on wide ones. */
 
 .hero { display: flex; flex-direction: column; align-items: center; padding-block: clamp(40px, 8vw, 104px) clamp(72px, 10vw, 128px); }
@@ -141,6 +130,10 @@ h1 {
   font-family: var(--display); font-weight: 900; font-stretch: 125%;
   font-size: clamp(2.75rem, 8vw, 6rem); line-height: 0.95; letter-spacing: -0.035em;
   text-wrap: balance;
+}
+.eyebrow {
+  margin-bottom: 20px; padding: 6px 12px; border: 1px solid var(--rule-strong); border-radius: 999px;
+  font-size: 0.8125rem; font-weight: 600; line-height: 1.3; color: var(--soft);
 }
 .lede { margin-top: 24px; max-width: 30ch; font-size: clamp(1.1875rem, 2vw, 1.375rem); line-height: 1.4; color: var(--muted); text-wrap: balance; }
 
@@ -322,13 +315,20 @@ h1 {
 
 /* Wide screens: copy on the left, the window on the right, both above the fold */
 @media (min-width: 1200px) {
-  .hero.wrap { max-width: calc(1280px + 2 * var(--gutter)); }
-  .hero { display: grid; grid-template-columns: minmax(0, 36.5rem) minmax(0, 1fr); align-items: center; gap: 48px; padding-top: clamp(40px, 5vw, 72px); }
+  .hero.wrap { max-width: calc(1344px + 2 * var(--gutter)); }
+  .hero {
+    display: grid; grid-template-columns: minmax(0, 34rem) minmax(0, 1fr); align-items: center;
+    column-gap: clamp(48px, 5vw, 88px); min-height: 100svh; padding-block: 64px;
+  }
   .hero-copy { align-items: flex-start; text-align: left; }
-  .get { margin-top: 40px; max-width: none; }
+  .hero h1 { font-size: clamp(3.5rem, 5.2vw, 4.75rem); }
+  .lede { margin-top: 20px; max-width: 34ch; font-size: 1.25rem; }
+  .get-label-agent { margin-top: 32px; }
+  .get { margin-top: 48px; max-width: none; }
+  .cmd code { font-size: 0.8125rem; }
   .trust { text-align: left; }
   .demo { margin-top: 0; }
-  .caption { max-width: none; margin-top: 20px; font-size: 1.0625rem; font-weight: 600; letter-spacing: 0; }
+  .caption { max-width: none; margin-top: 20px; font-size: 1rem; font-weight: 600; letter-spacing: 0; }
 }
 
 /* Band: how it works */
