@@ -63,6 +63,75 @@ document.querySelectorAll("[data-copy]").forEach((btn) => {
 // +2 per overdue item, +1 per item due within 72h, +3/+2/+1 for a lowest grade under 50/60/70.
 // Bands: raw 0-1, warming up 2-3, toasty 4-5, cooked 6-7, well done 8-10.
 
+// The wall behind the hero: verdict swatches (the heat as a grainy gradient) and small chats.
+// Built here because it is decoration; without JS the hero is simply dark.
+const SWATCHES = [
+  ["toasty", "bars", "Toasty, 4/10", "3 due within 72h", "4 / 5"],
+  ["raw", "", "Raw, 0/10", "nothing due for 5 days", "1"],
+  ["cooked", "dots", "Cooked, 7/10", "1 overdue, midterm Friday", "3 / 4"],
+  ["warming", "lines", "Warming up, 2/10", "2 due this week", "4 / 3"],
+  ["welldone", "", "Well done, 9/10", "3 overdue", "1"],
+  ["cooked", "bars", "Cooked, 6/10", "lowest grade 58%", "5 / 4"],
+  ["raw", "dots", "Raw, 1/10", "1 quiz on Friday", "4 / 5"],
+  ["toasty", "", "Toasty, 5/10", "lab report due tomorrow", "3 / 4"],
+  ["warming", "bars", "Warming up, 3/10", "lowest grade 64%", "1"],
+  ["welldone", "lines", "Well done, 8/10", "finals week", "4 / 3"],
+];
+const MINIS = [
+  ["am i cooked?", "Toasty (4/10).", "Not yet, but it’s getting warm.", "am_i_cooked"],
+  ["did I submit lab 4?", "Yes,", "Tuesday at 10:42 pm.", "get_assignments"],
+  ["what’s on the midterm?", "Chapters 4 to 7.", "No calculators.", "get_announcements"],
+  ["what’s my grade in 2XB3?", "78%.", "An estimate from graded items.", "get_my_grades"],
+  ["what’s due this week?", "Three things.", "Lab 5 is first, on Friday.", "get_upcoming_due_dates"],
+  ["summarize week 7", "Graphs.", "BFS first, then Dijkstra.", "get_course_content"],
+  ["how bad is finals week?", "Well done (8/10).", "Bad, but fixable.", "am_i_cooked"],
+];
+(function buildWall() {
+  const wall = document.getElementById("wall");
+  if (!wall) return;
+  const node = (tag, cls, text) => { const n = document.createElement(tag); n.className = cls; if (text) n.textContent = text; return n; };
+  const caption = (name, sub) => [node("span", "tile-name", name), node("span", "tile-sub", sub)];
+  const swatch = ([heat, tex, name, sub, ratio]) => {
+    const tile = node("div", "tile");
+    const art = node("div", `swatch heat-${heat}${tex ? ` tex-${tex}` : ""}`);
+    art.style.setProperty("--ratio", ratio);
+    tile.append(art, ...caption(name, sub));
+    return tile;
+  };
+  const mini = ([q, lead, rest, tool]) => {
+    const tile = node("div", "tile");
+    const card = node("div", "mini");
+    const a = node("p", "mini-a");
+    a.append(node("b", "", lead), ` ${rest}`);
+    card.append(node("p", "mini-q", q), a);
+    tile.append(card, ...caption(tool, "Used Am I Cooked"));
+    return tile;
+  };
+  // Six columns, each with its own mix (s = swatch, m = mini chat) and its own speed, so no two line up
+  const COLUMNS = [
+    ["s0", "m1", "s4", "s7", "m4"],
+    ["s5", "s2", "m0", "s8", "s1"],
+    ["m3", "s3", "s9", "m6", "s6"],
+    ["s8", "m5", "s4", "s5", "m2"],
+    ["s2", "s7", "m6", "s3", "s9"],
+    ["m4", "s4", "s1", "m0", "s6"],
+  ];
+  COLUMNS.forEach((recipe, col) => {
+    const tiles = recipe.map((id) => () => (id[0] === "s" ? swatch(SWATCHES[id[1]]) : mini(MINIS[id[1]])));
+    const track = node("div", "wall-track");
+    track.style.setProperty("--speed", `${[96, 124, 84, 138, 104, 118][col]}s`);
+    // The set is doubled so the track can loop by moving up exactly half its height
+    for (let half = 0; half < 2; half++) {
+      const set = node("div", "wall-set");
+      tiles.forEach((make) => set.append(make()));
+      track.append(set);
+    }
+    const column = node("div", "wall-col");
+    column.append(track);
+    wall.append(column);
+  });
+})();
+
 const EXCHANGES = [
   {
     // One verdict per heat level; a different one is picked every time this chat plays
