@@ -41,12 +41,6 @@
   --toasty: #E57A35;
   --cooked: #D2442A;
   --welldone: #7A5C50;
-  /* Lighter versions for heat words set as text, so they pass contrast on the dark window */
-  --raw-text: #86B39D;
-  --warming-text: #E8B652;
-  --toasty-text: #EC8A4B;
-  --cooked-text: #E5654B;
-  --welldone-text: #B8968A;
   --heat-gradient: linear-gradient(90deg, var(--raw) 0%, var(--raw) 8%, var(--warming) 25%, var(--toasty) 45%, var(--cooked) 66%, var(--welldone) 90%, var(--welldone) 100%);
 
   --display: "Archivo", "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
@@ -162,7 +156,7 @@ h1 {
 .icon-button .i-check, .icon-button.is-done .i-copy { opacity: 0; transform: scale(0.9); }
 
 /* Every pressable thing acknowledges the press */
-.icon-button:active, .segmented button:active, .app-switch button:active, .with-toggle:active { transform: scale(0.97); }
+.icon-button:active, .segmented button:active, .with-toggle:active { transform: scale(0.97); }
 .icon-button.is-done .i-check { opacity: 1; transform: none; color: var(--ink); }
 
 .script-link { display: flex; justify-content: flex-end; }
@@ -203,14 +197,7 @@ h1 {
 .window-bar { display: flex; align-items: center; gap: 16px; padding: 8px 10px 8px 16px; border-bottom: 1px solid var(--rule); }
 .dots { display: inline-flex; gap: 6px; }
 .dots span { width: 10px; height: 10px; border-radius: 50%; background: var(--rule-strong); }
-.app-switch { display: inline-flex; gap: 2px; }
-.app-switch button {
-  appearance: none; min-height: 36px; padding: 0 12px; border: 0; border-radius: 8px; cursor: pointer;
-  font: 600 0.8125rem/1.3 var(--sans); color: var(--faint); background: transparent;
-  transition: background-color 200ms var(--out), color 200ms var(--out), transform 160ms var(--out);
-}
-.app-switch button:hover { color: var(--ink); }
-.app-switch [aria-pressed="true"] { color: var(--ink); background: var(--well); }
+.window-title { font-size: 0.8125rem; font-weight: 600; color: var(--muted); }
 .bar-end { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; }
 
 .with-toggle {
@@ -271,29 +258,19 @@ h1 {
 }
 @keyframes sweep { from { -webkit-mask-position: 100% 0; mask-position: 100% 0; } to { -webkit-mask-position: 0 0; mask-position: 0 0; } }
 
-.answer { display: flex; flex-direction: column; gap: 14px; }
-.verdict-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; }
-.verdict { font-size: clamp(1.375rem, 2.4vw, 1.75rem); font-weight: 700; line-height: 1.3; letter-spacing: -0.015em; }
-.heat-word { font-family: var(--display); font-weight: 900; font-stretch: 125%; letter-spacing: -0.03em; color: var(--heat-text, var(--ink)); }
-.answer-text { color: var(--soft); max-width: 60ch; }
-.facts, .bullets { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 8px; color: var(--soft); }
-.facts code, .answer-text code { color: var(--ink); font-size: 0.875rem; font-weight: 600; }
-/* Course code in its own column, so a wrapped fact lines up after it */
-.facts li { display: grid; grid-template-columns: 2.6em minmax(0, 1fr); align-items: baseline; gap: 10px; }
+/* Replies look like ordinary chat text: paragraphs, bold and lists, the way an AI actually answers */
+.answer { display: flex; flex-direction: column; gap: 12px; max-width: 62ch; color: var(--soft); }
+.answer strong { color: var(--ink); font-weight: 700; }
+.reply-list { margin: 0; padding-left: 1.5em; display: flex; flex-direction: column; gap: 6px; }
+.reply-list li { padding-left: 4px; }
+.reply-list li::marker { color: var(--faint); }
+.bullets { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 .bullets li { position: relative; padding-left: 18px; }
-.bullets li::before { content: ""; position: absolute; left: 2px; top: 0.7em; width: 6px; height: 1.5px; background: var(--faint); }
-.file { font-family: var(--mono); font-size: 0.875em; color: var(--ink); }
+.bullets li::before { content: ""; position: absolute; left: 2px; top: 0.75em; width: 6px; height: 1.5px; background: var(--faint); }
 
-/* 140px wide, so one heat point is 14px. Moved with transforms set straight on each part (see setHeat in main.js). */
-.mini-meter { position: relative; display: inline-block; width: 140px; height: 6px; }
-.mini-track { position: absolute; inset: 0; overflow: hidden; border-radius: 3px; background: var(--heat-gradient); }
-.mini-rest { position: absolute; inset: 0; background: var(--rule); transform-origin: right; transform: scaleX(1); transition: transform 700ms var(--in-out); }
-.mini-marker { position: absolute; top: -5px; left: -2px; width: 4px; height: 16px; border-radius: 2px; background: var(--ink); transition: transform 700ms var(--in-out); }
-
-/* Streaming reveal: words (and whole fact lines) fade up and un-blur */
+/* Streaming reveal: words (and whole list lines) fade up and un-blur */
 .w { display: inline-block; opacity: 0; transform: translateY(4px); filter: blur(4px); transition: opacity 320ms var(--out), transform 320ms var(--out), filter 320ms var(--out); }
 .w.is-in { opacity: 1; transform: none; filter: none; }
-.heat-word.w { transition-duration: 450ms; }
 .line { opacity: 0; transform: translateY(4px); transition: opacity 300ms var(--out), transform 300ms var(--out); }
 .line.is-in { opacity: 1; transform: none; }
 .pop { opacity: 0; transform: translateY(6px); transition: opacity 260ms var(--out), transform 260ms var(--out); }
@@ -316,7 +293,6 @@ h1 {
   .window-body { grid-template-columns: minmax(0, 1fr); }
   .rail { display: none; }
   .chat { padding: 18px 16px 14px; }
-  .app-switch { display: none; }
   .with-toggle span { padding: 6px 9px; }
 }
 
@@ -348,6 +324,6 @@ h1 {
   .full-prompt[open] .full-prompt-body { animation: fade 200ms var(--out); }
   .tool.is-running > span:first-of-type { animation: none; -webkit-mask-image: none; mask-image: none; color: var(--muted); }
   .w, .line, .pop, .thread.is-leaving > *, .tool svg, .icon-button svg { filter: none !important; transform: none !important; }
-  .mini-rest, .mini-marker, .with-toggle::before { transition: none; }
-  .icon-button:active, .segmented button:active, .app-switch button:active, .with-toggle:active { transform: none; }
+  .with-toggle::before { transition: none; }
+  .icon-button:active, .segmented button:active, .with-toggle:active { transform: none; }
 }
