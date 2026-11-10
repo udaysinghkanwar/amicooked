@@ -1,6 +1,6 @@
 #!/bin/sh
 # Am I Cooked installer for macOS and Linux.
-#   curl -fsSL https://amicooked.app/install.sh | sh
+#   curl -fsSL https://amicooked-mcp.vercel.app/install.sh | sh
 # Options: --no-setup (or AMICOOKED_NO_SETUP=1) to skip `amicooked setup`;
 #          AMICOOKED_VERSION=v0.1.0 to pin a release.
 set -eu
@@ -19,7 +19,7 @@ fail() { printf 'amicooked: %s\n' "$*" >&2; exit 1; }
 case "$(uname -s)" in
   Darwin) os=darwin ;;
   Linux) os=linux ;;
-  *) fail "this installer is for macOS and Linux. On Windows run: irm https://amicooked.app/install.ps1 | iex" ;;
+  *) fail "this installer is for macOS and Linux. On Windows run: irm https://amicooked-mcp.vercel.app/install.ps1 | iex" ;;
 esac
 case "$(uname -m)" in
   arm64 | aarch64) arch=arm64 ;;

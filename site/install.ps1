@@ -1,5 +1,5 @@
 # Am I Cooked installer for Windows.
-#   irm https://amicooked.app/install.ps1 | iex
+#   irm https://amicooked-mcp.vercel.app/install.ps1 | iex
 # Set $env:AMICOOKED_NO_SETUP=1 to skip `amicooked setup`,
 # or $env:AMICOOKED_VERSION="v0.1.0" to pin a release.
 $ErrorActionPreference = "Stop"
