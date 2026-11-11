@@ -149,7 +149,7 @@ export function estimateGrade(items: RawGradeValue[]): GradeEstimate {
   const keyItems = pool
     .map((g) => {
       const [n, d] = part(g);
-      return { name: g.GradeObjectName, percent: round1((n / d) * 100), size: d };
+      return { name: g.GradeObjectName.trim(), percent: round1((n / d) * 100), size: d };
     })
     .sort((a, b) => (percent - b.percent) * b.size - (percent - a.percent) * a.size || b.size - a.size)
     .slice(0, 3)
