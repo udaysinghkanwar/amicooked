@@ -53,7 +53,8 @@ export class D2LClient {
       }
       if (!response.ok) {
         const text = (await response.text()).slice(0, 300);
-        console.error(`[api] ${method} ${path} -> ${response.status}`);
+        // Expected misses (a final grade that isn't released yet) are normal, so this only logs when asked
+        if (process.env.AMICOOKED_DEBUG) console.error(`[api] ${method} ${path} -> ${response.status}`);
         throw new D2LApiError(response.status, `D2L API error ${response.status}: ${text}`);
       }
       return (await response.json()) as T;
