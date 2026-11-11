@@ -68,8 +68,11 @@ describe("Claude Desktop config", () => {
 describe("the running app", () => {
   it("finds Claude Desktop by process on macOS and Windows, and never on Linux", async () => {
     const { isClaudeDesktopRunning } = await import("../../src/clients/claudeDesktop.js");
-    expect(isClaudeDesktopRunning("darwin", () => ({ status: 0, stdout: "123" }))).toBe(true);
-    expect(isClaudeDesktopRunning("darwin", () => ({ status: 1, stdout: "" }))).toBe(false);
+    const mac = "/sbin/launchd\n/Applications/Claude.app/Contents/MacOS/Claude\n/usr/bin/ssh";
+    expect(isClaudeDesktopRunning("darwin", () => ({ status: 0, stdout: mac }))).toBe(true);
+    // Claude Code's own helper app is lowercase and lives elsewhere; it must not count
+    const codeOnly = "/Users/me/Library/Application Support/Claude/claude-code/2.1/claude.app/Contents/MacOS/claude";
+    expect(isClaudeDesktopRunning("darwin", () => ({ status: 0, stdout: codeOnly }))).toBe(false);
     expect(isClaudeDesktopRunning("win32", () => ({ status: 0, stdout: "Claude.exe  4242 Console" }))).toBe(true);
     expect(isClaudeDesktopRunning("win32", () => ({ status: 0, stdout: "INFO: No tasks are running" }))).toBe(false);
     expect(isClaudeDesktopRunning("linux", () => ({ status: 0, stdout: "1" }))).toBe(false);
@@ -82,7 +85,7 @@ describe("the running app", () => {
     const run = (command: string) => {
       calls.push(command);
       // still running for the first check after the quit request, gone on the second
-      return command === "pgrep" ? { status: ++checks < 2 ? 0 : 1, stdout: "" } : { status: 0, stdout: "" };
+      return { status: 0, stdout: command === "ps" && ++checks < 2 ? "/Applications/Claude.app/Contents/MacOS/Claude" : "" };
     };
     expect(await quitClaudeDesktop("darwin", run, 2000)).toBe(true);
     expect(calls[0]).toBe("osascript");
@@ -90,6 +93,6 @@ describe("the running app", () => {
 
   it("reports when the app would not quit", async () => {
     const { quitClaudeDesktop } = await import("../../src/clients/claudeDesktop.js");
-    expect(await quitClaudeDesktop("darwin", () => ({ status: 0, stdout: "" }), 400)).toBe(false);
+    expect(await quitClaudeDesktop("darwin", () => ({ status: 0, stdout: "/Applications/Claude.app/Contents/MacOS/Claude" }), 400)).toBe(false);
   });
 });

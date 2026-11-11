@@ -102,7 +102,8 @@ const probe: Probe = (command, args) => {
 };
 
 export function isClaudeDesktopRunning(platform: NodeJS.Platform = process.platform, run: Probe = probe): boolean {
-  if (platform === "darwin") return run("pgrep", ["-x", "Claude"]).status === 0;
+  // ps, not pgrep: pgrep skips its own ancestors, so it misses the app when setup runs from inside it
+  if (platform === "darwin") return /\/Claude\.app\/Contents\/MacOS\/Claude$/m.test(run("ps", ["-axo", "comm="]).stdout);
   if (platform === "win32") return /claude\.exe/i.test(run("tasklist", ["/FI", "IMAGENAME eq Claude.exe", "/NH"]).stdout);
   return false;
 }
