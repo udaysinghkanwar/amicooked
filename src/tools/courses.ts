@@ -14,7 +14,7 @@ export const getMyCourses: Tool = {
 export const getMyGrades: Tool = {
   name: "get_my_grades",
   description:
-    'Your grade items for one course: item name, points earned and possible, percentage and instructor feedback. Use for "what did I get on the midterm?" or "what\'s my grade in 3BB4?". For an overview across all courses, use am_i_cooked.',
+    'Your grade items for one course: item name, points earned and possible, percentage, weight toward the final grade (when the gradebook has weights) and instructor feedback. Use for "what did I get on the midterm?" or "what\'s my grade in 3BB4?". For an overview across all courses, use am_i_cooked.',
   schema: { ...courseParams },
   handler: async (args) => {
     const grades = (await client.getMyGradeValues(await resolveCourse(args))) as RawGrade[];

@@ -79,6 +79,8 @@ export interface RawGrade {
   PointsDenominator: number | null;
   GradeObjectName: string;
   DisplayedGrade: string | null;
+  WeightedNumerator?: number | null;
+  WeightedDenominator?: number | null;
   Comments?: { Text: string; Html: string };
   LastModified: string | null;
 }
@@ -87,6 +89,8 @@ export interface MarshalledGrade {
   name: string;
   score: string | null;
   percentage: string | null;
+  /** Percent of the final grade this item is worth, when the gradebook is weighted. */
+  weight: number | null;
   feedback: string | null;
   lastModified: string | null;
 }
@@ -98,6 +102,7 @@ export function marshalGrades(grades: RawGrade[]): MarshalledGrade[] {
       ? `${g.PointsNumerator}/${g.PointsDenominator}`
       : null,
     percentage: g.DisplayedGrade?.trim() || null,
+    weight: g.WeightedDenominator ? Math.round(g.WeightedDenominator * 10) / 10 : null,
     feedback: g.Comments?.Text?.trim() || null,
     lastModified: formatDate(g.LastModified),
   })) as MarshalledGrade[];
