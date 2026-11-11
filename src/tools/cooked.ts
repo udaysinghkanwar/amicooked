@@ -79,12 +79,40 @@ export interface CourseReport {
   id: number;
   code: string;
   name: string;
-  grade: { percent: number | null; display: string | null; source: "final_calculated" | "estimated_from_items" | "none"; gradedItems: number };
+  grade: {
+    percent: number | null;
+    display: string | null;
+    source: "final_calculated" | "estimated_from_items" | "none";
+    gradedItems: number;
+    /** How an estimate was weighted: the gradebook's own weights, or plain points when it has none. */
+    basis?: "gradebook_weights" | "points";
+    /** Percent of the final grade that is graded so far, and still to come (gradebook weights only). */
+    weightGraded?: number;
+    weightRemaining?: number;
+    /** Up to three graded items that move the estimate most, heaviest and lowest first. */
+    keyItems?: KeyItem[];
+  };
   dueSoon: DueItem[];
   overdue: OverdueItem[];
   announcements: { count: number; latest: Array<{ title: string; date: string }> };
   signals: Signal[];
   errors: Array<{ part: string; message: string }>;
+}
+
+export interface KeyItem {
+  name: string;
+  percent: number;
+  /** Percent of the final grade this item is worth; absent in a points gradebook. */
+  weight?: number;
+}
+
+export interface GradeEstimate {
+  percent: number | null;
+  gradedItems: number;
+  basis?: "gradebook_weights" | "points";
+  weightGraded?: number;
+  weightRemaining?: number;
+  keyItems?: KeyItem[];
 }
 
 export interface Window {
@@ -101,17 +129,39 @@ const round1 = (n: number) => Math.round(n * 10) / 10;
 /** Grade items that count: numeric, pass/fail and select-box items with a score. */
 const SCORED_TYPES = new Set([1, 2, 3]);
 
-/** Weighted average over graded items, falling back to points when the course has no weights. */
-export function estimateGrade(items: RawGradeValue[]): { percent: number | null; gradedItems: number } {
+/**
+ * Weighted average over graded items, falling back to points when the course has no weights.
+ * Also says how much of the final grade is graded so far, and which items matter most, so nobody
+ * has to work the weights out backwards from the result.
+ */
+export function estimateGrade(items: RawGradeValue[]): GradeEstimate {
   const graded = items.filter((g) => SCORED_TYPES.has(g.GradeObjectType) && g.PointsNumerator !== null);
   const weighted = graded.filter((g) => g.WeightedNumerator !== null && g.WeightedDenominator);
-  const pool = weighted.length ? weighted : graded.filter((g) => g.PointsDenominator);
-  const [num, den] = pool.reduce(
-    ([n, d], g) =>
-      weighted.length ? [n + g.WeightedNumerator!, d + g.WeightedDenominator!] : [n + g.PointsNumerator!, d + g.PointsDenominator!],
-    [0, 0]
-  );
-  return { percent: den ? round1((num / den) * 100) : null, gradedItems: graded.length };
+  const byWeight = weighted.length > 0;
+  const pool = byWeight ? weighted : graded.filter((g) => g.PointsDenominator);
+  const part = (g: RawGradeValue): [number, number] =>
+    byWeight ? [g.WeightedNumerator!, g.WeightedDenominator!] : [g.PointsNumerator!, g.PointsDenominator!];
+  const [num, den] = pool.reduce(([n, d], g) => [n + part(g)[0], d + part(g)[1]], [0, 0]);
+  if (!den) return { percent: null, gradedItems: graded.length };
+
+  const percent = round1((num / den) * 100);
+  // The items pulling the estimate down hardest come first, then the heaviest
+  const keyItems = pool
+    .map((g) => {
+      const [n, d] = part(g);
+      return { name: g.GradeObjectName, percent: round1((n / d) * 100), size: d };
+    })
+    .sort((a, b) => (percent - b.percent) * b.size - (percent - a.percent) * a.size || b.size - a.size)
+    .slice(0, 3)
+    .map(({ name, percent: p, size }) => (byWeight ? { name, percent: p, weight: round1(size) } : { name, percent: p }));
+
+  const estimate: GradeEstimate = { percent, gradedItems: graded.length, basis: byWeight ? "gradebook_weights" : "points", keyItems };
+  // Weights are percent of the final grade; a total over 100 means the gradebook isn't out of 100
+  if (byWeight && den <= 100.5) {
+    estimate.weightGraded = round1(den);
+    estimate.weightRemaining = round1(Math.max(0, 100 - den));
+  }
+  return estimate;
 }
 
 function finalPercent(g: RawGradeValue): number | null {
@@ -127,12 +177,12 @@ export function buildCourseReport(course: Course, data: CourseData, w: Window): 
 
   // Grade: the released final calculated grade wins, otherwise estimate from items
   let grade: CourseReport["grade"] = { percent: null, display: null, source: "none", gradedItems: 0 };
-  const estimate = data.gradeItems ? estimateGrade(data.gradeItems) : { percent: null, gradedItems: 0 };
+  const estimate: GradeEstimate = data.gradeItems ? estimateGrade(data.gradeItems) : { percent: null, gradedItems: 0 };
   const final = data.finalGrade ? finalPercent(data.finalGrade) : null;
   if (final !== null) {
     grade = { percent: final, display: data.finalGrade!.DisplayedGrade?.trim() || null, source: "final_calculated", gradedItems: estimate.gradedItems };
   } else if (estimate.percent !== null) {
-    grade = { percent: estimate.percent, display: `${estimate.percent}%`, source: "estimated_from_items", gradedItems: estimate.gradedItems };
+    grade = { ...estimate, display: `${estimate.percent}%`, source: "estimated_from_items" };
   }
 
   // Assignments due soon, and overdue ones without a submission
@@ -342,6 +392,7 @@ export async function amICooked(args: { daysAhead?: number; overdueDaysBack?: nu
     notes: [
       "Times are UTC; convert to the student's local time.",
       "estimated_from_items grades ignore dropped or bonus items, so treat them as rough.",
+      "weightRemaining is the percent of the final grade still to come. basis \"points\" means the gradebook has no weights, so the real weighting may differ.",
       "Quiz completion isn't known (submitted: null).",
     ],
   };

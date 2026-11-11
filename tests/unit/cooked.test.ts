@@ -44,7 +44,31 @@ describe("estimateGrade", () => {
   });
 
   it("falls back to points and skips ungraded and category items", () => {
-    expect(estimateGrade([item(8, 10), item(null, 10), item(50, 100, undefined, 9)])).toEqual({ percent: 80, gradedItems: 1 });
+    expect(estimateGrade([item(8, 10), item(null, 10), item(50, 100, undefined, 9)])).toMatchObject({ percent: 80, gradedItems: 1, basis: "points" });
+  });
+
+  it("says how much of the grade is graded and which items matter most", () => {
+    // a 25% midterm at 59.5% and a 15% assignment at 81%
+    const midterm = { ...item(25, 42, [14.88, 25]), GradeObjectName: "Midterm" };
+    const a1 = { ...item(40.5, 50, [12.15, 15]), GradeObjectName: "Assignment 1" };
+    expect(estimateGrade([a1, midterm])).toEqual({
+      percent: 67.6,
+      gradedItems: 2,
+      basis: "gradebook_weights",
+      weightGraded: 40,
+      weightRemaining: 60,
+      keyItems: [
+        { name: "Midterm", percent: 59.5, weight: 25 },
+        { name: "Assignment 1", percent: 81, weight: 15 },
+      ],
+    });
+  });
+
+  it("gives no coverage for a points gradebook, and caps key items at three", () => {
+    const e = estimateGrade([item(8, 10), item(2, 10), item(9, 10), item(10, 10)]);
+    expect(e.weightRemaining).toBeUndefined();
+    expect(e.keyItems).toHaveLength(3);
+    expect(e.keyItems![0]).toEqual({ name: expect.any(String), percent: 20 });
   });
 
   it("returns null with nothing graded", () => {
