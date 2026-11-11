@@ -64,3 +64,32 @@ describe("Claude Desktop config", () => {
     expect(claudeDesktopDir({ platform: "darwin", home })).toBeNull();
   });
 });
+
+describe("the running app", () => {
+  it("finds Claude Desktop by process on macOS and Windows, and never on Linux", async () => {
+    const { isClaudeDesktopRunning } = await import("../../src/clients/claudeDesktop.js");
+    expect(isClaudeDesktopRunning("darwin", () => ({ status: 0, stdout: "123" }))).toBe(true);
+    expect(isClaudeDesktopRunning("darwin", () => ({ status: 1, stdout: "" }))).toBe(false);
+    expect(isClaudeDesktopRunning("win32", () => ({ status: 0, stdout: "Claude.exe  4242 Console" }))).toBe(true);
+    expect(isClaudeDesktopRunning("win32", () => ({ status: 0, stdout: "INFO: No tasks are running" }))).toBe(false);
+    expect(isClaudeDesktopRunning("linux", () => ({ status: 0, stdout: "1" }))).toBe(false);
+  });
+
+  it("asks it to quit and waits until the process is gone", async () => {
+    const { quitClaudeDesktop } = await import("../../src/clients/claudeDesktop.js");
+    const calls: string[] = [];
+    let checks = 0;
+    const run = (command: string) => {
+      calls.push(command);
+      // still running for the first check after the quit request, gone on the second
+      return command === "pgrep" ? { status: ++checks < 2 ? 0 : 1, stdout: "" } : { status: 0, stdout: "" };
+    };
+    expect(await quitClaudeDesktop("darwin", run, 2000)).toBe(true);
+    expect(calls[0]).toBe("osascript");
+  });
+
+  it("reports when the app would not quit", async () => {
+    const { quitClaudeDesktop } = await import("../../src/clients/claudeDesktop.js");
+    expect(await quitClaudeDesktop("darwin", () => ({ status: 0, stdout: "" }), 400)).toBe(false);
+  });
+});

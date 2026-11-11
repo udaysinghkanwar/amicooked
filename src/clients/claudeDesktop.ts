@@ -1,3 +1,4 @@
+import { spawn, spawnSync } from "child_process";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
@@ -88,4 +89,39 @@ export function uninstallClaudeDesktop(dir: string): WriteResult {
 export function manualSnippet(launch: LaunchCommand): string {
   const entry = { command: launch.command, args: launch.args, ...(launch.env ? { env: launch.env } : {}) };
   return JSON.stringify({ mcpServers: { [SERVER_NAME]: entry } }, null, 2);
+}
+
+// ---- the running app ----
+// Claude Desktop keeps its config in memory and saves it back when it quits, which wipes anything
+// written while it was open. So setup closes it first, writes, and opens it again.
+
+type Probe = (command: string, args: string[]) => { status: number | null; stdout: string };
+const probe: Probe = (command, args) => {
+  const r = spawnSync(command, args, { encoding: "utf8", timeout: 10000 });
+  return { status: r.error ? null : r.status, stdout: r.stdout ?? "" };
+};
+
+export function isClaudeDesktopRunning(platform: NodeJS.Platform = process.platform, run: Probe = probe): boolean {
+  if (platform === "darwin") return run("pgrep", ["-x", "Claude"]).status === 0;
+  if (platform === "win32") return /claude\.exe/i.test(run("tasklist", ["/FI", "IMAGENAME eq Claude.exe", "/NH"]).stdout);
+  return false;
+}
+
+/** Asks the app to quit (never forces it) and waits until it's gone. False if it's still open. */
+export async function quitClaudeDesktop(platform: NodeJS.Platform = process.platform, run: Probe = probe, waitMs = 15000): Promise<boolean> {
+  if (platform === "darwin") run("osascript", ["-e", 'tell application "Claude" to quit']);
+  else if (platform === "win32") run("taskkill", ["/IM", "Claude.exe"]);
+  else return false;
+  for (const end = Date.now() + waitMs; Date.now() < end; ) {
+    if (!isClaudeDesktopRunning(platform, run)) return true;
+    await new Promise((resolve) => setTimeout(resolve, 300));
+  }
+  return !isClaudeDesktopRunning(platform, run);
+}
+
+/** Opens the app again. Only macOS has a reliable way to find it; elsewhere the student opens it. */
+export function openClaudeDesktop(platform: NodeJS.Platform = process.platform): boolean {
+  if (platform !== "darwin") return false;
+  spawn("open", ["-a", "Claude"], { stdio: "ignore", detached: true }).unref();
+  return true;
 }

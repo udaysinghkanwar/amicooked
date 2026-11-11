@@ -1,7 +1,15 @@
 import * as p from "@clack/prompts";
 import { hasActiveSession, login } from "../auth.js";
 import { detectChannel } from "../browser.js";
-import { claudeDesktopDir, installClaudeDesktop, InvalidConfigError, manualSnippet } from "../clients/claudeDesktop.js";
+import {
+  claudeDesktopDir,
+  installClaudeDesktop,
+  InvalidConfigError,
+  isClaudeDesktopRunning,
+  manualSnippet,
+  openClaudeDesktop,
+  quitClaudeDesktop,
+} from "../clients/claudeDesktop.js";
 import { hasClaudeCode, installClaudeCode, installSkill } from "../clients/claudeCode.js";
 import { chatgptSteps, installChatGPT } from "../clients/chatgpt.js";
 import { selfCommand } from "../clients/self.js";
@@ -101,6 +109,16 @@ async function chooseClients(flag: string | undefined, detected: Record<ClientId
   return chosen;
 }
 
+/** Claude Desktop saves its own config over ours when it quits, so it has to be closed before we write. */
+async function closeClaudeDesktop(): Promise<"not_running" | "closed" | "left_open"> {
+  if (!isClaudeDesktopRunning()) return "not_running";
+  // An agent may be running this from inside Claude Desktop; never close it without asking
+  if (!interactive()) return "left_open";
+  const ok = await p.confirm({ message: "Claude Desktop is open and has to restart to pick this up. Quit it now? It reopens when setup is done." });
+  if (p.isCancel(ok) || !ok) return "left_open";
+  return (await quitClaudeDesktop()) ? "closed" : "left_open";
+}
+
 async function configureClients(clients: ClientId[]): Promise<string[]> {
   const done: string[] = [];
   const launch = selfCommand(["mcp"]);
@@ -111,9 +129,15 @@ async function configureClients(clients: ClientId[]): Promise<string[]> {
       p.log.warn("Claude Desktop isn't installed. Get it at https://claude.ai/download, then run `amicooked setup` again.");
     } else {
       try {
+        const state = await closeClaudeDesktop();
         const result = installClaudeDesktop(dir, launch);
-        p.log.success(`Claude Desktop: ${result === "unchanged" ? "already set up" : "set up"}`);
-        done.push("desktop");
+        if (state === "left_open" && result !== "unchanged") {
+          // Written, but the open app will save its own copy over it when it quits
+          p.log.warn("Claude Desktop is open, so it will undo this when it quits. Quit it, then run `amicooked setup --clients desktop`.");
+        } else {
+          p.log.success(`Claude Desktop: ${result === "unchanged" ? "already set up" : "set up"}`);
+          done.push(state === "closed" && openClaudeDesktop() ? "desktop-reopened" : "desktop");
+        }
       } catch (error) {
         if (!(error instanceof InvalidConfigError)) throw error;
         p.log.warn(`${error.message}\nAdd this to it yourself:\n${manualSnippet(launch)}`);
@@ -187,8 +211,10 @@ export async function setup(options: SetupOptions): Promise<number> {
 
     if (options.login !== false) await firstRoast();
 
-    const next = done.includes("desktop")
-      ? "Quit and reopen Claude Desktop, then ask: am I cooked?"
+    const next = done.includes("desktop-reopened")
+      ? "Claude Desktop is reopening. Ask it: am I cooked?"
+      : done.includes("desktop")
+        ? "Open Claude Desktop and ask: am I cooked?"
       : done.includes("code")
         ? "Start Claude Code and ask: am I cooked?"
         : done.includes("chatgpt")
