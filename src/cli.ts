@@ -14,7 +14,7 @@ Usage: amicooked <command>
 
   setup        Pick your school, sign in, and connect your AI apps
                --school <id|url>       e.g. mcmaster, or the URL you log in through
-               --clients <list>        desktop,code,chatgpt
+               --clients <list>        desktop,code,chatgpt-desktop,chatgpt
                --yes                   accept the detected apps without asking
   login        Sign in to your school again
   pair         Get a new code for connecting ChatGPT

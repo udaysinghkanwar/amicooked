@@ -12,6 +12,7 @@ import {
 } from "../clients/claudeDesktop.js";
 import { hasClaudeCode, installClaudeCode, installSkill } from "../clients/claudeCode.js";
 import { chatgptSteps, installChatGPT } from "../clients/chatgpt.js";
+import { hasCodex, installCodex, installCodexSkill } from "../clients/codex.js";
 import { selfCommand } from "../clients/self.js";
 import { client } from "../client.js";
 import { getConfig, writeConfig, type School } from "../config.js";
@@ -19,8 +20,10 @@ import { listCourses } from "../courseResolver.js";
 import { detectSchool, findPreset, PRESETS } from "../schools.js";
 import { amICooked } from "../tools/cooked.js";
 
-export type ClientId = "desktop" | "code" | "chatgpt";
-const CLIENT_IDS: ClientId[] = ["desktop", "code", "chatgpt"];
+/** `chatgpt-desktop` runs locally in the ChatGPT desktop app (Codex). `chatgpt` is ChatGPT on the web, over a tunnel. */
+export type ClientId = "desktop" | "code" | "chatgpt-desktop" | "chatgpt";
+const CLIENT_IDS: ClientId[] = ["desktop", "code", "chatgpt-desktop", "chatgpt"];
+const ALIASES: Record<string, ClientId> = { codex: "chatgpt-desktop", "chatgpt-app": "chatgpt-desktop", "chatgpt-web": "chatgpt" };
 
 export interface SetupOptions {
   school?: string;
@@ -87,10 +90,10 @@ async function chooseSchool(flag: string | undefined): Promise<School> {
 
 async function chooseClients(flag: string | undefined, detected: Record<ClientId, boolean>, yes: boolean): Promise<ClientId[]> {
   if (flag) {
-    const ids = flag.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
+    const ids = flag.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean).map((id) => ALIASES[id] ?? id);
     const unknown = ids.filter((id) => !CLIENT_IDS.includes(id as ClientId));
-    if (unknown.length) throw new SetupStop(`Unknown app: ${unknown.join(", ")}. Use desktop, code or chatgpt.`);
-    return ids as ClientId[];
+    if (unknown.length) throw new SetupStop(`Unknown app: ${unknown.join(", ")}. Use ${CLIENT_IDS.join(", ")}.`);
+    return [...new Set(ids)] as ClientId[];
   }
   const defaults = CLIENT_IDS.filter((id) => detected[id]);
   if (yes || !interactive()) return defaults;
@@ -102,7 +105,8 @@ async function chooseClients(flag: string | undefined, detected: Record<ClientId
     options: [
       { value: "desktop" as const, label: "Claude Desktop", hint: detected.desktop ? "found" : "not found" },
       { value: "code" as const, label: "Claude Code", hint: detected.code ? "found" : "not found" },
-      { value: "chatgpt" as const, label: "ChatGPT", hint: "runs in the background while your computer is on" },
+      { value: "chatgpt-desktop" as const, label: "ChatGPT desktop app", hint: detected["chatgpt-desktop"] ? "found" : "not found" },
+      { value: "chatgpt" as const, label: "ChatGPT on the web", hint: "needs a tunnel, not available yet" },
     ],
   });
   if (p.isCancel(chosen)) throw new SetupStop("Setup cancelled.");
@@ -156,6 +160,18 @@ async function configureClients(clients: ClientId[]): Promise<string[]> {
     }
   }
 
+  if (clients.includes("chatgpt-desktop")) {
+    if (!hasCodex()) {
+      p.log.warn("The ChatGPT desktop app isn't installed. Get it at https://chatgpt.com/download, then run `amicooked setup` again.");
+    } else {
+      // Runs on this computer like Claude Desktop does; no tunnel or domain involved
+      const result = installCodex(launch);
+      installCodexSkill();
+      p.log.success(`ChatGPT desktop app: ${result === "unchanged" ? "already set up" : "set up"}, with the amicooked skill`);
+      done.push("chatgpt-desktop");
+    }
+  }
+
   if (clients.includes("chatgpt")) {
     const spin = p.spinner();
     spin.start("Setting up your private ChatGPT connection");
@@ -206,7 +222,7 @@ export async function setup(options: SetupOptions): Promise<number> {
       p.log.success(`Signed in${me.FirstName ? ` as ${me.FirstName}` : ""}. Found ${courses.length} course${courses.length === 1 ? "" : "s"}.`);
     }
 
-    const detected = { desktop: Boolean(claudeDesktopDir()), code: hasClaudeCode(), chatgpt: false };
+    const detected = { desktop: Boolean(claudeDesktopDir()), code: hasClaudeCode(), "chatgpt-desktop": hasCodex(), chatgpt: false };
     const done = await configureClients(await chooseClients(options.clients, detected, Boolean(options.yes)));
 
     if (options.login !== false) await firstRoast();
@@ -215,11 +231,13 @@ export async function setup(options: SetupOptions): Promise<number> {
       ? "Claude Desktop is reopening. Ask it: am I cooked?"
       : done.includes("desktop")
         ? "Open Claude Desktop and ask: am I cooked?"
+      : done.includes("chatgpt-desktop")
+        ? "Restart the ChatGPT desktop app, then ask: am I cooked?"
       : done.includes("code")
         ? "Start Claude Code and ask: am I cooked?"
         : done.includes("chatgpt")
           ? "Finish connecting in ChatGPT, then ask: am I cooked?"
-          : "Run `amicooked setup` again once you've installed Claude Desktop, Claude Code or ChatGPT.";
+          : "Nothing was set up. Run `amicooked setup` again and pick an app.";
     p.outro(next);
     return 0;
   } catch (error) {
