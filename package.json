@@ -1,6 +1,6 @@
 {
   "name": "amicooked",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Ask your AI if you're cooked. A local MCP server for D2L Brightspace: grades, deadlines and announcements in Claude and ChatGPT.",
   "type": "module",
   "bin": {
@@ -38,7 +38,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/udaysinghkanwar/amicooked"
+    "url": "git+https://github.com/udaysinghkanwar/amicooked.git"
   },
   "dependencies": {
     "@clack/prompts": "^1.8.1",
