@@ -14,14 +14,12 @@ Usage: amicooked <command>
 
   setup        Pick your school, sign in, and connect your AI apps
                --school <id|url>       e.g. mcmaster, or the URL you log in through
-               --clients <list>        desktop,code,chatgpt-desktop,chatgpt
+               --clients <list>        desktop,code,chatgpt-desktop
                --yes                   accept the detected apps without asking
   login        Sign in to your school again
-  pair         Get a new code for connecting ChatGPT
   status       Show what's set up (--json for machines)
   uninstall    Disconnect your AI apps (--purge also deletes your login and settings)
   mcp          Run the MCP server over stdio (AI apps run this for you)
-  serve        Run the ChatGPT server (the background service runs this for you)
 `;
 
 async function runMcp(): Promise<number> {

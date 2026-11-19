@@ -20,9 +20,13 @@ import { listCourses } from "../courseResolver.js";
 import { detectSchool, findPreset, PRESETS } from "../schools.js";
 import { amICooked } from "../tools/cooked.js";
 
-/** `chatgpt-desktop` runs locally in the ChatGPT desktop app (Codex). `chatgpt` is ChatGPT on the web, over a tunnel. */
+/**
+ * Every app listed here starts Am I Cooked on the student's computer. `chatgpt` (ChatGPT on the web, over a
+ * tunnel) is built but hidden until the tunnel service is deployed; it only runs with AMICOOKED_TUNNEL_API set.
+ */
 export type ClientId = "desktop" | "code" | "chatgpt-desktop" | "chatgpt";
-const CLIENT_IDS: ClientId[] = ["desktop", "code", "chatgpt-desktop", "chatgpt"];
+const PUBLIC_IDS: ClientId[] = ["desktop", "code", "chatgpt-desktop"];
+const CLIENT_IDS: ClientId[] = [...PUBLIC_IDS, "chatgpt"];
 const ALIASES: Record<string, ClientId> = { codex: "chatgpt-desktop", "chatgpt-app": "chatgpt-desktop", "chatgpt-web": "chatgpt" };
 
 export interface SetupOptions {
@@ -92,10 +96,10 @@ async function chooseClients(flag: string | undefined, detected: Record<ClientId
   if (flag) {
     const ids = flag.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean).map((id) => ALIASES[id] ?? id);
     const unknown = ids.filter((id) => !CLIENT_IDS.includes(id as ClientId));
-    if (unknown.length) throw new SetupStop(`Unknown app: ${unknown.join(", ")}. Use ${CLIENT_IDS.join(", ")}.`);
+    if (unknown.length) throw new SetupStop(`Unknown app: ${unknown.join(", ")}. Use ${PUBLIC_IDS.join(", ")}.`);
     return [...new Set(ids)] as ClientId[];
   }
-  const defaults = CLIENT_IDS.filter((id) => detected[id]);
+  const defaults = PUBLIC_IDS.filter((id) => detected[id]);
   if (yes || !interactive()) return defaults;
 
   const chosen = await p.multiselect({
@@ -106,7 +110,6 @@ async function chooseClients(flag: string | undefined, detected: Record<ClientId
       { value: "desktop" as const, label: "Claude Desktop", hint: detected.desktop ? "found" : "not found" },
       { value: "code" as const, label: "Claude Code", hint: detected.code ? "found" : "not found" },
       { value: "chatgpt-desktop" as const, label: "ChatGPT desktop app", hint: detected["chatgpt-desktop"] ? "found" : "not found" },
-      { value: "chatgpt" as const, label: "ChatGPT on the web", hint: "needs a tunnel, not available yet" },
     ],
   });
   if (p.isCancel(chosen)) throw new SetupStop("Setup cancelled.");
@@ -172,7 +175,9 @@ async function configureClients(clients: ClientId[]): Promise<string[]> {
     }
   }
 
-  if (clients.includes("chatgpt")) {
+  if (clients.includes("chatgpt") && !process.env.AMICOOKED_TUNNEL_API) {
+    p.log.warn("ChatGPT on the web isn't available yet. For the ChatGPT desktop app, use `--clients chatgpt-desktop`.");
+  } else if (clients.includes("chatgpt")) {
     const spin = p.spinner();
     spin.start("Setting up your private ChatGPT connection");
     try {

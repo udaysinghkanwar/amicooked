@@ -68,7 +68,8 @@ export async function statusCommand(json: boolean): Promise<number> {
   console.log(`  Claude Desktop: ${status.claudeDesktop}`);
   console.log(`  Claude Code:    ${status.claudeCode}`);
   console.log(`  ChatGPT app:    ${status.chatgptDesktop}`);
-  console.log(`  ChatGPT web:    ${status.chatgpt}`);
+  // ChatGPT on the web is hidden until the tunnel service exists; only show it where it's been set up
+  if (chatgptUrl()) console.log(`  ChatGPT web:    ${status.chatgpt}`);
   console.log(`  Data:           ${status.dataFolder}`);
   console.log(`  Files:          ${status.filesFolder}`);
   return 0;
