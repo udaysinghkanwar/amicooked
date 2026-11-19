@@ -10,7 +10,8 @@ The student signs in on their school's own login page in a real browser window. 
 - macOS and Linux: `curl -fsSL https://amicooked-mcp.vercel.app/install.sh | sh`
 - Windows (PowerShell): `irm https://amicooked-mcp.vercel.app/install.ps1 | iex`
 - With Node.js 22 or newer: `npx -y amicooked@0 setup`
-- ChatGPT: `amicooked setup --clients chatgpt`, then add the address in ChatGPT under Settings, Apps & Connectors (Developer mode), and enter the pairing code (`amicooked pair` makes a new one). Works while the laptop is on and awake.
+- ChatGPT desktop app: `amicooked setup --clients chatgpt-desktop`, then restart the app. Runs locally, no tunnel.
+- ChatGPT on the web (not available yet): `amicooked setup --clients chatgpt`, then add the address in ChatGPT under Settings, Apps & Connectors (Developer mode), and enter the pairing code (`amicooked pair` makes a new one). Works while the laptop is on and awake.
 - Uninstall: `amicooked uninstall` (`--purge` also deletes login and settings)
 
 ## Tools
