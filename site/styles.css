@@ -153,6 +153,8 @@ h1 {
 .icon-button:active, .segmented button:active, .with-toggle:active { transform: scale(0.97); }
 .icon-button.is-done .i-check { opacity: 1; transform: none; color: var(--ink); }
 
+.alt-install { font-size: 0.875rem; color: var(--muted); }
+.alt-install code { padding: 2px 7px; border-radius: 6px; background: var(--raised); border: 1px solid var(--rule); color: var(--soft); font-size: 0.8125rem; }
 .trust a { color: var(--muted); }
 .trust { margin-top: 10px; text-align: center; font-size: 0.875rem; color: var(--faint); }
 
