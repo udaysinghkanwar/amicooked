@@ -42,8 +42,11 @@ fi
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 say "Downloading Am I Cooked ($os-$arch)..."
-curl -fsSL "$base/$asset" -o "$tmp/$asset" || fail "download failed from $base/$asset"
-curl -fsSL "$base/SHA256SUMS" -o "$tmp/SHA256SUMS" || fail "couldn't download checksums"
+# A download that stalls (under 10 KB/s for 30 seconds) is dropped and retried, so a dead connection
+# can't leave the installer waiting forever
+fetch() { curl -fsSL --retry 3 --retry-delay 2 --speed-limit 10240 --speed-time 30 "$1" -o "$2"; }
+fetch "$base/$asset" "$tmp/$asset" || fail "download failed from $base/$asset. Check your connection and try again."
+fetch "$base/SHA256SUMS" "$tmp/SHA256SUMS" || fail "couldn't download checksums"
 
 expected="$(grep " $asset\$" "$tmp/SHA256SUMS" | cut -d' ' -f1)"
 if command -v sha256sum >/dev/null 2>&1; then
