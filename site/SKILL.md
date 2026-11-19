@@ -16,7 +16,7 @@ Am I Cooked connects an AI assistant to a student's D2L Brightspace account (Ave
    - With Node.js installed, `npx -y amicooked@0` works in place of `amicooked` below.
 3. Run setup with flags, and a long command timeout (at least 5 minutes), because the student signs in through a browser window that opens:
    `amicooked setup --school mcmaster --clients desktop,code`
-   Use `--school https://...` for schools without a preset. Add `chatgpt-desktop` to `--clients` if they use the ChatGPT desktop app, then tell them to restart it. Don't offer `chatgpt` (ChatGPT on the web); it isn't available yet.
+   Use `--school https://...` for schools without a preset. Add `chatgpt-desktop` to `--clients` if they use the ChatGPT desktop app, then tell them to restart it. ChatGPT and Claude on the web or on phones aren't supported.
 4. Tell the student to sign in to their school in the browser window. Never ask for their password; you never need it.
 5. If something fails, run `amicooked status` and read what it says.
 

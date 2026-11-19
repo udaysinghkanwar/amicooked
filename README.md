@@ -53,16 +53,15 @@ Presets for McMaster, Waterloo, Western, Queen's, Guelph, Laurier, TMU, uOttawa,
 
 ## ChatGPT
 
-**ChatGPT desktop app.** `amicooked setup --clients chatgpt-desktop` connects it the same way as Claude Desktop: the app starts Am I Cooked on your computer, so there's no tunnel or account to set up. Restart the app afterwards. It works with the ChatGPT desktop app that's built on Codex (and the Codex CLI), which reads `~/.codex/config.toml`.
+`amicooked setup --clients chatgpt-desktop` connects the ChatGPT desktop app the same way as Claude Desktop: the app starts Am I Cooked on your computer, with no tunnel or extra account. Restart the app afterwards. It works with the ChatGPT desktop app that's built on Codex (and the Codex CLI), which reads `~/.codex/config.toml`.
 
-**ChatGPT on the web** (not available yet). `amicooked setup --clients chatgpt` will give your computer a private, permanent HTTPS address and runs Am I Cooked in the background. Add it in ChatGPT under Settings → Apps & Connectors (Developer mode), and enter the pairing code from `amicooked pair`. ChatGPT can reach it while your computer is on and awake. Requests travel through Cloudflare's network to your computer; nothing is stored on our servers.
+ChatGPT on the web and on phones can't start programs on your computer, so they aren't supported yet. Neither is Claude on the web.
 
 ## Commands
 
 ```
 amicooked setup      pick your school, sign in, connect apps
 amicooked login      sign in again
-amicooked pair       new ChatGPT pairing code
 amicooked status     what's set up
 amicooked uninstall  disconnect apps (--purge deletes your login and settings)
 ```
