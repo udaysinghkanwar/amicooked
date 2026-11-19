@@ -28,4 +28,4 @@ A local MCP server that lets students' AI apps read their D2L Brightspace course
 - Never print tokens, cookies or pairing codes to logs. `mcp` mode must keep stdout clean.
 - Tools are read-only. Tool errors are returned as results so the AI can relay them.
 - After editing `skill/SKILL.md` or `install/`, run `npm run sync:skill`.
-- Release: bump `package.json` and `src/version.ts`, tag `vX.Y.Z`; CI builds binaries and a GitHub release.
+- Release: `npm version patch` then `git push --follow-tags`; CI builds binaries, makes the GitHub release, then publishes to npm. See RELEASING.md.
