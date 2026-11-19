@@ -1,15 +1,16 @@
 name: Release
 
+# Runs only when a version tag is pushed (`npm version patch`, then `git push --follow-tags`).
+# Pushes to main just run the tests; the website deploys from main on its own.
 on:
   push:
     tags: ["v*"]
 
-permissions:
-  contents: write
-
 jobs:
   release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -25,3 +26,31 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release create "$GITHUB_REF_NAME" build/amicooked-* build/SHA256SUMS --title "$GITHUB_REF_NAME" --generate-notes
+
+  # The same version goes to npm only after the binaries are out, so both channels match.
+  # Uses npm trusted publishing: no token is stored here; npm checks this workflow's identity instead.
+  npm:
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          registry-url: https://registry.npmjs.org
+      # Trusted publishing needs npm 11.5.1 or newer
+      - run: npm install -g npm@latest
+      - run: npm ci
+      - name: Skip if this version is already on npm
+        id: check
+        run: |
+          if npm view "amicooked@${GITHUB_REF_NAME#v}" version >/dev/null 2>&1; then
+            echo "Already published; nothing to do."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.check.outputs.skip != 'true'
+        run: npm publish --access public
