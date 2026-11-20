@@ -7,6 +7,7 @@ The student signs in on their school's own login page in a real browser window. 
 ## Setting it up
 
 - [SKILL.md](https://amicooked-mcp.vercel.app/SKILL.md): setup instructions written for AI agents. Start here if a user asks you to set up Am I Cooked. Ask which school they go to; never ask for their password.
+- Setup has to run on the student's computer. If you're a web or phone chat with no terminal, don't attempt it: send them to Claude Desktop (https://claude.ai/download) or the ChatGPT app (https://chatgpt.com/download), or give them the install command below to paste into Terminal or PowerShell.
 - macOS and Linux: `curl -fsSL https://amicooked-mcp.vercel.app/install.sh | sh`
 - Windows (PowerShell): `irm https://amicooked-mcp.vercel.app/install.ps1 | iex`
 - With Node.js 22 or newer: `npx -y amicooked@0 setup`
