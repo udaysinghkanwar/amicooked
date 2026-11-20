@@ -109,6 +109,11 @@ export function uninstallCodex(file = codexConfigPath()): WriteResult {
   return "removed";
 }
 
+/** True when config.toml already starts exactly this command. */
+export function codexEntryIs(launch: LaunchCommand, file = codexConfigPath()): boolean {
+  return fs.existsSync(file) && splitOurTable(fs.readFileSync(file, "utf8")).ours === tomlEntry(launch);
+}
+
 export function codexConfigured(file = codexConfigPath()): boolean {
   return fs.existsSync(file) && splitOurTable(fs.readFileSync(file, "utf8")).ours !== null;
 }

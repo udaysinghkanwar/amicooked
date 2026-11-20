@@ -1,18 +1,15 @@
 import * as p from "@clack/prompts";
+import * as fs from "fs";
+import * as path from "path";
 import { hasActiveSession, login } from "../auth.js";
 import { detectChannel } from "../browser.js";
-import {
-  claudeDesktopDir,
-  installClaudeDesktop,
-  InvalidConfigError,
-  isClaudeDesktopRunning,
-  manualSnippet,
-  openClaudeDesktop,
-  quitClaudeDesktop,
-} from "../clients/claudeDesktop.js";
+import { APPS, CLAUDE_CODE_DOWNLOAD, desktopAppsSupported, isRunning, isRunningInside, open, openUrl, quit, type DesktopApp } from "../clients/apps.js";
+import { claudeDesktopDir, installClaudeDesktop, InvalidConfigError, manualSnippet } from "../clients/claudeDesktop.js";
+import { scheduleAfterQuit } from "./afterQuit.js";
 import { hasClaudeCode, installClaudeCode, installSkill } from "../clients/claudeCode.js";
 import { chatgptSteps, installChatGPT } from "../clients/chatgpt.js";
-import { hasCodex, installCodex, installCodexSkill } from "../clients/codex.js";
+import { codexEntryIs, codexSkillPath, hasCodex, installCodex, installCodexSkill } from "../clients/codex.js";
+import { SKILL_MD } from "../skill.js";
 import { selfCommand } from "../clients/self.js";
 import { client } from "../client.js";
 import { getConfig, writeConfig, type School } from "../config.js";
@@ -116,67 +113,121 @@ async function chooseClients(flag: string | undefined, detected: Record<ClientId
   return chosen;
 }
 
-/** Claude Desktop saves its own config over ours when it quits, so it has to be closed before we write. */
-async function closeClaudeDesktop(): Promise<"not_running" | "closed" | "left_open"> {
-  if (!isClaudeDesktopRunning()) return "not_running";
-  // An agent may be running this from inside Claude Desktop; never close it without asking
-  if (!interactive()) return "left_open";
-  const ok = await p.confirm({ message: "Claude Desktop is open and has to restart to pick this up. Quit it now? It reopens when setup is done." });
-  if (p.isCancel(ok) || !ok) return "left_open";
-  return (await quitClaudeDesktop()) ? "closed" : "left_open";
+// ---- finishing each app ----
+// Every app the student picks ends in one clear next step: it's open and ready, it needs a restart,
+// it needs opening, or it needs installing (with the link). setup prints them all at the end.
+
+export interface Outcome {
+  app: string;
+  next: string;
+  /** True when the student can ask straight away. */
+  ready: boolean;
 }
 
-async function configureClients(clients: ClientId[]): Promise<string[]> {
-  const done: string[] = [];
+const quitHow = () => (process.platform === "darwin" ? "with Cmd+Q" : "fully, from its icon by the clock if it has one");
+
+async function missingApp(app: string, name: string, url: string): Promise<Outcome> {
+  if (interactive()) {
+    const ok = await p.confirm({ message: `${name} isn't installed. Open its download page?` });
+    if (ok === true) openUrl(url);
+  }
+  return { app, next: `install ${name} from ${url}, then run \`amicooked setup\` again.`, ready: false };
+}
+
+/**
+ * Connects a desktop app and leaves it open with the new config loaded, or says exactly what's left.
+ * `write` adds our server to the app's config; `current` says whether it's already there.
+ */
+async function connectDesktopApp(app: DesktopApp, label: string, write: () => void, current: () => boolean): Promise<Outcome> {
+  const ask = "Ask it: am I cooked?";
+  if (current()) {
+    // Already set up. Make sure it's open; no restart needed
+    if (isRunning(app)) return { app: label, next: `already set up. ${ask}`, ready: true };
+    return open(app)
+      ? { app: label, next: `already set up, and opening now. ${ask}`, ready: true }
+      : { app: label, next: `already set up. Open ${app.name} and ask: am I cooked?`, ready: false };
+  }
+
+  let running = isRunning(app);
+  const inside = running && isRunningInside(app);
+  // An open app only loads the change after a restart. Offer one, unless setup is running inside that app
+  // (an agent there) or nobody's at the keyboard to say yes
+  if (running && !inside && interactive()) {
+    const ok = await p.confirm({ message: `${app.name} is open and needs a restart to pick this up. Restart it now?` });
+    if (ok === true) running = !(await quit(app));
+  }
+
+  write();
+  if (running && app.overwritesOnQuit) {
+    // Quitting it would save its old config over ours, so a background helper waits for the quit, writes
+    // the config again and reopens the app
+    return scheduleAfterQuit()
+      ? { app: label, next: `quit ${app.name} ${quitHow()}. Am I Cooked finishes setting it up and reopens it. Then ${ask.toLowerCase()}`, ready: false }
+      : { app: label, next: `quit ${app.name} ${quitHow()}, then run \`amicooked setup\` again.`, ready: false };
+  }
+  if (running) return { app: label, next: `quit ${app.name} ${quitHow()} and open it again. Then ${ask.toLowerCase()}`, ready: false };
+  return open(app)
+    ? { app: label, next: `set up, and opening now. ${ask}`, ready: true }
+    : { app: label, next: `set up. Open ${app.name} and ask: am I cooked?`, ready: false };
+}
+
+async function configureClients(clients: ClientId[]): Promise<Outcome[]> {
+  const outcomes: Outcome[] = [];
   const launch = selfCommand(["mcp"]);
 
   if (clients.includes("desktop")) {
     const dir = claudeDesktopDir();
-    if (!dir) {
-      p.log.warn("Claude Desktop isn't installed. Get it at https://claude.ai/download, then run `amicooked setup` again.");
+    if (!desktopAppsSupported()) {
+      outcomes.push({ app: "Claude Desktop", next: `isn't available on Linux. Use Claude Code instead: ${CLAUDE_CODE_DOWNLOAD}`, ready: false });
+    } else if (!dir) {
+      outcomes.push(await missingApp("Claude Desktop", "Claude Desktop", APPS.claude.download));
     } else {
       try {
-        const state = await closeClaudeDesktop();
-        const result = installClaudeDesktop(dir, launch);
-        if (state === "left_open" && result !== "unchanged") {
-          // Written, but the open app will save its own copy over it when it quits
-          p.log.warn("Claude Desktop is open, so it will undo this when it quits. Quit it, then run `amicooked setup --clients desktop`.");
-        } else {
-          p.log.success(`Claude Desktop: ${result === "unchanged" ? "already set up" : "set up"}`);
-          done.push(state === "closed" && openClaudeDesktop() ? "desktop-reopened" : "desktop");
-        }
+        outcomes.push(
+          await connectDesktopApp(APPS.claude, "Claude Desktop", () => installClaudeDesktop(dir, launch), () => desktopHas(dir, launch))
+        );
       } catch (error) {
         if (!(error instanceof InvalidConfigError)) throw error;
         p.log.warn(`${error.message}\nAdd this to it yourself:\n${manualSnippet(launch)}`);
+        outcomes.push({ app: "Claude Desktop", next: "add the snippet above to its config, then restart it.", ready: false });
       }
     }
   }
 
   if (clients.includes("code")) {
     if (!hasClaudeCode()) {
-      p.log.warn("Claude Code isn't installed, so it was skipped.");
+      outcomes.push(await missingApp("Claude Code", "Claude Code", CLAUDE_CODE_DOWNLOAD));
     } else {
       installClaudeCode(launch);
       installSkill();
-      p.log.success("Claude Code: set up, with the amicooked skill");
-      done.push("code");
+      // Claude Code loads servers when a session starts, so an agent already running needs a new one
+      outcomes.push({ app: "Claude Code", next: "set up. Start a new Claude Code session and ask: am I cooked?", ready: true });
     }
   }
 
   if (clients.includes("chatgpt-desktop")) {
-    if (!hasCodex()) {
-      p.log.warn("The ChatGPT desktop app isn't installed. Get it at https://chatgpt.com/download, then run `amicooked setup` again.");
+    if (!hasCodex() && !desktopAppsSupported()) {
+      outcomes.push({ app: "ChatGPT app", next: `isn't available on Linux. Use Claude Code instead: ${CLAUDE_CODE_DOWNLOAD}`, ready: false });
+    } else if (!hasCodex()) {
+      outcomes.push(await missingApp("ChatGPT app", "the ChatGPT app", APPS.chatgpt.download));
     } else {
       // Runs on this computer like Claude Desktop does; no tunnel or domain involved
-      const result = installCodex(launch);
-      installCodexSkill();
-      p.log.success(`ChatGPT desktop app: ${result === "unchanged" ? "already set up" : "set up"}, with the amicooked skill`);
-      done.push("chatgpt-desktop");
+      outcomes.push(
+        await connectDesktopApp(
+          APPS.chatgpt,
+          "ChatGPT app",
+          () => {
+            installCodex(launch);
+            installCodexSkill();
+          },
+          () => codexHas(launch)
+        )
+      );
     }
   }
 
   if (clients.includes("chatgpt") && !process.env.AMICOOKED_TUNNEL_API) {
-    p.log.warn("ChatGPT on the web isn't available yet. For the ChatGPT desktop app, use `--clients chatgpt-desktop`.");
+    outcomes.push({ app: "ChatGPT on the web", next: "isn't available yet. Use the ChatGPT app instead: `--clients chatgpt-desktop`.", ready: false });
   } else if (clients.includes("chatgpt")) {
     const spin = p.spinner();
     spin.start("Setting up your private ChatGPT connection");
@@ -184,12 +235,40 @@ async function configureClients(clients: ClientId[]): Promise<string[]> {
       const { url, pairingCode } = await installChatGPT();
       spin.stop("ChatGPT: running in the background");
       p.note(chatgptSteps(url, pairingCode), "Connect ChatGPT");
-      done.push("chatgpt");
+      outcomes.push({ app: "ChatGPT on the web", next: "finish connecting with the steps above, then ask: am I cooked?", ready: false });
     } catch (error) {
       spin.stop(`ChatGPT: ${error instanceof Error ? error.message : error}`);
     }
   }
-  return done;
+  return outcomes;
+}
+
+/** True when Claude Desktop's config already starts this exact install. */
+function desktopHas(dir: string, launch: ReturnType<typeof selfCommand>): boolean {
+  try {
+    const config = JSON.parse(fs.readFileSync(path.join(dir, "claude_desktop_config.json"), "utf8"));
+    const entry = { command: launch.command, args: launch.args, ...(launch.env ? { env: launch.env } : {}) };
+    return JSON.stringify(config.mcpServers?.amicooked) === JSON.stringify(entry);
+  } catch {
+    return false;
+  }
+}
+
+/** True when the ChatGPT app's config already starts this exact install, and the skill is in place. */
+function codexHas(launch: ReturnType<typeof selfCommand>): boolean {
+  return codexEntryIs(launch) && fs.existsSync(codexSkillPath()) && fs.readFileSync(codexSkillPath(), "utf8") === SKILL_MD;
+}
+
+/** The end of setup: every app's next step, then one line saying whether they're done. */
+export function finishMessage(outcomes: Outcome[]): { steps: string | null; outro: string } {
+  if (!outcomes.length) {
+    return {
+      steps: null,
+      outro: `Nothing was set up. Get Claude Desktop (${APPS.claude.download}) or the ChatGPT app (${APPS.chatgpt.download}), then run \`amicooked setup\` again.`,
+    };
+  }
+  const steps = outcomes.map((o) => `${o.app}: ${o.next}`).join("\n");
+  return { steps, outro: outcomes.some((o) => o.ready) ? "You're set." : "Almost there. Do the step above." };
 }
 
 async function firstRoast(): Promise<void> {
@@ -228,22 +307,13 @@ export async function setup(options: SetupOptions): Promise<number> {
     }
 
     const detected = { desktop: Boolean(claudeDesktopDir()), code: hasClaudeCode(), "chatgpt-desktop": hasCodex(), chatgpt: false };
-    const done = await configureClients(await chooseClients(options.clients, detected, Boolean(options.yes)));
+    const outcomes = await configureClients(await chooseClients(options.clients, detected, Boolean(options.yes)));
 
     if (options.login !== false) await firstRoast();
 
-    const next = done.includes("desktop-reopened")
-      ? "Claude Desktop is reopening. Ask it: am I cooked?"
-      : done.includes("desktop")
-        ? "Open Claude Desktop and ask: am I cooked?"
-      : done.includes("chatgpt-desktop")
-        ? "Restart the ChatGPT desktop app, then ask: am I cooked?"
-      : done.includes("code")
-        ? "Start Claude Code and ask: am I cooked?"
-        : done.includes("chatgpt")
-          ? "Finish connecting in ChatGPT, then ask: am I cooked?"
-          : "Nothing was set up. Run `amicooked setup` again and pick an app.";
-    p.outro(next);
+    const { steps, outro } = finishMessage(outcomes);
+    if (steps) p.note(steps, "Next");
+    p.outro(outro);
     return 0;
   } catch (error) {
     const code = error instanceof SetupStop ? error.code : 1;
