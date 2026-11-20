@@ -36,7 +36,7 @@ Setup asks for your school, opens a browser window to sign in, and connects the 
 
 The Am I Cooked skill can guide a capable local agent through making a narrated, animated lesson from selected course material. It first asks about your goal, prior knowledge, time budget and mode: **cramming**, **fully cooked** (from the foundations), **chill**, or **bird's-eye**. Shorter modes reduce scope rather than skip necessary reasoning.
 
-Video creation is optional and requires local command/file access, a renderer and narration tools in addition to the Brightspace connection. The main skill loads [the detailed workflow](skill/references/lecture-videos.md) only for video requests. Setup installs that reference alongside the skill; MCP-only clients can retrieve the same guide with `get_lecture_video_guide`. The guide provides instructions, not a rendering service. See [setup, usage and quality checks](docs/lecture-videos.md).
+Video creation is optional and requires local command/file access, a renderer and narration tools in addition to the Brightspace connection. The main skill loads [the detailed workflow](skill/references/lecture-videos.md) only for video requests. Setup installs that reference alongside the skill; MCP-only clients can retrieve the same guide with `get_lecture_video_guide`. The optional `amicooked video` CLI builds provider-independent JSON lessons into locally narrated videos, captions, chapter notes and a study player; it needs local media tools. Try `amicooked video example break-even` to get a complete spec. See [setup, usage and quality checks](docs/lecture-videos.md).
 
 ## Tools
 

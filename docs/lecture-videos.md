@@ -29,18 +29,39 @@ Use an agent with **local command execution and file access**, such as Codex or 
 
 When trying this branch from source, run `npm install`, `npm run build`, then `node dist/cli.js setup --clients chatgpt-desktop --no-login` (or `--clients code` for Claude Code) to refresh the installed skill without starting school login. Restart/reconnect the client so it reloads the skill and MCP instructions. A released install needs a version containing this workflow.
 
-One supported production path is [HyperFrames](https://github.com/heygen-com/hyperframes), which renders editable HTML animations locally. It needs Node.js 22+, Chrome/Chromium, FFmpeg and FFprobe. Install missing system tools for your OS using their official instructions; [FFmpeg downloads](https://ffmpeg.org/download.html) include platform options. Then check:
+The optional builder uses [HyperFrames](https://github.com/heygen-com/hyperframes) **0.9.72**, FFmpeg/FFprobe and Chrome/Chromium. Node.js 22+ and `npx` are required even with Am I Cooked's standalone binary. Install system tools through their official OS instructions, then run:
 
 ```sh
-npx hyperframes --version
-npx hyperframes doctor --json
+npx hyperframes@0.9.72 doctor --json
 ```
 
-Inspect the individual doctor results: it can exit successfully while reporting missing dependencies. Transcription and music generators are optional. For an agent unfamiliar with the renderer, `npx hyperframes skills` installs its production guidance; this is an optional setup action, not part of normal Brightspace setup. Follow the installed CLI help if flags change.
+Inspect individual doctor checks; a zero exit code can still report missing tools. No renderer, model or speech service is installed by normal Am I Cooked setup. The first `npx` renderer download needs internet.
 
-For natural on-device narration, use [Kokoro ONNX](https://github.com/thewh1teagle/kokoro-onnx) with a supported Python environment and its model/voice files. Keep Python packages in a virtual environment; install `kokoro-onnx` and `soundfile` there. HyperFrames also exposes `tts`; inspect `npx hyperframes tts --help` and ensure that command can find the Python environment and models. An existing working local Kokoro script is equally suitable. Start with `am_michael` or the student's preferred available voice. Test math pronunciation before generating a whole lecture.
+For on-device speech, create a Python virtual environment and install `kokoro-onnx` and `soundfile`. Download the model and voice files using the [official Kokoro ONNX instructions](https://github.com/thewh1teagle/kokoro-onnx). Pass those explicit paths when building. On Windows, the venv executable is typically `voice-env\Scripts\python.exe`; on macOS/Linux it is `voice-env/bin/python`. There is no hardcoded home directory or host-specific tool name. Voice availability and Python/runtime compatibility depend on the installed Kokoro version; test a short passage first.
 
-Model/runtime downloads need internet initially. Local synthesis/rendering does not need a speech API key, but the host AI may still send selected material to its provider and its own usage limits apply. If local media tooling is unavailable, deliver a clearly labelled script/storyboard or explain setup; do not silently switch to a paid or hosted renderer.
+Alternatively provide a local audio file for each narration cue. This removes the Python/Kokoro dependency and supports human narration or any chosen speech provider. Am I Cooked does not call that provider. Local synthesis/rendering needs no AI-provider API key; the host AI may still send selected material to its own provider, and its permissions/limits apply.
+
+## Reusable production commands
+
+The model authors plain JSON; reusable scripts handle narration caching, measured timing, visual scenes, captions, checks and export. They do not generate teaching content or choose the student's learning goal. Get an example spec through the CLI (works in npm and standalone distributions):
+
+```sh
+amicooked video example break-even > lesson.json
+# Also available: breadth-first, petri-net.
+amicooked video build lesson.json --out my-lesson \
+  --python /path/to/venv/python --model /path/to/kokoro.onnx --voices /path/to/voices.bin
+amicooked video check my-lesson
+npx hyperframes@0.9.72 preview my-lesson/project --background
+# Inspect the preview, narration and saved snapshots before export.
+amicooked video render my-lesson
+amicooked video serve my-lesson --port 8058
+```
+
+When working from source, use `node dist/cli.js` in place of `amicooked`. Quote paths with spaces and adapt executable paths to the user's OS. In an agent host, save example stdout using the available file tool if shell redirection is unavailable. `video --help` lists the options. Omit speech flags when every cue supplies `audio`; relative audio paths resolve against the input JSON. `--cache` selects a narration cache instead of the default `~/.amicooked/video-cache`.
+
+The [workflow reference](../skill/references/lecture-videos.md#reusable-local-builder) contains the format and component fields. Examples in [examples/video](../examples/video/) cover cumulative KaTeX equations, numerical plots, code highlights, a graph execution trace and computed Petri-net markings. No executable lesson specs, provider SDKs or cloud rendering keys are involved. Small visual components remain editable HTML/SVG/GSAP; custom scenes are appropriate when the topic needs more than these components.
+
+The delivery folder contains `lesson.mp4`, `player.html`, `captions.vtt`, `captions.srt`, `transcript.txt`, `notes.md`, `lesson.json`, `timing.json`, validation reports and `project/` with offline scripts/fonts/media and editable animation scenes. The MP4 includes visible captions. The player adds chapter/replay controls and practice answers. Run the serve command and open **http://127.0.0.1:8058/**; keep the server running. It binds to loopback and supports byte ranges for seeking. A changed spec requires a new output folder; rerendering the same spec preserves the previous MP4 as a timestamped backup.
 
 ## Make the lesson
 
@@ -48,21 +69,7 @@ Model/runtime downloads need internet initially. Local synthesis/rendering does 
 2. **Save the brief.** Record the intent, selected mode, viewing budget, assumed prerequisites, chapters, omissions and source/page map. Use the instructor's notation; label invented example data as illustrative.
 3. **Write for understanding.** Start with a concrete question. Explain quantities and assumptions, why each operation is valid, intermediate results and what the result means. Use analogous practice for assessed work. A shorter lesson covers fewer things; it does not hide the steps needed to follow its chosen example.
 4. **Create narration and meaningful motion.** A spoken substitution should appear as that substitution, not an unexplained final equation. Time reveals and captions from measured narration segments. Hold important results briefly; avoid padded silence, distracting music and unreadably dense screens. Keep playback continuous unless the student wants quiz pauses.
-5. **Preview, check, render.** With HyperFrames, use a new project folder and the following production loop. Adapt scenes to the selected topic; a generic title-card export is not a completed lesson.
-
-```sh
-npx hyperframes init my-lesson --non-interactive
-cd my-lesson
-# The agent writes the source-grounded scenes and adds measured local narration.
-npx hyperframes check --json
-npx hyperframes snapshot --at 1,10,20
-npx hyperframes preview --background
-# After reviewing the preview; the requested video file authorizes export.
-npx hyperframes render --quality delivery --output lesson.mp4
-ffprobe -v error -show_streams -show_format -of json lesson.mp4
-```
-
-Choose snapshot times covering every chapter, a dense calculation, and the ending—not just the example timestamps above. Consult `--help` for preview, render and snapshot options. Review findings even when the overall check passes; fix errors and assess warnings before delivery. An existing local animation workflow can replace HyperFrames; keep the same source, timing and quality requirements.
+5. **Preview, check, render.** Use the production commands above. Review snapshots from every chapter and dense step, plus the ending. The automated checker is a gate, not a teaching-quality score: `ok:false` blocks render even when the checker exits successfully. Render also verifies audio/video tracks, measured duration and a full FFmpeg decode. Keep independent correctness review and actual listening/browser checks in the loop.
 
 ## Quality and delivery
 
@@ -72,9 +79,9 @@ Choose snapshot times covering every chapter, a dense calculation, and the endin
 | Visuals | Inspect every chapter and dense step; check readable notation, intermediate states and alignment with spoken actions. |
 | Media | Inspect the exported tracks, actual duration, decoded frames and last spoken line. Check captions against the current narration. |
 | Listening | Listen to an opening and a math-heavy passage where possible. Audio levels and transcription are supporting checks, not a listening substitute. |
-| Player | Open it in a real browser; play, seek to a chapter, replay, toggle captions and reveal a practice answer if included. |
+| Player | Open it in a real browser; play, seek to a chapter, replay, read captions and reveal a practice answer if included. |
 
-Keep a captioned MP4, transcript, chapter/source notes, a simple study player and editable source together in the chosen course's `Study Videos/<topic>/` folder. A WebVTT caption track works for a local HTML player; retain a sidecar caption file with the MP4. Chapters and answer-reveal controls live in the player, not inside a linear MP4. If serving is necessary, use a loopback server with HTTP byte-range support, for example `npx http-server . -a 127.0.0.1 -p 8057 -c-1` from the lesson folder. Verify seeking to an unbuffered chapter; a basic server can play from the beginning while silently failing to seek. Provide the reopen command. Do not publish private sources or renders automatically.
+Keep a captioned MP4, transcript, chapter/source notes, a simple study player and editable source together in the chosen course's `Study Videos/<topic>/` folder. This builder uses burned-in captions for consistent playback; retain a sidecar caption file with the MP4. Chapters and answer-reveal controls live in the player, not inside a linear MP4. If serving is necessary, use a loopback server with HTTP byte-range support, for example `npx http-server . -a 127.0.0.1 -p 8057 -c-1` from the lesson folder. Verify seeking to an unbuffered chapter; a basic server can play from the beginning while silently failing to seek. Provide the reopen command. Do not publish private sources or renders automatically.
 
 Report the actual runtime, coverage and checks performed, including any listening or browser checks you could not do. A successful export is not proof of teaching quality, and watching to the end is not evidence of mastery. Verify one installment before generating a series.
 
@@ -89,3 +96,15 @@ Ask the agent:
 > Use the Am I Cooked lecture-video workflow and source.md. Make a chill lesson explaining why 38 earned course points means a 76% average so far. I know basic percentages. Aim for roughly three minutes, include the target-grade example and one practice check, and save the MP4 and local player. Use local narration and rendering.
 
 Check the numbers independently, inspect when each result appears, and use the quality table above. This tests local production from a supplied source; it does not test Brightspace authentication, another host's behavior, or learning outcomes. Also try an underspecified request (“make a lecture video”) to check that the agent asks about intent before generating, and a host without command access to check that it explains the limitation rather than claiming a render.
+
+## Compatibility and validation boundaries
+
+| Surface | What is portable | What still needs verification |
+|---|---|---|
+| ChatGPT, Claude, Gemini and other models | The Markdown workflow and JSON spec have no provider dependency. | The exact app must expose file access and command execution for local production. MCP alone is insufficient. |
+| Ordinary web/mobile chats | Read the guide and prepare a script/spec when supported. | Running a local CLI or reaching this computer's loopback player is not implied. Free-plan support is not claimed. |
+| macOS, Linux, Windows | Node APIs, argument-array subprocesses, relative audio paths and configurable executables. | Install each OS's media dependencies. Actual export evidence currently comes from macOS; CI unit/build checks are separate. |
+
+The three original illustrative demos exercise all visual types and the review arc. They are short production tests rather than evidence of learning outcomes, real Brightspace authentication or tested behavior inside every named AI app. Narration captions are segment-timed, not forced word alignment. Initial downloads need network access; cached assets and models support local production thereafter.
+
+The generated renderer project uses one shared timeline with timed chapter sections. HyperFrames currently reports organizational warnings recommending sub-compositions; these are reviewed warnings, not hidden failures. This layout avoids a preview/export mismatch observed with nested template styles and timelines in the tested renderer. Inspect decoded exports as well as preview snapshots.

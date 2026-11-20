@@ -1,4 +1,6 @@
 node_modules/
+src/video/assets.ts
+src/video/examples.ts
 dist/
 build/
 coverage/
