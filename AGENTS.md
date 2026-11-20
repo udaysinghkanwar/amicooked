@@ -17,7 +17,8 @@ A local MCP server that lets students' AI apps read their D2L Brightspace course
 | `src/server.ts` | Registers tools on the MCP server |
 | `src/clients/` | Writers for Claude Desktop, Claude Code and ChatGPT |
 | `src/remote/` | ChatGPT: OAuth store, HTTP server, tunnel, background service |
-| `skill/SKILL.md` | Single source for the skill and server instructions |
+| `skill/` | Small skill entry point and on-demand references |
+| `src/features.ts`, `src/cli/update.ts` | Feature guides, skill refresh and release updates |
 | `install/` | One-line installers (copied into `site/`) |
 | `site/` | Landing page (Vercel, root directory `site`) |
 | `worker/` | Cloudflare Worker that provisions per-student tunnels |
@@ -27,5 +28,5 @@ A local MCP server that lets students' AI apps read their D2L Brightspace course
 - Run `npm test` before committing; keep commits small with short messages.
 - Never print tokens, cookies or pairing codes to logs. `mcp` mode must keep stdout clean.
 - Tools are read-only. Tool errors are returned as results so the AI can relay them.
-- After editing `skill/SKILL.md` or `install/`, run `npm run sync:skill`.
+- After editing `skill/` or `install/`, run `npm run sync:skill`.
 - Release: `npm version patch` then `git push --follow-tags`; CI builds binaries, makes the GitHub release, then publishes to npm. See RELEASING.md.

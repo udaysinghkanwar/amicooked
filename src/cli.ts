@@ -8,6 +8,8 @@ import { setup } from "./cli/setup.js";
 import { serverInstructions } from "./instructions.js";
 import { createServer } from "./server.js";
 import { VERSION } from "./version.js";
+import { updateCommand } from "./cli/update.js";
+import { featuresCommand, refreshSkills } from "./features.js";
 
 const HELP = `Am I Cooked ${VERSION}: ask your AI about your D2L Brightspace courses.
 
@@ -17,8 +19,14 @@ Usage: amicooked <command>
                --school <id|url>       e.g. mcmaster, or the URL you log in through
                --clients <list>        desktop,code,chatgpt-desktop
                --yes                   accept the detected apps without asking
+               --weekly-updates        request a weekly update skill (AI app schedules it)
+               --no-weekly-updates     decline/remove the local update skill
+               --skill-dir <folder>    install full skill for another local AI client
+               --clients none          skip automatic client configuration
   login        Sign in to your school again
   status       Show what's set up (--json for machines)
+  update       Update the app and installed skills (--check to only check; --json)
+  features     List available features; features <id> reads a guide (--json)
   uninstall    Disconnect your AI apps (--purge also deletes your login and settings)
   mcp          Run the MCP server over stdio (AI apps run this for you)
 `;
@@ -48,6 +56,10 @@ async function main(argv: string[]): Promise<number> {
       port: { type: "string" },
       help: { type: "boolean", short: "h" },
       version: { type: "boolean", short: "v" },
+      check: { type: "boolean" },
+      "weekly-updates": { type: "boolean" },
+      "no-weekly-updates": { type: "boolean" },
+      "skill-dir": { type: "string" },
     },
   });
 
@@ -59,7 +71,16 @@ async function main(argv: string[]): Promise<number> {
     case "mcp":
       return runMcp();
     case "setup":
-      return setup({ school: values.school, clients: values.clients, yes: values.yes, login: !values["no-login"] });
+      if (values["weekly-updates"] && values["no-weekly-updates"]) throw new Error("Choose --weekly-updates or --no-weekly-updates, not both.");
+      return setup({ school: values.school, clients: values.clients, yes: values.yes, login: !values["no-login"], skillDir: values["skill-dir"], weeklyUpdates: values["weekly-updates"] ? true : values["no-weekly-updates"] ? false : undefined });
+    case "update":
+      return updateCommand({ check: values.check, json: values.json });
+    case "features":
+      return featuresCommand(positionals[1], values.json);
+    case "refresh-skills":
+      // Used by the new release after an update. No login, client config changes or app restarts.
+      console.log(JSON.stringify(refreshSkills()));
+      return 0;
     case "login":
       return loginCommand();
     case "pair":
