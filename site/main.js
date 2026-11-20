@@ -43,6 +43,11 @@ function legacyCopy(text) {
 async function copy(text) {
   try { await navigator.clipboard.writeText(text); return true; } catch { return legacyCopy(text); }
 }
+// Anonymous click counts (see site/api/e.js): no cookies, nothing about the visitor
+function count(event) {
+  try { navigator.sendBeacon?.("/api/e", JSON.stringify(event)); } catch {}
+}
+const COPY_TABS = { "cmd-mac": "mac", "cmd-win": "win", "cmd-npm": "npm", "agent-prompt": "agent" };
 // ---- The agent prompt: one line until asked for in full ----
 
 const promptToggle = document.getElementById("prompt-toggle");
@@ -50,12 +55,14 @@ promptToggle?.addEventListener("click", () => {
   const open = document.querySelector(".cmd-prompt").classList.toggle("is-open");
   promptToggle.setAttribute("aria-expanded", open);
   promptToggle.textContent = open ? "Show less" : "Show full prompt";
+  if (open) count({ e: "prompt" });
 });
 
 document.querySelectorAll("[data-copy]").forEach((btn) => {
   let timer;
   btn.addEventListener("click", async () => {
     const src = document.getElementById(btn.dataset.copy);
+    count({ e: "copy", tab: COPY_TABS[btn.dataset.copy] });
     const ok = await copy(src.textContent.trim());
     if (!ok) getSelection().selectAllChildren(src);
     btn.classList.toggle("is-done", ok);

@@ -16,6 +16,7 @@ import { getConfig, writeConfig, type School } from "../config.js";
 import { listCourses } from "../courseResolver.js";
 import { detectSchool, findPreset, PRESETS } from "../schools.js";
 import { amICooked } from "../tools/cooked.js";
+import { reportSetup } from "../telemetry.js";
 
 /**
  * Every app listed here starts Am I Cooked on the student's computer. `chatgpt` (ChatGPT on the web, over a
@@ -122,6 +123,8 @@ export interface Outcome {
   next: string;
   /** True when the student can ask straight away. */
   ready: boolean;
+  /** True when our server is in the app's config (it may still need a restart). Only these count as a setup. */
+  connected: boolean;
 }
 
 const quitHow = () => (process.platform === "darwin" ? "with Cmd+Q" : "fully, from its icon by the clock if it has one");
@@ -131,7 +134,7 @@ async function missingApp(app: string, name: string, url: string): Promise<Outco
     const ok = await p.confirm({ message: `${name} isn't installed. Open its download page?` });
     if (ok === true) openUrl(url);
   }
-  return { app, next: `install ${name} from ${url}, then run \`amicooked setup\` again.`, ready: false };
+  return { app, next: `install ${name} from ${url}, then run \`amicooked setup\` again.`, ready: false, connected: false };
 }
 
 /**
@@ -142,10 +145,10 @@ async function connectDesktopApp(app: DesktopApp, label: string, write: () => vo
   const ask = "Ask it: am I cooked?";
   if (current()) {
     // Already set up. Make sure it's open; no restart needed
-    if (isRunning(app)) return { app: label, next: `already set up. ${ask}`, ready: true };
+    if (isRunning(app)) return { app: label, next: `already set up. ${ask}`, ready: true, connected: true };
     return open(app)
-      ? { app: label, next: `already set up, and opening now. ${ask}`, ready: true }
-      : { app: label, next: `already set up. Open ${app.name} and ask: am I cooked?`, ready: false };
+      ? { app: label, next: `already set up, and opening now. ${ask}`, ready: true, connected: true }
+      : { app: label, next: `already set up. Open ${app.name} and ask: am I cooked?`, ready: false, connected: true };
   }
 
   let running = isRunning(app);
@@ -162,13 +165,13 @@ async function connectDesktopApp(app: DesktopApp, label: string, write: () => vo
     // Quitting it would save its old config over ours, so a background helper waits for the quit, writes
     // the config again and reopens the app
     return scheduleAfterQuit()
-      ? { app: label, next: `quit ${app.name} ${quitHow()}. Am I Cooked finishes setting it up and reopens it. Then ask it: am I cooked?`, ready: false }
-      : { app: label, next: `quit ${app.name} ${quitHow()}, then run \`amicooked setup\` again.`, ready: false };
+      ? { app: label, next: `quit ${app.name} ${quitHow()}. Am I Cooked finishes setting it up and reopens it. Then ask it: am I cooked?`, ready: false, connected: true }
+      : { app: label, next: `quit ${app.name} ${quitHow()}, then run \`amicooked setup\` again.`, ready: false, connected: false };
   }
-  if (running) return { app: label, next: `quit ${app.name} ${quitHow()} and open it again. Then ask it: am I cooked?`, ready: false };
+  if (running) return { app: label, next: `quit ${app.name} ${quitHow()} and open it again. Then ask it: am I cooked?`, ready: false, connected: true };
   return open(app)
-    ? { app: label, next: `set up, and opening now. ${ask}`, ready: true }
-    : { app: label, next: `set up. Open ${app.name} and ask: am I cooked?`, ready: false };
+    ? { app: label, next: `set up, and opening now. ${ask}`, ready: true, connected: true }
+    : { app: label, next: `set up. Open ${app.name} and ask: am I cooked?`, ready: false, connected: true };
 }
 
 async function configureClients(clients: ClientId[]): Promise<Outcome[]> {
@@ -178,7 +181,7 @@ async function configureClients(clients: ClientId[]): Promise<Outcome[]> {
   if (clients.includes("desktop")) {
     const dir = claudeDesktopDir();
     if (!desktopAppsSupported()) {
-      outcomes.push({ app: "Claude Desktop", next: `isn't available on Linux. Use Claude Code instead: ${CLAUDE_CODE_DOWNLOAD}`, ready: false });
+      outcomes.push({ app: "Claude Desktop", next: `isn't available on Linux. Use Claude Code instead: ${CLAUDE_CODE_DOWNLOAD}`, ready: false, connected: false });
     } else if (!dir) {
       outcomes.push(await missingApp("Claude Desktop", "Claude Desktop", APPS.claude.download));
     } else {
@@ -189,7 +192,7 @@ async function configureClients(clients: ClientId[]): Promise<Outcome[]> {
       } catch (error) {
         if (!(error instanceof InvalidConfigError)) throw error;
         p.log.warn(`${error.message}\nAdd this to it yourself:\n${manualSnippet(launch)}`);
-        outcomes.push({ app: "Claude Desktop", next: "add the snippet above to its config, then restart it.", ready: false });
+        outcomes.push({ app: "Claude Desktop", next: "add the snippet above to its config, then restart it.", ready: false, connected: false });
       }
     }
   }
@@ -201,13 +204,13 @@ async function configureClients(clients: ClientId[]): Promise<Outcome[]> {
       installClaudeCode(launch);
       installSkill();
       // Claude Code loads servers when a session starts, so an agent already running needs a new one
-      outcomes.push({ app: "Claude Code", next: "set up. Start a new Claude Code session and ask: am I cooked?", ready: true });
+      outcomes.push({ app: "Claude Code", next: "set up. Start a new Claude Code session and ask: am I cooked?", ready: true, connected: true });
     }
   }
 
   if (clients.includes("chatgpt-desktop")) {
     if (!hasCodex() && !desktopAppsSupported()) {
-      outcomes.push({ app: "ChatGPT app", next: `isn't available on Linux. Use Claude Code instead: ${CLAUDE_CODE_DOWNLOAD}`, ready: false });
+      outcomes.push({ app: "ChatGPT app", next: `isn't available on Linux. Use Claude Code instead: ${CLAUDE_CODE_DOWNLOAD}`, ready: false, connected: false });
     } else if (!hasCodex()) {
       outcomes.push(await missingApp("ChatGPT app", "the ChatGPT app", APPS.chatgpt.download));
     } else {
@@ -227,7 +230,7 @@ async function configureClients(clients: ClientId[]): Promise<Outcome[]> {
   }
 
   if (clients.includes("chatgpt") && !process.env.AMICOOKED_TUNNEL_API) {
-    outcomes.push({ app: "ChatGPT on the web", next: "isn't available yet. Use the ChatGPT app instead: `--clients chatgpt-desktop`.", ready: false });
+    outcomes.push({ app: "ChatGPT on the web", next: "isn't available yet. Use the ChatGPT app instead: `--clients chatgpt-desktop`.", ready: false, connected: false });
   } else if (clients.includes("chatgpt")) {
     const spin = p.spinner();
     spin.start("Setting up your private ChatGPT connection");
@@ -235,7 +238,7 @@ async function configureClients(clients: ClientId[]): Promise<Outcome[]> {
       const { url, pairingCode } = await installChatGPT();
       spin.stop("ChatGPT: running in the background");
       p.note(chatgptSteps(url, pairingCode), "Connect ChatGPT");
-      outcomes.push({ app: "ChatGPT on the web", next: "finish connecting with the steps above, then ask: am I cooked?", ready: false });
+      outcomes.push({ app: "ChatGPT on the web", next: "finish connecting with the steps above, then ask: am I cooked?", ready: false, connected: true });
     } catch (error) {
       spin.stop(`ChatGPT: ${error instanceof Error ? error.message : error}`);
     }
@@ -308,12 +311,15 @@ export async function setup(options: SetupOptions): Promise<number> {
 
     const detected = { desktop: Boolean(claudeDesktopDir()), code: hasClaudeCode(), "chatgpt-desktop": hasCodex(), chatgpt: false };
     const outcomes = await configureClients(await chooseClients(options.clients, detected, Boolean(options.yes)));
+    // Count the setup only if an app was connected. Started now so it runs alongside the first report
+    const reported = outcomes.some((o) => o.connected) ? reportSetup(school.id) : undefined;
 
     if (options.login !== false) await firstRoast();
 
     const { steps, outro } = finishMessage(outcomes);
     if (steps) p.note(steps, "Next");
     p.outro(outro);
+    await reported;
     return 0;
   } catch (error) {
     const code = error instanceof SetupStop ? error.code : 1;

@@ -1,6 +1,6 @@
 {
   "name": "amicooked",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Ask your AI if you're cooked. A local MCP server for D2L Brightspace: grades, deadlines and announcements in Claude and ChatGPT.",
   "type": "module",
   "bin": {
@@ -22,7 +22,8 @@
     "build:bin": "node scripts/sync-skill.mjs && node scripts/build-video-assets.mjs && node scripts/build-binaries.mjs",
     "preversion": "npm test",
     "version": "node scripts/sync-version.mjs && git add src/version.ts",
-    "pretest": "node scripts/build-video-assets.mjs"
+    "pretest": "node scripts/build-video-assets.mjs",
+    "stats": "node --env-file-if-exists=.env.local scripts/stats.mjs"
   },
   "keywords": [
     "mcp",

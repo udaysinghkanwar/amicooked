@@ -1,0 +1,51 @@
+# Every Monday, appends one line of numbers (installs, npm downloads, setups, repo traffic) to stats.csv on
+# the `stats` branch, so history builds up. GitHub only keeps repo traffic for 14 days.
+# Secrets: KV_REST_API_URL and KV_REST_API_READ_ONLY_TOKEN (from the Upstash integration on Vercel).
+# Optional STATS_TOKEN: a token with push access, needed for repo traffic.
+name: Stats
+
+on:
+  schedule:
+    - cron: "0 13 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Two runs at once would both push to the stats branch, and the second push would fail
+concurrency:
+  group: stats
+  cancel-in-progress: false
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check out the stats branch
+        run: |
+          if git fetch --depth=1 origin stats; then
+            git worktree add -B stats stats-branch FETCH_HEAD
+          else
+            git worktree add --orphan -b stats stats-branch
+          fi
+
+      - name: Append this week's numbers
+        env:
+          GITHUB_TOKEN: ${{ secrets.STATS_TOKEN || github.token }}
+          KV_REST_API_URL: ${{ secrets.KV_REST_API_URL }}
+          KV_REST_API_READ_ONLY_TOKEN: ${{ secrets.KV_REST_API_READ_ONLY_TOKEN }}
+        run: node scripts/stats.mjs --csv stats-branch/stats.csv
+
+      - name: Commit
+        working-directory: stats-branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add stats.csv
+          git commit -m "stats: $(date -u +%F)"
+          git push origin stats
