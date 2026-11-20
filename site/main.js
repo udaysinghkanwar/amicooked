@@ -43,6 +43,15 @@ function legacyCopy(text) {
 async function copy(text) {
   try { await navigator.clipboard.writeText(text); return true; } catch { return legacyCopy(text); }
 }
+// ---- The agent prompt: one line until asked for in full ----
+
+const promptToggle = document.getElementById("prompt-toggle");
+promptToggle?.addEventListener("click", () => {
+  const open = document.querySelector(".cmd-prompt").classList.toggle("is-open");
+  promptToggle.setAttribute("aria-expanded", open);
+  promptToggle.textContent = open ? "Show less" : "Show full prompt";
+});
+
 document.querySelectorAll("[data-copy]").forEach((btn) => {
   let timer;
   btn.addEventListener("click", async () => {

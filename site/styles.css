@@ -125,6 +125,10 @@ h1 {
 .tab-panel { display: flex; flex-direction: column; gap: 10px; width: 100%; }
 .tab-panel[hidden] { display: none; }
 .panel-hint { font-size: 0.8125rem; color: var(--muted); text-align: center; }
+/* The agent prompt shows one line like the commands; the full text is a click away (copy always takes all of it) */
+.js .cmd-prompt:not(.is-open) code { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.text-button { appearance: none; padding: 0; border: 0; background: none; cursor: pointer; font: inherit; color: var(--soft); text-decoration: underline; text-decoration-color: var(--faint); text-underline-offset: 0.2em; }
+.text-button:hover { color: var(--ink); text-decoration-color: var(--ink); }
 
 .segmented { display: inline-flex; padding: 3px; border-radius: 999px; background: var(--raised); border: 1px solid var(--rule); }
 .segmented button {
