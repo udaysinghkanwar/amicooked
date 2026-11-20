@@ -1,6 +1,6 @@
 ---
 name: amicooked
-description: Use when a student asks about their D2L Brightspace courses, grades, deadlines, assignments, announcements or course files, asks "am I cooked?", or wants to set up Am I Cooked.
+description: Use when a student asks about their D2L Brightspace courses, grades, deadlines, assignments, announcements or course files, wants a source-grounded lecture video, asks "am I cooked?", or wants to set up Am I Cooked.
 ---
 
 # Am I Cooked
@@ -59,6 +59,14 @@ Use `summary.heatLabel` from `am_i_cooked` to set the tone. Be playful, never me
 4. `late_window_open` means a missed assignment can still be submitted: say so first, it's the easiest win.
 5. If `partial_data` appears, mention that some of a course couldn't be loaded.
 6. For grades under 60%, suggest office hours, the TA, or an academic advisor.
+
+## Lecture videos
+
+When a student requests a lecture or study video, first read [the lecture-video workflow](references/lecture-videos.md). If the reference is not accessible as a local file, call `get_lecture_video_guide` to retrieve the same bundled instructions. Load it only for video requests.
+
+Before scripting or rendering, ask about missing details: lecture/topic, learning goal, prior knowledge, mode (**cramming**, **fully cooked**, **chill**, or **bird's-eye**) and viewing time. Reuse answers already supplied; if asked to choose, state assumptions and proceed. The guide supplies the mode definitions, teaching standards, setup and delivery checks.
+
+The guide tool returns instructions, not media. Rendering requires a host with local command/file access and suitable media tools. If unavailable, explain what is missing and offer a source-linked script/storyboard or setup help.
 
 ## Integrity
 

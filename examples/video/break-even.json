@@ -1,0 +1,324 @@
+{
+  "version": 1,
+  "title": "When does a workshop break even?",
+  "goal": "Build a contribution-margin equation, read its graph, and solve a changed example.",
+  "mode": "chill",
+  "sources": [
+    {
+      "id": "demo",
+      "title": "Original illustrative example",
+      "location": "Authored demo; not a real course, assessment or financial forecast."
+    }
+  ],
+  "scenes": [
+    {
+      "id": "concept",
+      "title": "Start with one workshop",
+      "kind": "concept",
+      "sources": [
+        "demo"
+      ],
+      "cues": [
+        {
+          "id": "c1",
+          "text": "You are running a workshop. Each ticket sells for thirty dollars, but that is not thirty dollars of profit."
+        },
+        {
+          "id": "c2",
+          "text": "The room costs two hundred forty dollars regardless of attendance. These are fixed costs: they do not change with ticket count."
+        },
+        {
+          "id": "c3",
+          "text": "Materials cost ten dollars per attendee. These variable costs increase whenever one more ticket is sold."
+        },
+        {
+          "id": "c4",
+          "text": "Our question is simple: how many tickets cover both the room and the materials, before there is any profit?"
+        }
+      ],
+      "visual": {
+        "type": "cards",
+        "steps": [
+          {
+            "cue": "c1",
+            "title": "Ticket price: $30",
+            "body": "Revenue per ticket, before paying any costs."
+          },
+          {
+            "cue": "c2",
+            "title": "Fixed cost: $240",
+            "body": "The room costs the same at zero, six or twelve attendees."
+          },
+          {
+            "cue": "c3",
+            "title": "Variable cost: $10 per attendee",
+            "body": "More tickets also mean more materials."
+          },
+          {
+            "cue": "c4",
+            "title": "Goal: cover all costs",
+            "body": "Break-even means profit is zero, not revenue is zero."
+          }
+        ]
+      }
+    },
+    {
+      "id": "example",
+      "title": "Let each ticket pay toward the room",
+      "kind": "example",
+      "sources": [
+        "demo"
+      ],
+      "cues": [
+        {
+          "id": "c1",
+          "text": "Start with the price minus the variable cost. Thirty minus ten leaves twenty dollars per ticket to cover the fixed room cost."
+        },
+        {
+          "id": "c2",
+          "text": "Let q mean the number of tickets sold. Twenty dollars times q tickets must equal the two hundred forty dollar room cost."
+        },
+        {
+          "id": "c3",
+          "text": "Divide both sides by twenty. We need twelve tickets. At that point the workshop covers its costs, with zero profit."
+        }
+      ],
+      "visual": {
+        "type": "equations",
+        "steps": [
+          {
+            "cue": "c1",
+            "tex": "30-10=20",
+            "note": "Contribution per ticket: dollars left after materials."
+          },
+          {
+            "cue": "c2",
+            "tex": "20q=240",
+            "note": "q is the number of tickets, not a dollar amount."
+          },
+          {
+            "cue": "c3",
+            "tex": "q=240/20=12",
+            "note": "Twelve tickets cover the fixed cost."
+          }
+        ]
+      }
+    },
+    {
+      "id": "graph",
+      "title": "See the same calculation on a graph",
+      "kind": "example",
+      "sources": [
+        "demo"
+      ],
+      "cues": [
+        {
+          "id": "c1",
+          "text": "Now plot money against ticket count. The blue revenue line starts at zero and rises thirty dollars per ticket."
+        },
+        {
+          "id": "c2",
+          "text": "The green total cost line starts at two hundred forty dollars, then rises ten dollars per ticket for materials."
+        },
+        {
+          "id": "c3",
+          "text": "The lines meet at twelve tickets and three hundred sixty dollars. Revenue equals total cost, exactly as the equation predicted."
+        },
+        {
+          "id": "c4",
+          "text": "Beyond twelve tickets, revenue sits above cost. The vertical difference is profit, under these simplified assumptions."
+        }
+      ],
+      "visual": {
+        "type": "plot",
+        "xLabel": "Tickets sold",
+        "yLabel": "Dollars",
+        "series": [
+          {
+            "name": "Revenue",
+            "cue": "c1",
+            "points": [
+              [
+                0,
+                0
+              ],
+              [
+                6,
+                180
+              ],
+              [
+                12,
+                360
+              ],
+              [
+                24,
+                720
+              ]
+            ]
+          },
+          {
+            "name": "Total cost",
+            "cue": "c2",
+            "points": [
+              [
+                0,
+                240
+              ],
+              [
+                6,
+                300
+              ],
+              [
+                12,
+                360
+              ],
+              [
+                24,
+                480
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "mistake",
+      "title": "The mistake: treating sales as profit",
+      "kind": "mistake",
+      "sources": [
+        "demo"
+      ],
+      "cues": [
+        {
+          "id": "c1",
+          "text": "A common mistake is to divide the room cost by the ticket price. That ignores the materials you buy for each attendee."
+        },
+        {
+          "id": "c2",
+          "text": "Use the contribution per ticket in the denominator. Each ticket first pays its variable cost; only the remainder covers fixed costs."
+        },
+        {
+          "id": "c3",
+          "text": "This model assumes fixed prices and costs and enough room for the attendees. A real decision needs those assumptions checked."
+        }
+      ],
+      "visual": {
+        "type": "cards",
+        "steps": [
+          {
+            "cue": "c1",
+            "title": "Do not use 240 \u00f7 30",
+            "body": "A ticket also has to pay for $10 of materials."
+          },
+          {
+            "cue": "c2",
+            "title": "Use 240 \u00f7 (30 \u2212 10)",
+            "body": "Contribution is what remains to cover the room."
+          },
+          {
+            "cue": "c3",
+            "title": "Check the assumptions",
+            "body": "Capacity, discounts and changing costs can alter the model."
+          }
+        ]
+      }
+    },
+    {
+      "id": "practice",
+      "title": "Try a changed workshop",
+      "kind": "practice",
+      "sources": [
+        "demo"
+      ],
+      "cues": [
+        {
+          "id": "c1",
+          "text": "Try this version. Tickets cost thirty five dollars, materials fifteen per attendee, and the room three hundred dollars. How many tickets break even?"
+        },
+        {
+          "id": "c2",
+          "text": "First subtract the variable cost from the price. Thirty five minus fifteen still leaves twenty dollars per ticket."
+        },
+        {
+          "id": "c3",
+          "text": "Multiply twenty by the unknown ticket count and set it equal to the new fixed cost: three hundred dollars."
+        },
+        {
+          "id": "c4",
+          "text": "Divide three hundred by twenty. Fifteen tickets are needed. We changed the inputs, but used exactly the same reasoning."
+        }
+      ],
+      "visual": {
+        "type": "equations",
+        "steps": [
+          {
+            "cue": "c1",
+            "tex": "P=35,\\quad V=15,\\quad F=300",
+            "note": "Price, variable cost and fixed cost are the givens."
+          },
+          {
+            "cue": "c2",
+            "tex": "P-V=35-15=20",
+            "note": "Contribution is twenty dollars per ticket."
+          },
+          {
+            "cue": "c3",
+            "tex": "20q=300",
+            "note": "Total contribution must cover the fixed cost."
+          },
+          {
+            "cue": "c4",
+            "tex": "q=300/20=15",
+            "note": "Fifteen tickets break even."
+          }
+        ]
+      },
+      "check": {
+        "question": "Why is the ticket price alone the wrong denominator?",
+        "answer": "Each ticket also incurs variable costs. Use price minus variable cost: the contribution toward fixed costs."
+      }
+    },
+    {
+      "id": "recap",
+      "title": "A method you can reuse",
+      "kind": "recap",
+      "sources": [
+        "demo"
+      ],
+      "cues": [
+        {
+          "id": "c1",
+          "text": "Separate fixed costs from costs that grow with quantity. That tells you what each sale actually contributes."
+        },
+        {
+          "id": "c2",
+          "text": "Set total contribution equal to fixed cost, then solve for quantity. Use the graph to check what equality means."
+        },
+        {
+          "id": "c3",
+          "text": "Interpret the result in context. Break-even covers costs; it does not promise demand, capacity, or a successful event."
+        }
+      ],
+      "visual": {
+        "type": "cards",
+        "steps": [
+          {
+            "cue": "c1",
+            "title": "1. Find contribution",
+            "body": "Price minus variable cost per unit."
+          },
+          {
+            "cue": "c2",
+            "title": "2. Cover fixed costs",
+            "body": "Quantity \u00d7 contribution = fixed cost."
+          },
+          {
+            "cue": "c3",
+            "title": "3. Interpret and check",
+            "body": "Confirm units and assumptions before using the result."
+          }
+        ]
+      }
+    }
+  ]
+}

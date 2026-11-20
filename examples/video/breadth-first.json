@@ -1,0 +1,411 @@
+{
+  "version": 1,
+  "title": "Trace breadth-first search without guessing",
+  "goal": "Use a queue and a seen set to explain a small graph traversal and avoid duplicate work.",
+  "mode": "chill",
+  "sources": [
+    {
+      "id": "demo",
+      "title": "Original illustrative example",
+      "location": "Authored demo; not a real course, assessment or financial forecast."
+    }
+  ],
+  "scenes": [
+    {
+      "id": "concept",
+      "title": "Explore one layer at a time",
+      "kind": "concept",
+      "sources": [
+        "demo"
+      ],
+      "cues": [
+        {
+          "id": "c1",
+          "text": "Imagine finding the fewest links from A to every other node in an unweighted graph. Breadth first search explores nearby nodes before farther ones."
+        },
+        {
+          "id": "c2",
+          "text": "A queue gives first in, first out behavior. A newly discovered node waits behind the nodes already in that queue."
+        },
+        {
+          "id": "c3",
+          "text": "A seen set records discoveries. We mark a node when we enqueue it, so another path cannot add the same node again."
+        }
+      ],
+      "visual": {
+        "type": "cards",
+        "steps": [
+          {
+            "cue": "c1",
+            "title": "Explore by distance",
+            "body": "Finish the nearer layer before the next one."
+          },
+          {
+            "cue": "c2",
+            "title": "Use a queue",
+            "body": "First discovered, first processed."
+          },
+          {
+            "cue": "c3",
+            "title": "Mark on enqueue",
+            "body": "Record a discovery immediately to prevent duplicate work."
+          }
+        ]
+      }
+    },
+    {
+      "id": "graph",
+      "title": "Follow one concrete discovery sequence",
+      "kind": "example",
+      "sources": [
+        "demo"
+      ],
+      "cues": [
+        {
+          "id": "c1",
+          "text": "Start with A in the queue and in the seen set. In this example A lists B before C in its neighbor list."
+        },
+        {
+          "id": "c2",
+          "text": "Remove A and discover B. Mark B as seen and append it to the queue. B is one edge away from A."
+        },
+        {
+          "id": "c3",
+          "text": "Then discover C from A and append C after B. The queue is now B followed by C; both are in the first layer."
+        },
+        {
+          "id": "c4",
+          "text": "Next remove B and discover D. Append D behind C, so C will be processed before the second layer node D."
+        }
+      ],
+      "visual": {
+        "type": "graph",
+        "nodes": [
+          {
+            "id": "a",
+            "label": "A",
+            "x": 12,
+            "y": 45
+          },
+          {
+            "id": "b",
+            "label": "B",
+            "x": 44,
+            "y": 20
+          },
+          {
+            "id": "c",
+            "label": "C",
+            "x": 44,
+            "y": 70
+          },
+          {
+            "id": "d",
+            "label": "D",
+            "x": 82,
+            "y": 45
+          }
+        ],
+        "edges": [
+          {
+            "id": "ab",
+            "from": "a",
+            "to": "b"
+          },
+          {
+            "id": "ac",
+            "from": "a",
+            "to": "c"
+          },
+          {
+            "id": "bd",
+            "from": "b",
+            "to": "d"
+          },
+          {
+            "id": "cd",
+            "from": "c",
+            "to": "d"
+          }
+        ],
+        "steps": [
+          {
+            "cue": "c1",
+            "node": "a",
+            "note": "Queue [A] \u00b7 seen {A}"
+          },
+          {
+            "cue": "c2",
+            "node": "b",
+            "note": "After discovering B: queue [B]",
+            "edge": "ab"
+          },
+          {
+            "cue": "c3",
+            "node": "c",
+            "note": "After discovering C: queue [B, C]",
+            "edge": "ac"
+          },
+          {
+            "cue": "c4",
+            "node": "d",
+            "note": "After processing B: queue [C, D]",
+            "edge": "bd"
+          }
+        ]
+      }
+    },
+    {
+      "id": "code",
+      "title": "Connect the picture to the code",
+      "kind": "example",
+      "sources": [
+        "demo"
+      ],
+      "cues": [
+        {
+          "id": "c1",
+          "text": "The left removal operation takes the oldest queued node. This is the line that gives the traversal its breadth first order."
+        },
+        {
+          "id": "c2",
+          "text": "For each outgoing neighbor, test whether it is absent from seen. When C later reaches D, this test will be false."
+        },
+        {
+          "id": "c3",
+          "text": "Mark a new neighbor before appending it. Otherwise, two nodes in the current layer could both schedule the same future node."
+        },
+        {
+          "id": "c4",
+          "text": "Appending places new work behind existing work. The loop continues until the queue is empty; no recursive call is needed."
+        }
+      ],
+      "visual": {
+        "type": "code",
+        "lines": [
+          "from collections import deque",
+          "queue = deque([\"A\"])",
+          "seen = {\"A\"}",
+          "while queue:",
+          "    node = queue.popleft()",
+          "    for nxt in graph[node]:",
+          "        if nxt not in seen:",
+          "            seen.add(nxt)",
+          "            queue.append(nxt)"
+        ],
+        "steps": [
+          {
+            "cue": "c1",
+            "line": 5,
+            "note": "Remove from the front: oldest queued node first."
+          },
+          {
+            "cue": "c2",
+            "line": 7,
+            "note": "D is skipped when another path has already discovered it."
+          },
+          {
+            "cue": "c3",
+            "line": 8,
+            "note": "Mark the discovery before scheduling it."
+          },
+          {
+            "cue": "c4",
+            "line": 9,
+            "note": "Append at the back; preserve the layer order."
+          }
+        ]
+      }
+    },
+    {
+      "id": "mistake",
+      "title": "Three details that change the result",
+      "kind": "mistake",
+      "sources": [
+        "demo"
+      ],
+      "cues": [
+        {
+          "id": "c1",
+          "text": "If we mark only when removing a node, duplicate entries can accumulate. Marking on enqueue avoids that unnecessary work."
+        },
+        {
+          "id": "c2",
+          "text": "If we remove from the back instead, we are using a stack. That changes the strategy and loses the usual breadth first distance guarantee."
+        },
+        {
+          "id": "c3",
+          "text": "The exact order within one layer depends on neighbor order. Shortest path distances still agree for this unweighted graph."
+        }
+      ],
+      "visual": {
+        "type": "cards",
+        "steps": [
+          {
+            "cue": "c1",
+            "title": "Seen means discovered",
+            "body": "Do not wait until processing to record it."
+          },
+          {
+            "cue": "c2",
+            "title": "Queue is not a stack",
+            "body": "Remove from the front, not the back."
+          },
+          {
+            "cue": "c3",
+            "title": "Neighbor order matters",
+            "body": "B before C is an input choice, not a universal rule."
+          }
+        ]
+      }
+    },
+    {
+      "id": "practice",
+      "title": "What if A lists C before B?",
+      "kind": "practice",
+      "sources": [
+        "demo"
+      ],
+      "cues": [
+        {
+          "id": "c1",
+          "text": "Keep the graph, but list C before B in A\u2019s neighbors. Predict the processing order before following the trace."
+        },
+        {
+          "id": "c2",
+          "text": "A is first. C enters the queue before B, so C is processed next and discovers D."
+        },
+        {
+          "id": "c3",
+          "text": "B was already queued before D. Process B next; its neighbor D is already seen, so do not enqueue D again."
+        },
+        {
+          "id": "c4",
+          "text": "D is last. The processing order is A, C, B, D. D is still two edges from A; only the tie within the first layer changed."
+        }
+      ],
+      "visual": {
+        "type": "graph",
+        "nodes": [
+          {
+            "id": "a",
+            "label": "A",
+            "x": 12,
+            "y": 45
+          },
+          {
+            "id": "b",
+            "label": "B",
+            "x": 44,
+            "y": 20
+          },
+          {
+            "id": "c",
+            "label": "C",
+            "x": 44,
+            "y": 70
+          },
+          {
+            "id": "d",
+            "label": "D",
+            "x": 82,
+            "y": 45
+          }
+        ],
+        "edges": [
+          {
+            "id": "ab",
+            "from": "a",
+            "to": "b"
+          },
+          {
+            "id": "ac",
+            "from": "a",
+            "to": "c"
+          },
+          {
+            "id": "bd",
+            "from": "b",
+            "to": "d"
+          },
+          {
+            "id": "cd",
+            "from": "c",
+            "to": "d"
+          }
+        ],
+        "steps": [
+          {
+            "cue": "c1",
+            "node": "a",
+            "note": "Process A; enqueue C, then B."
+          },
+          {
+            "cue": "c2",
+            "node": "c",
+            "note": "Process C; enqueue D behind B.",
+            "edge": "ac"
+          },
+          {
+            "cue": "c3",
+            "node": "b",
+            "note": "Process B; D is already seen.",
+            "edge": "ab"
+          },
+          {
+            "cue": "c4",
+            "node": "d",
+            "note": "Process D. Order: A, C, B, D.",
+            "edge": "cd"
+          }
+        ]
+      },
+      "check": {
+        "question": "Why does D not get enqueued twice?",
+        "answer": "The seen set is updated when D is first enqueued. The second path finds it already seen and skips it."
+      }
+    },
+    {
+      "id": "recap",
+      "title": "Read the state, not just the arrows",
+      "kind": "recap",
+      "sources": [
+        "demo"
+      ],
+      "cues": [
+        {
+          "id": "c1",
+          "text": "At every step, keep track of the current node, the queue in order, and the set of discovered nodes."
+        },
+        {
+          "id": "c2",
+          "text": "Use the code to justify each state change. Remove the oldest item, examine neighbors, then mark and append only new discoveries."
+        },
+        {
+          "id": "c3",
+          "text": "That is the reusable pattern: a queue controls the order, while the seen set prevents repeated work."
+        }
+      ],
+      "visual": {
+        "type": "cards",
+        "steps": [
+          {
+            "cue": "c1",
+            "title": "Queue",
+            "body": "The ordered list of work waiting to be processed."
+          },
+          {
+            "cue": "c2",
+            "title": "Seen set",
+            "body": "Every node discovered so far, including queued nodes."
+          },
+          {
+            "cue": "c3",
+            "title": "Trace",
+            "body": "A record of why each update follows from the code."
+          }
+        ]
+      }
+    }
+  ]
+}
