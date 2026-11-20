@@ -122,6 +122,9 @@ h1 {
 
 .get { display: flex; flex-direction: column; align-items: center; gap: 14px; width: 100%; max-width: 600px; margin-top: 44px; }
 .get .cmd { width: 100%; text-align: left; }
+.tab-panel { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+.tab-panel[hidden] { display: none; }
+.panel-hint { font-size: 0.8125rem; color: var(--muted); text-align: center; }
 
 .segmented { display: inline-flex; padding: 3px; border-radius: 999px; background: var(--raised); border: 1px solid var(--rule); }
 .segmented button {
