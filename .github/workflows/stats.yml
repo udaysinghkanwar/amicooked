@@ -12,6 +12,11 @@ on:
 permissions:
   contents: write
 
+# Two runs at once would both push to the stats branch, and the second push would fail
+concurrency:
+  group: stats
+  cancel-in-progress: false
+
 jobs:
   snapshot:
     runs-on: ubuntu-latest

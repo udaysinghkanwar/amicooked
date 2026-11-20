@@ -53,8 +53,20 @@ async function npmDownloads() {
   const meta = await json(`https://registry.npmjs.org/${pkg.name}`);
   const created = meta?.time?.created?.slice(0, 10);
   if (!created) return null;
-  const point = await json(`https://api.npmjs.org/downloads/point/${created}:${today}/${pkg.name}`);
-  return point?.downloads ?? null;
+  // The API takes ranges of at most 18 months, so add it up a year at a time
+  let total = 0;
+  for (let start = new Date(created); start.toISOString().slice(0, 10) <= today; ) {
+    const end = new Date(start);
+    end.setUTCDate(end.getUTCDate() + 364);
+    const from = start.toISOString().slice(0, 10);
+    const to = end.toISOString().slice(0, 10) < today ? end.toISOString().slice(0, 10) : today;
+    const point = await json(`https://api.npmjs.org/downloads/point/${from}:${to}/${pkg.name}`);
+    if (typeof point?.downloads !== "number") return null;
+    total += point.downloads;
+    start = new Date(end);
+    start.setUTCDate(start.getUTCDate() + 1);
+  }
+  return total;
 }
 
 async function setups() {
