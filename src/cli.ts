@@ -1,9 +1,11 @@
 #!/usr/bin/env node
+import { serveGeminiLocal } from "./clients/geminiLocal.js";
 import { parseArgs } from "util";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { loginCommand, pairCommand, statusCommand, uninstallCommand } from "./cli/manage.js";
 import { finishAfterQuit } from "./cli/afterQuit.js";
 import { serveCommand } from "./cli/serve.js";
+import { doctorCommand } from "./cli/doctor.js";
 import { setup } from "./cli/setup.js";
 import { serverInstructions } from "./instructions.js";
 import { createServer } from "./server.js";
@@ -15,10 +17,11 @@ Usage: amicooked <command>
 
   setup        Pick your school, sign in, and connect your AI apps
                --school <id|url>       e.g. mcmaster, or the URL you log in through
-               --clients <list>        desktop,code,chatgpt-desktop
+               --clients <list>        desktop,code,chatgpt-desktop,gemini-desktop,gemini-cli
                --yes                   accept the detected apps without asking
   login        Sign in to your school again
   status       Show what's set up (--json for machines)
+  doctor       Test configured Gemini MCP connections (--clients <target>, --live for school access)
   uninstall    Disconnect your AI apps (--purge also deletes your login and settings)
   mcp          Run the MCP server over stdio (AI apps run this for you)
 `;
@@ -42,6 +45,7 @@ async function main(argv: string[]): Promise<number> {
       yes: { type: "boolean", short: "y" },
       "no-login": { type: "boolean" },
       json: { type: "boolean" },
+      live: { type: "boolean" },
       purge: { type: "boolean" },
       quick: { type: "boolean" },
       local: { type: "boolean" },
@@ -56,6 +60,8 @@ async function main(argv: string[]): Promise<number> {
   if (values.help || command === "help") return console.log(HELP), 0;
 
   switch (command) {
+    case "gemini-serve":
+      return serveGeminiLocal();
     case "mcp":
       return runMcp();
     case "setup":
@@ -67,6 +73,8 @@ async function main(argv: string[]): Promise<number> {
     case "serve":
       // --quick (a throwaway trycloudflare URL) and --local are for development
       return serveCommand({ quick: values.quick, local: values.local, port: values.port ? Number(values.port) : undefined });
+    case "doctor":
+      return doctorCommand(values.clients, Boolean(values.live));
     case "status":
       return statusCommand(Boolean(values.json));
     case "finish-after-quit":

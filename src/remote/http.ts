@@ -1,3 +1,4 @@
+import { createHash, timingSafeEqual } from "crypto";
 import * as http from "http";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { serverInstructions } from "../instructions.js";
@@ -58,17 +59,30 @@ export interface RemoteServerOptions {
   /** The public https URL clients reach us at, e.g. https://abc123.amicooked.app */
   publicUrl: string;
   store?: OAuthStore;
+  /** Dedicated native desktop service: bearer auth on loopback, no public OAuth routes. */
+  localToken?: string;
 }
 
 /** HTTP MCP server with OAuth, for ChatGPT and other remote clients. Listens on loopback only. */
-export function createRemoteServer({ publicUrl, store = new OAuthStore() }: RemoteServerOptions): http.Server {
+export function createRemoteServer({ publicUrl, store = new OAuthStore(), localToken }: RemoteServerOptions): http.Server {
   const base = publicUrl.replace(/\/+$/, "");
+  const localUrl = new URL(base);
+  if (localToken !== undefined && (localToken.length < 32 || localUrl.protocol !== "http:" || localUrl.hostname !== "127.0.0.1")) {
+    throw new Error("The native local service requires a strong token and a 127.0.0.1 HTTP URL.");
+  }
+  const hash = (value: string) => createHash("sha256").update(value).digest();
+
   const resourceMetadata = `${base}/.well-known/oauth-protected-resource`;
 
   return http.createServer(async (req, res) => {
     const url = new URL(req.url ?? "/", base);
     const route = `${req.method} ${url.pathname}`;
     try {
+      if (localToken !== undefined) {
+        // Never accept browser cross-origin requests or DNS-rebound hostnames.
+        if (req.headers.host !== localUrl.host || (req.headers.origin && req.headers.origin !== localUrl.origin)) return send(res, 403, { error: "forbidden" });
+        if (url.pathname !== "/mcp") return send(res, 404, { error: "not_found" });
+      }
       if (req.method === "GET" && url.pathname.startsWith("/.well-known/oauth-protected-resource")) {
         return send(res, 200, { resource: `${base}/mcp`, authorization_servers: [base], bearer_methods_supported: ["header"] });
       }
@@ -125,7 +139,10 @@ export function createRemoteServer({ publicUrl, store = new OAuthStore() }: Remo
       }
       if (url.pathname === "/mcp") {
         const auth = req.headers.authorization ?? "";
-        if (!auth.startsWith("Bearer ") || !store.verifyAccessToken(auth.slice(7))) {
+        const valid = auth.startsWith("Bearer ") && (localToken !== undefined
+          ? timingSafeEqual(hash(auth.slice(7)), hash(localToken))
+          : store.verifyAccessToken(auth.slice(7)));
+        if (!valid) {
           return send(res, 401, { error: "invalid_token" }, { "WWW-Authenticate": `Bearer resource_metadata="${resourceMetadata}"` });
         }
         if (req.method !== "POST") return send(res, 405, { error: "method_not_allowed" }, { Allow: "POST" });

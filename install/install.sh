@@ -2,6 +2,8 @@
 # Am I Cooked installer for macOS and Linux.
 #   curl -fsSL https://amicooked-mcp.vercel.app/install.sh | sh
 # Options: --no-setup (or AMICOOKED_NO_SETUP=1) to skip `amicooked setup`;
+#          --school <id|url>, --clients <list>, --yes forwarded to setup.
+#          AMICOOKED_CLIENTS selects apps for both installers.
 #          AMICOOKED_VERSION=v0.1.0 to pin a release.
 set -eu
 
@@ -9,9 +11,23 @@ REPO="udaysinghkanwar/amicooked"
 INSTALL_DIR="${AMICOOKED_HOME:-$HOME/.amicooked}/bin"
 RUN_SETUP=1
 [ "${AMICOOKED_NO_SETUP:-}" = "1" ] && RUN_SETUP=0
-for arg in "$@"; do
-  [ "$arg" = "--no-setup" ] && RUN_SETUP=0
+# Remove only the installer flag; keep every setup argument as its own argument.
+remaining=$#
+while [ "$remaining" -gt 0 ]; do
+  arg=$1
+  shift
+  remaining=$((remaining - 1))
+  case "$arg" in
+    --no-setup) RUN_SETUP=0 ;;
+    *) set -- "$@" "$arg" ;;
+  esac
 done
+if [ -n "${AMICOOKED_SCHOOL:-}" ]; then
+  set -- --school "$AMICOOKED_SCHOOL" "$@"
+fi
+if [ -n "${AMICOOKED_CLIENTS:-}" ]; then
+  set -- --clients "$AMICOOKED_CLIENTS" "$@"
+fi
 
 say() { printf '%s\n' "$*"; }
 fail() { printf 'amicooked: %s\n' "$*" >&2; exit 1; }
@@ -82,11 +98,14 @@ if [ "$RUN_SETUP" = 1 ]; then
   # When piped from curl, stdin is the script, so setup reads the keyboard through the terminal that
   # stdout or stderr is already attached to. Not /dev/tty: the binary cannot poll that on macOS and crashes.
   if [ -t 0 ]; then
-    "$INSTALL_DIR/amicooked" setup
+    "$INSTALL_DIR/amicooked" setup "$@"
   elif [ -t 1 ]; then
-    "$INSTALL_DIR/amicooked" setup <&1
+    "$INSTALL_DIR/amicooked" setup "$@" <&1
   elif [ -t 2 ]; then
-    "$INSTALL_DIR/amicooked" setup <&2
+    "$INSTALL_DIR/amicooked" setup "$@" <&2
+  elif [ "$#" -gt 0 ]; then
+    # Agent-driven setup needs no terminal prompts when school and clients are supplied.
+    "$INSTALL_DIR/amicooked" setup "$@"
   else
     say "Next: run \"$INSTALL_DIR/amicooked\" setup"
   fi

@@ -1,6 +1,6 @@
 # Am I Cooked
 
-Ask your AI if you're cooked. Am I Cooked connects Claude and ChatGPT to your D2L Brightspace courses (Avenue to Learn, LEARN, onQ, OWL Brightspace, CourseLink and others) so they can read your grades, deadlines, announcements and course files, and tell you straight.
+Ask your AI if you're cooked. Am I Cooked connects Claude, ChatGPT and Gemini to your D2L Brightspace courses (Avenue to Learn, LEARN, onQ, OWL Brightspace, CourseLink and others) so they can read your grades, deadlines, announcements and course files, and tell you straight.
 
 It runs on your own computer. You sign in to your school in a normal browser window; your password never touches anything else.
 
@@ -57,12 +57,19 @@ Presets for McMaster, Waterloo, Western, Queen's, Guelph, Laurier, TMU, uOttawa,
 
 ChatGPT on the web and on phones can't start programs on your computer, so they aren't supported yet. Neither is Claude on the web.
 
+## Gemini
+
+For the native Gemini Mac app, run `amicooked setup --clients gemini-desktop`. For Gemini CLI, use `--clients gemini-cli`. Setup registers MCP and tests the connection automatically; no manual JSON is required. The native Mac app uses an authenticated service on your computer, started automatically at login; CLI uses stdio. Native Gemini needs an app restart, while an active CLI session can use `/mcp reload` and `/skills reload`.
+
+The native adapter targets the observed Mac app configuration route. Direct stdio launching was rejected by its sandbox; the local HTTP route has executed real course tools in a native-app test. Gemini CLI has a personal Google sign-in route without a model API key. Native Windows and Gemini web/mobile are separate integrations. See [setup, diagnostics, limitations and PR testing](docs/gemini.md).
+
 ## Commands
 
 ```
 amicooked setup      pick your school, sign in, connect apps
 amicooked login      sign in again
 amicooked status     what's set up
+amicooked doctor     verify Gemini MCP (--clients <target>, --live for school access)
 amicooked uninstall  disconnect apps (--purge deletes your login and settings)
 ```
 

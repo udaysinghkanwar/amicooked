@@ -16,7 +16,7 @@ const TASK = "Am I Cooked";
 
 const xml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-export function launchAgentPlist(launch: LaunchCommand, logFile: string): string {
+export function launchAgentPlist(launch: LaunchCommand, logFile: string, label = LABEL): string {
   const args = [launch.command, ...launch.args].map((a) => `    <string>${xml(a)}</string>`).join("\n");
   const env = Object.entries(launch.env ?? {})
     .map(([k, v]) => `    <key>${xml(k)}</key>\n    <string>${xml(v)}</string>`)
@@ -26,7 +26,7 @@ export function launchAgentPlist(launch: LaunchCommand, logFile: string): string
 <plist version="1.0">
 <dict>
   <key>Label</key>
-  <string>${LABEL}</string>
+  <string>${label}</string>
   <key>ProgramArguments</key>
   <array>
 ${args}

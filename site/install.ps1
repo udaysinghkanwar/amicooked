@@ -1,6 +1,8 @@
 # Am I Cooked installer for Windows.
 #   irm https://amicooked-mcp.vercel.app/install.ps1 | iex
 # Set $env:AMICOOKED_NO_SETUP=1 to skip `amicooked setup`,
+# Set $env:AMICOOKED_CLIENTS="gemini-cli"
+# and optionally $env:AMICOOKED_SCHOOL="mcmaster" to select setup without editing MCP files.
 # or $env:AMICOOKED_VERSION="v0.1.0" to pin a release.
 $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
@@ -50,5 +52,9 @@ if (-not ($env:Path -split ";" | Where-Object { $_ -eq $InstallDir })) { $env:Pa
 if ($env:AMICOOKED_NO_SETUP -eq "1") {
   Write-Host "Next: run amicooked setup"
 } else {
-  & $Exe setup
+  $SetupArgs = @("setup")
+  if ($env:AMICOOKED_CLIENTS) { $SetupArgs += @("--clients", $env:AMICOOKED_CLIENTS) }
+  if ($env:AMICOOKED_SCHOOL) { $SetupArgs += @("--school", $env:AMICOOKED_SCHOOL) }
+  & $Exe @SetupArgs
+  if ($LASTEXITCODE -ne 0) { throw "Am I Cooked setup failed (exit $LASTEXITCODE). Run amicooked setup to retry." }
 }
