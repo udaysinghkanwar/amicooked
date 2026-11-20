@@ -17,7 +17,7 @@ export async function doctorCommand(clients?: string, live = false): Promise<num
       const result = await checkMcp(entry, live);
       checked++;
       console.log(`${target}: MCP handshake, usage instructions and ${result.tools} read-only tools verified${live ? "; school access verified" : ""}.`);
-      console.log("This tests the configured server process. Reload Gemini and ask 'am I cooked?' to verify the host/account too.");
+      console.log("This tests the configured MCP connection. Reload Gemini and ask 'am I cooked?' to verify the host/account too.");
     } catch (error) {
       failed = true;
       console.error(`${target}: ${error instanceof Error ? error.message : String(error)}`);

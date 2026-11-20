@@ -1,6 +1,6 @@
 # Gemini support
 
-Choose the client you actually use. The native Gemini Mac app and Gemini CLI do not share their MCP settings. This adapter configures a local server; it does not expose Brightspace through a tunnel or hosted endpoint.
+Choose the client you actually use. The native Gemini Mac app and Gemini CLI do not share their MCP settings. The native app uses an authenticated loopback HTTP service; CLI uses stdio. This adapter configures a local server; it does not expose Brightspace through a tunnel or hosted endpoint.
 
 ## Native Gemini Mac app
 
@@ -16,11 +16,13 @@ Already installed:
 amicooked setup --school mcmaster --clients gemini-desktop
 ```
 
-`gemini` is an alias for `gemini-desktop`. Setup opens the school login if needed, adds the installed executable to Gemini's local MCP configuration, and automatically verifies initialization, usage instructions and nine read-only tools. It prints the exact configuration path. No JSON editing or skill upload is required.
+`gemini` is an alias for `gemini-desktop`. Setup opens the school login if needed, starts a dedicated local service, adds its authenticated loopback URL to Gemini's MCP configuration, and automatically verifies initialization, usage instructions and nine read-only tools. It prints the exact configuration path. No JSON editing or skill upload is required.
 
 Quit Gemini with Cmd+Q and reopen it so it loads the configuration. Start a new Task, mention Am I Cooked with `@` if needed, and ask **am I cooked?** Approve Gemini's normal connection/network/file prompts when shown. Setup does not silently change its sandbox or approval settings. A successfully tested server does not mean an already open Gemini session has reloaded it.
 
-The native adapter currently targets macOS. It uses `~/.gemini/config/mcp_config.json`, matching the installed Gemini app's bundled `agy mcp` helper and native registry. This native configuration route was observed in app version 1.147.5.1526; Google does not currently document it as a stable external installation API. Native Free-account tool execution and scanner behavior require acceptance testing on the student's app version. Windows native setup is not implemented.
+The native app's sandbox rejected direct stdio startup with exit 126 (`Operation not permitted`), even with execute permission and a verified code signature. Native setup therefore installs a dedicated macOS LaunchAgent, `app.amicooked.gemini`, which starts the server independently and listens only on `127.0.0.1`. Gemini connects using a random bearer token kept in owner-only configuration files. The service reads your school session locally; it needs no public endpoint or Gemini access to your filesystem. It restarts automatically and starts at login. Credentials live in `~/.amicooked/gemini-local.json`; logs are in `~/.amicooked/logs/gemini-local.log`. Uninstall stops the dedicated service and revokes its saved credential. It does not touch the separate ChatGPT service.
+
+The native adapter currently targets macOS. It uses `~/.gemini/config/mcp_config.json`, matching the installed Gemini app's bundled `agy mcp` helper and native registry. This native configuration route was observed in app version 1.147.5.1526; Google does not currently document it as a stable external installation API. The initial native stdio acceptance test failed. A subsequent local HTTP test executed `am_i_cooked`, deadlines and announcements successfully; app-version/account eligibility and file downloads still need acceptance testing. Windows native setup is not implemented.
 
 ## Gemini CLI
 
@@ -60,7 +62,7 @@ amicooked doctor --clients gemini-desktop --live
 # For CLI, replace gemini-desktop with gemini-cli.
 ```
 
-`doctor` launches the configured executable, checks the MCP handshake, server instructions, and all nine read-only tools, then closes the subprocess. `--live` additionally calls `get_my_courses` using the existing school session. It reports success without printing course names or grades and returns nonzero on failure. It does not make a Gemini model request or certify the host's reload, trust, account or tool-use behavior.
+`doctor` connects to the configured local HTTP endpoint or launches the CLI executable, then checks the MCP handshake, server instructions, and all nine read-only tools, then closes the diagnostic connection. `--live` additionally calls `get_my_courses` using the existing school session. It reports success without printing course names or grades and returns nonzero on failure. It does not make a Gemini model request or certify the host's reload, trust, account or tool-use behavior. In particular, a successful direct stdio test did not establish native sandbox compatibility.
 
 A Gemini agent can have a separate home such as `.gemini/users/...`. Files created there are not automatically the Mac user's files. Check the exact paths printed by setup/status. If the sandbox cannot register a host configuration or complete browser login, run the command in the Mac user's Terminal; do not bypass sandbox restrictions or assume another app's configuration was changed. Likewise, respect any skill scanner rejection; do not disguise an installer guide to get it accepted.
 
@@ -89,8 +91,8 @@ npm test
 npm run test:gemini
 ```
 
-The subprocess smoke test uses disposable HOME, USERPROFILE, GEMINI_CLI_HOME and AMICOOKED_HOME directories. It checks setup, repeat setup, actual stdio discovery, doctor, removal, malformed settings and failure exit codes. The existing CI matrix runs it through `npm test` on macOS, Windows and Linux.
+The subprocess smoke test uses disposable HOME, USERPROFILE, GEMINI_CLI_HOME and AMICOOKED_HOME directories. It checks setup, repeat setup, actual CLI stdio and native local HTTP discovery, doctor, removal, malformed settings and failure exit codes. The existing CI matrix runs it through `npm test` on macOS, Windows and Linux.
 
-Optionally set `GEMINI_TEST_COMMAND` to an installed `gemini` executable and/or `GEMINI_DESKTOP_TEST_HELPER` to the Mac app's `Contents/Helpers/agy`. These extend the smoke test to each real client's config reader. The CLI test checks untrusted-folder suppression and then trusts only its disposable fixture folder for discovery. No real user trust/config changes, Google login, model calls or school requests occur in these smoke tests.
+Optionally set `GEMINI_TEST_COMMAND` to an installed `gemini` executable and/or `GEMINI_DESKTOP_TEST_HELPER` to the Mac app's `Contents/Helpers/agy`. These extend the smoke test to each real client's config reader. They never install or stop the user's real LaunchAgent. The CLI test checks untrusted-folder suppression and then trusts only its disposable fixture folder for discovery. No real user trust/config changes, Google login, model calls or school requests occur in these smoke tests.
 
 Research and test evidence: [Gemini integration investigation](research/gemini-support-2026-11-20.md).

@@ -2,7 +2,7 @@
 
 ## Decision
 
-Implement two local setup targets: `gemini-desktop` for the native Gemini Mac app (the user's actual client), and `gemini-cli` for the terminal agent. `gemini` aliases the native app. Reuse the existing read-only stdio MCP server and school browser login. Do not add hosted infrastructure, API-key requirements, an unofficial chat wrapper or a hidden model backend.
+Implement two local setup targets: `gemini-desktop` for the native Gemini Mac app (the user's actual client), and `gemini-cli` for the terminal agent. `gemini` aliases the native app. Reuse the existing read-only tools and school browser login. CLI uses stdio; the native Mac app now uses a dedicated authenticated loopback HTTP service because its sandbox rejected stdio startup. Do not add hosted infrastructure, API-key requirements, an unofficial chat wrapper or a hidden model backend.
 
 Native registration can be automated on the observed app version. Public Google documentation is much clearer for the CLI than for the native app, so native compatibility must retain an explicit version/acceptance-test caveat.
 
@@ -49,6 +49,14 @@ UI inspection confirmed the user's native client and a Customize entry. Further 
 
 ## Remaining acceptance evidence
 
-A user-operated Free-account native test must verify restart/loading, eligibility, network/file approvals, discovery and actual `am_i_cooked` execution, plus announcement/file use. CLI Free-account model behavior is also separate from parser/transport testing. CI covers synthetic subprocess tests on macOS/Windows/Linux; the initial local run was on Apple Silicon macOS. Native Windows is intentionally unsupported pending investigation.
+Further user-operated native tests must verify restart/loading, eligibility, network/file approvals, discovery and actual `am_i_cooked` execution, plus announcement/file use. CLI Free-account model behavior is also separate from parser/transport testing. CI covers synthetic subprocess tests on macOS/Windows/Linux; the initial local run was on Apple Silicon macOS. Native Windows is intentionally unsupported pending investigation.
 
 The user's earlier native attempt reported a skill scanner rejection and a different agent HOME. Neither is safe to solve by bypassing protections. Avoid requiring the installer guide as a usage skill, surface exact paths, and direct host-level setup through the user's Terminal if the agent sandbox cannot reach the host's configuration. The ideal agent-only flow remains constrained by the host's permissions and reload capabilities.
+
+## Native acceptance failure and transport correction
+
+The first actual native Gemini test loaded the file registration but failed to execute the standalone binary with exit 126. macOS unified logs (`StdioMCPServer`) showed `Operation not permitted`. The binary already had execute permission, its signature verified, and moving it from the development worktree into the normal Am I Cooked bin directory did not fix it. Thus the subprocess handshake check was insufficient to establish host compatibility.
+
+A temporary authenticated loopback HTTP test reused the existing MCP HTTP transport. Gemini then executed `am_i_cooked`, upcoming due dates and announcements successfully. No public tunnel or filesystem permission expansion was involved. This is actual native tool execution evidence, separate from the earlier helper/parser check.
+
+Native setup now owns a dedicated login LaunchAgent (`app.amicooked.gemini`), a loopback-only port and a random private bearer token. Configuration supports the native command-URL format plus the bundled helper's `serverUrl` format. CLI stdio remains unchanged. Doctor verifies both transports; HTTP authentication, origin/host restrictions, private config migration and a separate service label have regression tests. The installer must manage service startup so the tested path does not depend on a developer's Terminal process.

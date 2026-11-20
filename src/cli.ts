@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { serveGeminiLocal } from "./clients/geminiLocal.js";
 import { parseArgs } from "util";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { loginCommand, pairCommand, statusCommand, uninstallCommand } from "./cli/manage.js";
@@ -59,6 +60,8 @@ async function main(argv: string[]): Promise<number> {
   if (values.help || command === "help") return console.log(HELP), 0;
 
   switch (command) {
+    case "gemini-serve":
+      return serveGeminiLocal();
     case "mcp":
       return runMcp();
     case "setup":

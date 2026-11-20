@@ -5,6 +5,7 @@ import { hasClaudeCode, skillPath, uninstallClaudeCode, uninstallSkill } from ".
 import { chatgptSteps, chatgptUrl, uninstallChatGPT } from "../clients/chatgpt.js";
 import { codexConfigured, hasCodex, uninstallCodex, uninstallCodexSkill } from "../clients/codex.js";
 import { geminiConfigPath, geminiDesktopHelper, geminiEntry, hasGeminiCli, uninstallGemini, uninstallGeminiSkill } from "../clients/gemini.js";
+import { uninstallGeminiLocal } from "../clients/geminiLocal.js";
 import { OAuthStore } from "../remote/oauth.js";
 import { client } from "../client.js";
 import { getConfig, paths } from "../config.js";
@@ -103,6 +104,7 @@ export async function uninstallCommand(purge: boolean): Promise<number> {
     if (removed !== "absent") console.log(`${target}: ${removed}`);
   }
   uninstallGeminiSkill();
+  if (process.platform === "darwin" && uninstallGeminiLocal()) console.log("Gemini desktop: local service stopped");
   if (uninstallChatGPT()) console.log("ChatGPT: background service stopped and disconnected");
   if (purge) {
     fs.rmSync(paths().home, { recursive: true, force: true });

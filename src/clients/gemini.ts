@@ -6,6 +6,7 @@ import { applyEdits, modify, parse, type ParseError } from "jsonc-parser";
 import { writePrivateFile } from "../config.js";
 import { USAGE_SKILL_MD } from "../skill.js";
 import { InvalidConfigError, SERVER_NAME, type WriteResult } from "./claudeDesktop.js";
+import type { McpConnection, HttpConnection } from "./check.js";
 import type { LaunchCommand } from "./self.js";
 
 export type GeminiClient = "gemini-desktop" | "gemini-cli";
@@ -59,9 +60,19 @@ function write(file: string, text: string): void {
   writePrivateFile(file, text);
 }
 
-export function geminiEntry(client: GeminiClient, home = os.homedir()): LaunchCommand | null {
+export function geminiEntry(client: GeminiClient, home = os.homedir()): McpConnection | null {
   const { config } = read(geminiConfigPath(client, home), client);
   const e = config.mcpServers?.[SERVER_NAME];
+  const endpoint = e?.serverUrl ?? e?.httpUrl ?? (typeof e?.command === "string" && e.command.startsWith("http:") ? e.command : undefined);
+  if (client === "gemini-desktop" && !e?.disabled && typeof endpoint === "string") {
+    try {
+      const url = new URL(endpoint);
+      if (url.protocol !== "http:" || url.hostname !== "127.0.0.1" || url.pathname !== "/mcp" || url.username || url.password) return null;
+      if (!e.headers || typeof e.headers !== "object" || Array.isArray(e.headers) || !Object.values(e.headers).every((v) => typeof v === "string")) return null;
+      return { url: endpoint, headers: e.headers };
+    } catch { return null; }
+  }
+
   if (!e || e.disabled || e.httpUrl || e.url || typeof e.command !== "string" ||
       (e.args !== undefined && (!Array.isArray(e.args) || !e.args.every((a: unknown) => typeof a === "string"))) ||
       (e.env !== undefined && (!e.env || typeof e.env !== "object" || Array.isArray(e.env) || !Object.values(e.env).every((v) => typeof v === "string")))) return null;
@@ -80,11 +91,29 @@ export function installGemini(client: GeminiClient, launch: LaunchCommand, home 
   const entry = { ...existing, command: launch.command, args: launch.args, env: launch.env ?? {} };
   delete entry.url;
   delete entry.httpUrl;
+  delete entry.serverUrl;
+  delete entry.headers;
   if (JSON.stringify(existing) === JSON.stringify(entry)) return "unchanged";
   const next = client === "gemini-cli"
     ? applyEdits(text, modify(text, ["mcpServers", SERVER_NAME], entry, { formattingOptions: { insertSpaces: true, tabSize: 2 } }))
     : JSON.stringify({ ...config, mcpServers: { ...config.mcpServers, [SERVER_NAME]: entry } }, null, 2) + "\n";
   write(file, next);
+  return existing ? "updated" : "added";
+}
+
+/** Native Gemini uses authenticated loopback HTTP: its default sandbox rejects stdio executables. */
+export function installGeminiHttp(connection: HttpConnection, home = os.homedir()): WriteResult {
+  const endpoint = new URL(connection.url);
+  if (endpoint.protocol !== "http:" || endpoint.hostname !== "127.0.0.1" || endpoint.pathname !== "/mcp" || endpoint.username || endpoint.password || !connection.headers.Authorization?.startsWith("Bearer ")) throw new Error("Gemini desktop requires an authenticated loopback MCP connection.");
+  const target = "gemini-desktop";
+  const file = geminiConfigPath(target, home);
+  const { config } = read(file, target);
+  const existing = config.mcpServers?.[SERVER_NAME];
+  if (existing !== undefined && (!existing || typeof existing !== "object" || Array.isArray(existing))) throw new InvalidConfigError(`${file} has an invalid server entry, so it was left alone.`);
+  const entry = { ...existing, command: connection.url, serverUrl: connection.url, headers: connection.headers };
+  for (const key of ["args", "env", "url", "httpUrl"]) delete entry[key];
+  if (JSON.stringify(existing) === JSON.stringify(entry)) return "unchanged";
+  write(file, JSON.stringify({ ...config, mcpServers: { ...config.mcpServers, [SERVER_NAME]: entry } }, null, 2) + "\n");
   return existing ? "updated" : "added";
 }
 

@@ -9,8 +9,9 @@ import { scheduleAfterQuit } from "./afterQuit.js";
 import { hasClaudeCode, installClaudeCode, installSkill } from "../clients/claudeCode.js";
 import { chatgptSteps, installChatGPT } from "../clients/chatgpt.js";
 import { codexEntryIs, codexSkillPath, hasCodex, installCodex, installCodexSkill } from "../clients/codex.js";
+import { installGeminiLocal } from "../clients/geminiLocal.js";
 import { checkMcp } from "../clients/check.js";
-import { geminiConfigPath, geminiDesktopHelper, geminiDesktopHomeError, geminiEntry, hasGeminiCli, installGemini, installGeminiSkill, GEMINI_DOWNLOAD, GEMINI_CLI_DOWNLOAD, type GeminiClient } from "../clients/gemini.js";
+import { geminiConfigPath, geminiDesktopHelper, geminiDesktopHomeError, geminiEntry, hasGeminiCli, installGemini, installGeminiHttp, installGeminiSkill, GEMINI_DOWNLOAD, GEMINI_CLI_DOWNLOAD, type GeminiClient } from "../clients/gemini.js";
 import { SKILL_MD } from "../skill.js";
 import { selfCommand } from "../clients/self.js";
 import { client } from "../client.js";
@@ -244,7 +245,11 @@ async function configureClients(clients: ClientId[]): Promise<Outcome[]> {
         : "native setup currently supports macOS only. For Gemini CLI use --clients gemini-cli.", ready: false, connected: false });
       continue;
     }
-    installGemini(target, geminiLaunch);
+    if (target === "gemini-desktop") {
+      geminiEntry(target); // Validate existing JSON before changing a background service.
+      const service = await installGeminiLocal(selfCommand(["gemini-serve"]));
+      installGeminiHttp(service);
+    } else installGemini(target, geminiLaunch);
     if (target === "gemini-cli") installGeminiSkill();
     const configured = geminiEntry(target);
     if (!configured) throw new Error(`${label}: Am I Cooked is disabled or has an invalid entry in ${geminiConfigPath(target)}. Enable it in Gemini, then rerun setup.`);
@@ -253,7 +258,7 @@ async function configureClients(clients: ClientId[]): Promise<Outcome[]> {
     outcomes.push({
       app: label,
       next: target === "gemini-desktop"
-        ? "set up and MCP tested. Quit Gemini with Cmd+Q and reopen it, then start a new Task and ask: am I cooked? Approve its connection/network prompts if shown."
+        ? "local connection registered and tested. Quit Gemini with Cmd+Q and reopen it, then start a new Task and ask: am I cooked? Approve its connection/network prompts if shown."
         : hasGeminiCli()
           ? "set up and MCP tested. In Gemini CLI run /mcp reload and /skills reload. Accept the folder-trust prompt if you trust the folder, then ask: am I cooked? For a new session, run gemini and choose Sign in with Google."
           : `set up and MCP tested. With Node.js 22+, run npx -y @google/gemini-cli and choose Sign in with Google. Or install Gemini CLI: ${GEMINI_CLI_DOWNLOAD}`,

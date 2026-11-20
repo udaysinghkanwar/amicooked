@@ -3,9 +3,12 @@ import assert from "node:assert/strict";
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
+import { randomBytes } from "node:crypto";
+import net from "node:net";
+import { once } from "node:events";
+import { spawn, spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { installGemini, geminiEntry } from "../dist/clients/gemini.js";
+import { installGeminiHttp, geminiEntry } from "../dist/clients/gemini.js";
 import { checkMcp } from "../dist/clients/check.js";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
@@ -18,6 +21,7 @@ const env = {
   AMICOOKED_NO_TELEMETRY: "1", D2L_HOST: "", D2L_LOGIN_URL: "",
 };
 // No tests should consult a developer's CLI override.
+let localProcess;
 const previousCliHome = process.env.GEMINI_CLI_HOME;
 process.env.GEMINI_CLI_HOME = env.GEMINI_CLI_HOME;
 const run = (args, expected = 0) => {
@@ -39,8 +43,21 @@ try {
   assert.match(before, /Preserve me/);
   assert.equal(existsSync(path.join(home, ".claude")), false);
   assert.equal(existsSync(path.join(home, ".codex")), false);
-  const launch = { command: process.execPath, args: [path.join(root, "dist/cli.js"), "mcp"], env: { AMICOOKED_HOME: env.AMICOOKED_HOME } };
-  installGemini("gemini-desktop", launch, home);
+  const socket = net.createServer();
+  await new Promise((r) => socket.listen(0, "127.0.0.1", r));
+  const port = socket.address().port;
+  await new Promise((r) => socket.close(r));
+  const token = randomBytes(32).toString("base64url");
+  writeFileSync(path.join(env.AMICOOKED_HOME, "gemini-local.json"), JSON.stringify({ version: 1, port, token }), { mode: 0o600 });
+  localProcess = spawn(process.execPath, [path.join(root, "dist/cli.js"), "gemini-serve"], { cwd: home, env, stdio: "ignore" });
+  const connection = { url: `http://127.0.0.1:${port}/mcp`, headers: { Authorization: `Bearer ${token}` } };
+  let connected = false;
+  for (let attempt = 0; attempt < 40; attempt++) {
+    try { await checkMcp(connection, false, 500); connected = true; break; }
+    catch { await new Promise((r) => setTimeout(r, 100)); }
+  }
+  assert.equal(connected, true, "Compiled Gemini local service did not become ready.");
+  installGeminiHttp(connection, home);
   assert.deepEqual(await checkMcp(geminiEntry("gemini-desktop", home)), { tools: 9, live: false });
   assert.match(run(["doctor", "--clients", "gemini-desktop"]), /9 read-only tools/);
   // Optional real host parser test. Isolated config; this never signs into Google or calls a model.
@@ -58,7 +75,7 @@ try {
     console.log("Real Gemini CLI loaded the generated config and connected to Am I Cooked.");
   }
   if (process.env.GEMINI_DESKTOP_TEST_HELPER) {
-    if (process.platform === "darwin") run(["setup", "--school", "mcmaster", "--clients", "gemini-desktop", "--no-login"]);
+    // Do not install/stop a real user LaunchAgent from an isolated test.
     const r = spawnSync(process.env.GEMINI_DESKTOP_TEST_HELPER, ["mcp", "list"], { cwd: home, env, encoding: "utf8", timeout: 30000 });
     assert.equal(r.status, 0, r.stderr);
     assert.match(r.stdout + r.stderr, /amicooked/);
@@ -72,8 +89,12 @@ try {
   writeFileSync(settings, "{broken");
   run(["setup", "--school", "mcmaster", "--clients", "gemini-cli", "--no-login"], 1);
   assert.equal(readFileSync(settings, "utf8"), "{broken");
-  console.log("Gemini setup, configured stdio process, doctor, repeat setup, uninstall and failure paths passed in an isolated home.");
+  console.log("Gemini CLI setup, stdio and native local HTTP transports, doctor, repeat setup, uninstall and failure paths passed in an isolated home.");
 } finally {
+  if (localProcess && localProcess.exitCode === null) {
+    localProcess.kill("SIGTERM");
+    await once(localProcess, "exit");
+  }
   if (previousCliHome === undefined) delete process.env.GEMINI_CLI_HOME;
   else process.env.GEMINI_CLI_HOME = previousCliHome;
   rmSync(home, { recursive: true, force: true });

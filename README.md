@@ -59,9 +59,9 @@ ChatGPT on the web and on phones can't start programs on your computer, so they 
 
 ## Gemini
 
-For the native Gemini Mac app, run `amicooked setup --clients gemini-desktop`. For Gemini CLI, use `--clients gemini-cli`. Setup registers MCP and tests the configured server automatically; no manual JSON is required. Native Gemini needs an app restart, while an active CLI session can use `/mcp reload` and `/skills reload`.
+For the native Gemini Mac app, run `amicooked setup --clients gemini-desktop`. For Gemini CLI, use `--clients gemini-cli`. Setup registers MCP and tests the connection automatically; no manual JSON is required. The native Mac app uses an authenticated service on your computer, started automatically at login; CLI uses stdio. Native Gemini needs an app restart, while an active CLI session can use `/mcp reload` and `/skills reload`.
 
-The native adapter targets the observed Mac app configuration route; Free-account execution is awaiting acceptance testing. Gemini CLI has a personal Google sign-in route without a model API key. Native Windows and Gemini web/mobile are separate integrations. See [setup, diagnostics, limitations and PR testing](docs/gemini.md).
+The native adapter targets the observed Mac app configuration route. Direct stdio launching was rejected by its sandbox; the local HTTP route has executed real course tools in a native-app test. Gemini CLI has a personal Google sign-in route without a model API key. Native Windows and Gemini web/mobile are separate integrations. See [setup, diagnostics, limitations and PR testing](docs/gemini.md).
 
 ## Commands
 
