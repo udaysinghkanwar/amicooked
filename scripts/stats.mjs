@@ -4,7 +4,7 @@
 // Redis credentials come from the environment or .env.local (`vercel env pull .env.local`).
 // GitHub uses GITHUB_TOKEN / GH_TOKEN, or `gh auth token`. Anything unavailable shows as "-".
 import { execFileSync } from "child_process";
-import { appendFileSync, existsSync, readFileSync } from "fs";
+import { appendFileSync, existsSync, readFileSync, writeFileSync } from "fs";
 
 const pkg = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
 const REPO = pkg.repository.url.match(/github\.com\/(.+?)(\.git)?$/)[1];
@@ -78,14 +78,21 @@ async function setups() {
     const res = await fetch(`${url}/pipeline`, {
       method: "POST",
       headers: { authorization: `Bearer ${key}`, "content-type": "application/json" },
-      body: JSON.stringify([["GET", "setup:total"], ["HGETALL", "setup:schools"], ["HGETALL", "setup:platforms"]]),
+      body: JSON.stringify([
+        ["GET", "setup:total"], ["HGETALL", "setup:schools"], ["HGETALL", "setup:platforms"],
+        ["HGETALL", "copy:tabs"], ["GET", "prompt:opens"],
+      ]),
       signal: AbortSignal.timeout(15000),
     });
     if (!res.ok) return null;
-    const [total, schools, platforms] = (await res.json()).map((r) => r.result);
+    const [total, schools, platforms, tabs, prompt] = (await res.json()).map((r) => r.result);
     const pairs = (flat) =>
       Object.fromEntries((flat ?? []).flatMap((v, i, a) => (i % 2 ? [] : [[v, Number(a[i + 1])]])));
-    return { total: Number(total ?? 0), schools: pairs(schools), platforms: pairs(platforms) };
+    const copies = pairs(tabs);
+    return {
+      total: Number(total ?? 0), schools: pairs(schools), platforms: pairs(platforms),
+      copies, copyTotal: Object.values(copies).reduce((a, b) => a + b, 0), promptOpens: Number(prompt ?? 0),
+    };
   } catch {
     return null;
   }
@@ -112,6 +119,9 @@ console.log(`\nAm I Cooked stats (${today})\n\nInstalls`);
 row("Installer runs", rel?.installs, "SHA256SUMS downloads, from install.sh / install.ps1");
 row("Binary downloads", rel?.binaries, "includes bots");
 row("npm downloads", npm, "since first publish");
+console.log("\nSite");
+row("Install copies", setup?.copyTotal, setup && setup.copyTotal ? top(setup.copies) : "");
+row("Full prompt opened", setup?.promptOpens);
 console.log("\nSetups");
 row("Finished setups", setup?.total, "first setup per computer");
 row("Schools", namedSchools, setup && Object.keys(setup.schools).length ? top(setup.schools) : "");
@@ -124,9 +134,14 @@ console.log("\nSite visitors: Vercel dashboard → Analytics\n");
 const csvAt = process.argv.indexOf("--csv");
 if (csvAt !== -1) {
   const file = process.argv[csvAt + 1];
-  const header = "date,installer_runs,binary_downloads,npm_downloads,setups,schools,repo_views_14d,repo_uniques_14d,repo_clones_14d";
-  const values = [today, rel?.installs, rel?.binaries, npm, setup?.total, namedSchools, views?.count, views?.uniques, clones?.count];
+  const header = "date,installer_runs,binary_downloads,npm_downloads,setups,schools,repo_views_14d,repo_uniques_14d,repo_clones_14d,copies,prompt_opens";
+  const values = [today, rel?.installs, rel?.binaries, npm, setup?.total, namedSchools, views?.count, views?.uniques, clones?.count, setup?.copyTotal, setup?.promptOpens];
   if (!existsSync(file)) appendFileSync(file, `${header}\n`);
+  else {
+    // New columns go on the end, so older rows just leave them empty
+    const lines = readFileSync(file, "utf8").split("\n");
+    if (lines[0] !== header) writeFileSync(file, [header, ...lines.slice(1)].join("\n"));
+  }
   appendFileSync(file, `${values.map((v) => v ?? "").join(",")}\n`);
   console.log(`Appended to ${file}`);
 }

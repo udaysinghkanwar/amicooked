@@ -1,4 +1,4 @@
-// Counts finished setups. Stores counters only: no IPs, no install IDs, nothing from Brightspace.
+// Counts finished setups and install-command copies. Stores counters only: no IPs, no install IDs, nothing from Brightspace.
 // Redis comes from the Upstash integration on Vercel (KV_REST_API_* or UPSTASH_REDIS_REST_* env vars).
 
 // Must match the preset ids in src/schools.ts; a unit test checks this.
@@ -8,12 +8,24 @@ export const SCHOOLS = [
 ];
 export const PLATFORMS = ["darwin-arm64", "darwin-x64", "linux-x64", "linux-arm64", "win32-x64", "win32-arm64"];
 
+// The install tabs on the site, as site/main.js names them
+export const TABS = ["agent", "mac", "win", "npm"];
+
 /** Redis commands for one event, or null if the event isn't one we count. */
 export function commandsFor(event, now = new Date()) {
-  if (!event || typeof event !== "object" || event.e !== "setup") return null;
+  if (!event || typeof event !== "object") return null;
+  const day = now.toISOString().slice(0, 10);
+  if (event.e === "copy") {
+    if (!TABS.includes(event.tab)) return null;
+    return [
+      ["HINCRBY", "copy:tabs", event.tab, "1"],
+      ["HINCRBY", "copy:days", day, "1"],
+    ];
+  }
+  if (event.e === "prompt") return [["INCR", "prompt:opens"]];
+  if (event.e !== "setup") return null;
   const school = SCHOOLS.includes(event.school) ? event.school : "custom";
   const platform = PLATFORMS.includes(event.platform) ? event.platform : "other";
-  const day = now.toISOString().slice(0, 10);
   return [
     ["INCR", "setup:total"],
     ["HINCRBY", "setup:days", day, "1"],

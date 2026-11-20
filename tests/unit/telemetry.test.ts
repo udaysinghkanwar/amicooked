@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PRESETS } from "../../src/schools.js";
 import { REPORT_URL, reportSetup, telemetryOff } from "../../src/telemetry.js";
 // @ts-expect-error plain JS Vercel function
-import { commandsFor, handle, PLATFORMS, SCHOOLS } from "../../site/api/e.js";
+import { commandsFor, handle, PLATFORMS, SCHOOLS, TABS } from "../../site/api/e.js";
 
 const ok = () => vi.fn(async () => new Response(null, { status: 204 })) as unknown as typeof fetch & ReturnType<typeof vi.fn>;
 
@@ -67,6 +67,24 @@ describe("site/api/e.js", () => {
       ["HINCRBY", "setup:platforms", "win32-x64", "1"],
     ]);
     expect(PLATFORMS).toContain("darwin-arm64");
+  });
+
+  it("counts copies per install tab, and opens of the full prompt", () => {
+    expect(commandsFor({ e: "copy", tab: "win" }, new Date("2026-11-20T12:00:00Z"))).toEqual([
+      ["HINCRBY", "copy:tabs", "win", "1"],
+      ["HINCRBY", "copy:days", "2026-11-20", "1"],
+    ]);
+    expect(commandsFor({ e: "copy", tab: "elsewhere" })).toBeNull();
+    expect(commandsFor({ e: "prompt" })).toEqual([["INCR", "prompt:opens"]]);
+  });
+
+  it("knows every copy button on the site", () => {
+    const main = fs.readFileSync(new URL("../../site/main.js", import.meta.url), "utf8");
+    const html = fs.readFileSync(new URL("../../site/index.html", import.meta.url), "utf8");
+    const buttons = [...html.matchAll(/data-copy="([^"]+)"/g)].map((m) => m[1]);
+    const map = JSON.parse(main.match(/const COPY_TABS = (\{[^}]+\})/)![1].replace(/"?([\w-]+)"?:/g, '"$1":'));
+    expect(buttons.length).toBeGreaterThan(0);
+    for (const id of buttons) expect(TABS).toContain(map[id]);
   });
 
   it("buckets unknown values instead of storing them", () => {
