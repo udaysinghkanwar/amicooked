@@ -24,3 +24,36 @@ describe("finishMessage", () => {
     expect(m.outro).toContain("https://chatgpt.com/download");
   });
 });
+
+describe("finishAfterQuit", () => {
+  it("waits for Claude to quit, then writes the config and reopens it", async () => {
+    const { finishAfterQuit } = await import("../../src/cli/afterQuit.js");
+    const log: string[] = [];
+    let polls = 0;
+    let clock = 0;
+    const code = await finishAfterQuit({
+      running: () => (log.push("check"), ++polls < 3),
+      write: () => log.push("write"),
+      reopen: () => log.push("reopen"),
+      wait: async (ms) => void (clock += ms),
+      now: () => clock,
+    });
+    expect(code).toBe(0);
+    expect(log).toEqual(["check", "check", "check", "write", "reopen"]);
+  });
+
+  it("gives up without writing if Claude is never quit", async () => {
+    const { finishAfterQuit } = await import("../../src/cli/afterQuit.js");
+    let clock = 0;
+    const log: string[] = [];
+    const code = await finishAfterQuit({
+      running: () => true,
+      write: () => log.push("write"),
+      reopen: () => log.push("reopen"),
+      wait: async (ms) => void (clock += ms * 1000),
+      now: () => clock,
+    });
+    expect(code).toBe(1);
+    expect(log).toEqual([]);
+  });
+});

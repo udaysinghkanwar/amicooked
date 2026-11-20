@@ -162,10 +162,10 @@ async function connectDesktopApp(app: DesktopApp, label: string, write: () => vo
     // Quitting it would save its old config over ours, so a background helper waits for the quit, writes
     // the config again and reopens the app
     return scheduleAfterQuit()
-      ? { app: label, next: `quit ${app.name} ${quitHow()}. Am I Cooked finishes setting it up and reopens it. Then ${ask.toLowerCase()}`, ready: false }
+      ? { app: label, next: `quit ${app.name} ${quitHow()}. Am I Cooked finishes setting it up and reopens it. Then ask it: am I cooked?`, ready: false }
       : { app: label, next: `quit ${app.name} ${quitHow()}, then run \`amicooked setup\` again.`, ready: false };
   }
-  if (running) return { app: label, next: `quit ${app.name} ${quitHow()} and open it again. Then ${ask.toLowerCase()}`, ready: false };
+  if (running) return { app: label, next: `quit ${app.name} ${quitHow()} and open it again. Then ask it: am I cooked?`, ready: false };
   return open(app)
     ? { app: label, next: `set up, and opening now. ${ask}`, ready: true }
     : { app: label, next: `set up. Open ${app.name} and ask: am I cooked?`, ready: false };

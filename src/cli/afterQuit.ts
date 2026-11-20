@@ -28,17 +28,37 @@ export function scheduleAfterQuit(): boolean {
   }
 }
 
+export interface AfterQuitSteps {
+  running: () => boolean;
+  write: () => void;
+  reopen: () => void;
+  wait: (ms: number) => Promise<void>;
+  now: () => number;
+}
+
 /** The hidden `finish-after-quit` command the helper runs. */
-export async function finishAfterQuit(): Promise<number> {
-  const dir = claudeDesktopDir();
-  if (!dir) return 1;
-  for (const end = Date.now() + GIVE_UP_MS; isRunning(APPS.claude); ) {
-    if (Date.now() > end) return 1;
-    await new Promise((resolve) => setTimeout(resolve, POLL_MS));
+export async function finishAfterQuit(steps: AfterQuitSteps | null = defaultSteps()): Promise<number> {
+  if (!steps) return 1;
+  const end = steps.now() + GIVE_UP_MS;
+  while (steps.running()) {
+    if (steps.now() > end) return 1;
+    await steps.wait(POLL_MS);
   }
   // Give the app a moment to finish writing its own copy before ours goes on top
-  await new Promise((resolve) => setTimeout(resolve, 1500));
-  installClaudeDesktop(dir, selfCommand(["mcp"]));
-  open(APPS.claude);
+  await steps.wait(1500);
+  steps.write();
+  steps.reopen();
   return 0;
+}
+
+function defaultSteps(): AfterQuitSteps | null {
+  const dir = claudeDesktopDir();
+  if (!dir) return null;
+  return {
+    running: () => isRunning(APPS.claude),
+    write: () => installClaudeDesktop(dir, selfCommand(["mcp"])),
+    reopen: () => void open(APPS.claude),
+    wait: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+    now: () => Date.now(),
+  };
 }
