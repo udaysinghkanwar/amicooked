@@ -155,6 +155,11 @@ export function drawVisual(v: Visual, sceneId: string, cues: CueTiming[]) {
         note(s.note, `${sceneId}-note-${i}`, start, end);
       });
     } else {
+      // A transition may fire repeatedly. Give seek-back a stable starting color.
+      for (const transition of v.transitions)
+        animations.push(
+          `tl.set('#${sceneId}-node-${transition.id}',{fill:'#3159dc'},0);`,
+        );
       petriMarkings(v).forEach((marking, i) => {
         const id = `${sceneId}-mark-${i}`;
         svg += `<g id="${id}" opacity="${i === 0 ? 1 : 0}">`;
