@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PRESETS } from "../../src/schools.js";
 import { REPORT_URL, reportSetup, telemetryOff } from "../../src/telemetry.js";
 // @ts-expect-error plain JS Vercel function
-import { commandsFor, PLATFORMS, POST, SCHOOLS } from "../../site/api/e.js";
+import { commandsFor, handle, PLATFORMS, SCHOOLS } from "../../site/api/e.js";
 
 const ok = () => vi.fn(async () => new Response(null, { status: 204 })) as unknown as typeof fetch & ReturnType<typeof vi.fn>;
 
@@ -79,20 +79,35 @@ describe("site/api/e.js", () => {
     expect(commandsFor({ e: "grades" })).toBeNull();
     const env = { KV_REST_API_URL: "https://redis.test", KV_REST_API_TOKEN: "t" };
     const fetchImpl = ok();
-    const bad = await POST(new Request("https://x/api/e", { method: "POST", body: "not json" }), env, fetchImpl);
+    const bad = await handle(new Request("https://x/api/e", { method: "POST", body: "not json" }), env, fetchImpl);
     expect(bad.status).toBe(400);
-    const big = await POST(new Request("https://x/api/e", { method: "POST", body: "x".repeat(600) }), env, fetchImpl);
+    const big = await handle(new Request("https://x/api/e", { method: "POST", body: "x".repeat(600) }), env, fetchImpl);
     expect(big.status).toBe(413);
     expect(fetchImpl).not.toHaveBeenCalled();
   });
 
+  const redis = (results: unknown) =>
+    vi.fn(async () => Response.json(results)) as unknown as typeof fetch & ReturnType<typeof vi.fn>;
+  const setupEvent = () =>
+    new Request("https://x/api/e", { method: "POST", body: JSON.stringify({ e: "setup", school: "mcmaster" }) });
+
   it("writes the counters to Redis in one pipeline", async () => {
     const env = { KV_REST_API_URL: "https://redis.test", KV_REST_API_TOKEN: "t" };
-    const fetchImpl = ok();
-    const res = await POST(new Request("https://x/api/e", { method: "POST", body: JSON.stringify({ e: "setup", school: "mcmaster" }) }), env, fetchImpl);
+    const fetchImpl = redis([{ result: 1 }, { result: 1 }, { result: 1 }, { result: 1 }]);
+    const res = await handle(new Request("https://x/api/e", { method: "POST", body: JSON.stringify({ e: "setup", school: "mcmaster" }) }), env, fetchImpl);
     expect(res.status).toBe(204);
     const [url, init] = fetchImpl.mock.calls[0] as [string, RequestInit];
     expect(url).toBe("https://redis.test/pipeline");
     expect(JSON.parse(String(init.body))).toHaveLength(4);
+  });
+
+  it("reports a failure when Redis rejects a command inside a 200 response", async () => {
+    const env = { KV_REST_API_URL: "https://redis.test", KV_REST_API_TOKEN: "t" };
+    const fetchImpl = redis([{ result: 1 }, { error: "ERR wrong type" }, { result: 1 }, { result: 1 }]);
+    expect((await handle(setupEvent(), env, fetchImpl)).status).toBe(502);
+  });
+
+  it("answers 503 when Redis isn't connected", async () => {
+    expect((await handle(setupEvent(), {}, ok())).status).toBe(503);
   });
 });

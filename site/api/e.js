@@ -22,7 +22,12 @@ export function commandsFor(event, now = new Date()) {
   ];
 }
 
-export async function POST(request, env = process.env, fetchImpl = fetch) {
+// Vercel calls this with the request only; the rest is for tests
+export function POST(request) {
+  return handle(request, process.env, fetch);
+}
+
+export async function handle(request, env, fetchImpl) {
   const text = await request.text();
   if (text.length > 512) return new Response(null, { status: 413 });
   let event;
@@ -44,7 +49,10 @@ export async function POST(request, env = process.env, fetchImpl = fetch) {
       body: JSON.stringify(commands),
       signal: AbortSignal.timeout(3000),
     });
-    return new Response(null, { status: res.ok ? 204 : 502 });
+    // /pipeline answers 200 even when a command fails, with { error } in place of { result } for that command
+    const results = res.ok ? await res.json() : null;
+    const written = Array.isArray(results) && results.length === commands.length && results.every((r) => r && !r.error);
+    return new Response(null, { status: written ? 204 : 502 });
   } catch {
     return new Response(null, { status: 502 });
   }
