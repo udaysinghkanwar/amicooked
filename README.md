@@ -30,6 +30,13 @@ Setup asks for your school, opens a browser window to sign in, and connects the 
 - "Summarize the week 7 slides."
 - "Anything new from my profs?"
 - "What's on the midterm?"
+- "Make a chill study video on this lecture. I know the basics and have 10 minutes."
+
+## Lecture videos
+
+The Am I Cooked skill can guide a capable local agent through making a narrated, animated lesson from selected course material. It first asks about your goal, prior knowledge, time budget and mode: **cramming**, **fully cooked** (from the foundations), **chill**, or **bird's-eye**. Shorter modes reduce scope rather than skip necessary reasoning.
+
+Video creation is optional and requires local command/file access, a renderer and narration tools in addition to the Brightspace connection. It is not a new MCP tool or a hosted video service. See [setup, usage and quality checks](docs/lecture-videos.md).
 
 ## Tools
 
