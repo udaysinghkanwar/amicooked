@@ -21,7 +21,8 @@
     "prepack": "npm run build",
     "build:bin": "node scripts/sync-skill.mjs && node scripts/build-binaries.mjs",
     "preversion": "npm test",
-    "version": "node scripts/sync-version.mjs && git add src/version.ts"
+    "version": "node scripts/sync-version.mjs && git add src/version.ts",
+    "stats": "node --env-file-if-exists=.env.local scripts/stats.mjs"
   },
   "keywords": [
     "mcp",

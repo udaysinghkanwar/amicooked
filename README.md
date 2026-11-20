@@ -68,6 +68,8 @@ amicooked uninstall  disconnect apps (--purge deletes your login and settings)
 
 Your settings and login live in `~/.amicooked`; downloaded files go to `~/Downloads/amicooked`.
 
+The first time setup finishes on a computer, it sends one anonymous count: your school's preset name (or "custom") and your OS. Nothing from Brightspace, no IP or ID is stored. Set `AMICOOKED_NO_TELEMETRY=1` or `DO_NOT_TRACK=1` to turn it off.
+
 ## Development
 
 ```sh
@@ -76,6 +78,7 @@ npm test
 npm run build        # TypeScript to dist/
 npm run build:bin    # standalone binaries in build/ (uses Bun)
 node dist/cli.js setup
+npm run stats        # installs, npm downloads, setups, repo traffic
 ```
 
 `skill/SKILL.md` is the single source for the agent skill; `npm run sync:skill` copies it (and `install/`) into `src/skill.ts` and `site/`.
