@@ -2,6 +2,7 @@
 import { parseArgs } from "util";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { loginCommand, pairCommand, statusCommand, uninstallCommand } from "./cli/manage.js";
+import { finishAfterQuit } from "./cli/afterQuit.js";
 import { serveCommand } from "./cli/serve.js";
 import { setup } from "./cli/setup.js";
 import { serverInstructions } from "./instructions.js";
@@ -68,6 +69,9 @@ async function main(argv: string[]): Promise<number> {
       return serveCommand({ quick: values.quick, local: values.local, port: values.port ? Number(values.port) : undefined });
     case "status":
       return statusCommand(Boolean(values.json));
+    case "finish-after-quit":
+      // Hidden: setup starts this in the background when it can't restart Claude Desktop itself
+      return finishAfterQuit();
     case "uninstall":
       return uninstallCommand(Boolean(values.purge));
     default:
