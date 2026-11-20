@@ -1,32 +1,18 @@
 ---
 name: amicooked
-description: Use when a student asks about their D2L Brightspace courses, grades, deadlines, assignments, announcements or course files, asks "am I cooked?", or wants to set up Am I Cooked.
+description: Use when a student asks about their D2L Brightspace courses, grades, deadlines, assignments, announcements or course files, asks "am I cooked?", or wants to set up or update Am I Cooked or explore its features.
 ---
 
 # Am I Cooked
 
 Am I Cooked connects an AI assistant to a student's D2L Brightspace account (Avenue to Learn, LEARN, onQ, OWL Brightspace, CourseLink, MyLearningSpace and others). It runs on the student's own computer and is read-only.
 
-## Setting it up (for agents)
+## Setup and optional features
 
-**First, check that you can run commands on the student's computer.** Setup installs a program there, so it only works from an agent with a terminal, like Claude Code, Codex or the ChatGPT desktop app. If you're on a website (chatgpt.com, claude.ai, gemini.google.com), in a phone app, or in a chat with no command tool, don't try. Tell the student instead:
+- To install or connect an AI app, read [references/setup.md](references/setup.md).
+- For updates, available features or a weekly update routine, read [references/updates.md](references/updates.md).
 
-- Get an app that can do it: Claude Desktop (https://claude.ai/download) or the ChatGPT app (https://chatgpt.com/download), then paste the same request there. Or install it themselves by pasting this into Terminal (Mac): `curl -fsSL https://amicooked-mcp.vercel.app/install.sh | sh`, or this into PowerShell (Windows): `irm https://amicooked-mcp.vercel.app/install.ps1 | iex`.
-- Either way, it ends by opening their AI app, ready to ask "am I cooked?".
-
-If you can run commands:
-
-1. Ask the student which school they go to. Presets: mcmaster, waterloo, western, queens, guelph, laurier, tmu, uottawa, carleton, brock, windsor, laurentian, lakehead. Any other Brightspace school works with the URL they log in through.
-2. Install it:
-   - macOS / Linux: `curl -fsSL https://amicooked-mcp.vercel.app/install.sh | sh -s -- --no-setup`
-   - Windows (PowerShell): `$env:AMICOOKED_NO_SETUP=1; irm https://amicooked-mcp.vercel.app/install.ps1 | iex`
-   - With Node.js installed, `npx -y amicooked@0` works in place of `amicooked` below.
-3. Run setup with flags, and a long command timeout (at least 5 minutes), because the student signs in through a browser window that opens:
-   `amicooked setup --school mcmaster --clients desktop,code`
-   Use `--school https://...` for schools without a preset. Add `chatgpt-desktop` to `--clients` if they use the ChatGPT desktop app, then tell them to restart it. ChatGPT and Claude on the web or on phones aren't supported.
-4. Tell the student to sign in to their school in the browser window. Never ask for their password; you never need it.
-5. Setup ends with a "Next" list: one line per app saying it's open and ready, needs a restart, needs opening, or needs installing (with a link). Tell the student each line as written. If you're running inside Claude Desktop, they need to quit it; Am I Cooked then reopens it with everything set up.
-6. If something fails, run `amicooked status` and read what it says.
+The app installs this entire skill folder from its release, including references. Do not install just this file or fetch individual files from the repository's main branch into an older app.
 
 <!-- server-instructions -->
 ## Answering questions
@@ -59,6 +45,10 @@ Use `summary.heatLabel` from `am_i_cooked` to set the tone. Be playful, never me
 4. `late_window_open` means a missed assignment can still be submitted: say so first, it's the easiest win.
 5. If `partial_data` appears, mention that some of a course couldn't be loaded.
 6. For grades under 60%, suggest office hours, the TA, or an academic advisor.
+
+## Optional features
+
+Use `get_feature_guide` to discover available features or read their instructions when local skill references are unavailable. Load only the requested guide. For setup or weekly updates, retrieve the corresponding guide. Scheduling depends on the host AI app; never claim a task was scheduled without a successful scheduler result.
 
 ## Integrity
 

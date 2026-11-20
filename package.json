@@ -16,13 +16,16 @@
   "scripts": {
     "sync:skill": "node scripts/sync-skill.mjs",
     "build": "node scripts/sync-skill.mjs && tsc",
-    "test": "vitest run",
+    "test": "vitest run && npm run test:updates && npm run test:updates:native",
     "test:watch": "vitest",
     "prepack": "npm run build",
     "build:bin": "node scripts/sync-skill.mjs && node scripts/build-binaries.mjs",
     "preversion": "npm test",
     "version": "node scripts/sync-version.mjs && git add src/version.ts",
-    "stats": "node --env-file-if-exists=.env.local scripts/stats.mjs"
+    "stats": "node --env-file-if-exists=.env.local scripts/stats.mjs",
+    "pretest": "npm run build",
+    "test:updates": "node scripts/test-updates.mjs",
+    "test:updates:native": "node scripts/test-updates.mjs --build-native"
   },
   "keywords": [
     "mcp",

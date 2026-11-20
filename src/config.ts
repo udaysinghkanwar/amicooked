@@ -21,6 +21,10 @@ export interface Config {
   browser?: BrowserChannel;
   filesDir: string;
   chatgpt?: { subdomain: string };
+  /** Preference only: the host AI app owns the actual schedule. */
+  weeklyUpdates?: boolean;
+  /** Explicit skill destinations for other local AI clients. */
+  skillDirs?: string[];
 }
 
 export function homeDir(): string {
