@@ -26,7 +26,7 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="/fonts/archivo-expanded-black-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/bricolage-grotesque-latin-opsz.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="/styles.css?v=14">
+  <link rel="stylesheet" href="/styles.css?v=16">
   <link rel="alternate" type="text/markdown" href="/SKILL.md" title="Setup instructions for AI agents">
   <script>document.documentElement.classList.replace("no-js", "js");</script>
   <script src="/main.js?v=15" defer></script>
@@ -47,6 +47,7 @@
         <div class="segmented" role="tablist" aria-label="How to install">
           <button type="button" role="tab" id="os-mac" aria-controls="os-mac-panel" aria-selected="true">macOS &amp; Linux</button>
           <button type="button" role="tab" id="os-win" aria-controls="os-win-panel" aria-selected="false" tabindex="-1">Windows</button>
+          <button type="button" role="tab" id="os-npm" aria-controls="os-npm-panel" aria-selected="false" tabindex="-1">npm</button>
           <button type="button" role="tab" id="os-agent" aria-controls="os-agent-panel" aria-selected="false" tabindex="-1">AI agent</button>
         </div>
         <div class="cmd" role="tabpanel" id="os-mac-panel" aria-labelledby="os-mac">
@@ -61,13 +62,18 @@
             <svg class="i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i-check" aria-hidden="true"><use href="#i-check"/></svg>
           </button>
         </div>
+        <div class="cmd" role="tabpanel" id="os-npm-panel" aria-labelledby="os-npm" hidden>
+          <code id="cmd-npm">npx -y amicooked@0 setup</code>
+          <button class="icon-button" type="button" data-copy="cmd-npm" aria-label="Copy the npm setup command (needs Node 22 or newer)">
+            <svg class="i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i-check" aria-hidden="true"><use href="#i-check"/></svg>
+          </button>
+        </div>
         <div class="cmd cmd-prompt" role="tabpanel" id="os-agent-panel" aria-labelledby="os-agent" hidden>
           <code id="agent-prompt">Set up Am I Cooked from https://<span data-domain>amicooked-mcp.vercel.app</span>/SKILL.md. Ask me which school I go to. Never ask for my password.</code>
           <button class="icon-button" type="button" data-copy="agent-prompt" aria-label="Copy the setup prompt for your AI agent">
             <svg class="i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i-check" aria-hidden="true"><use href="#i-check"/></svg>
           </button>
         </div>
-        <p class="alt-install">Have Node 22+? <code>npx -y amicooked@0 setup</code></p>
         <p class="trust">Free <span aria-hidden="true">·</span> open source <span aria-hidden="true">·</span> your login stays on your laptop <span aria-hidden="true">·</span> <a href="https://github.com/udaysinghkanwar/amicooked/blob/main/install/install.sh">view install script</a></p>
       </div>
     </section>
