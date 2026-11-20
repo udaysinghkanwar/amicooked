@@ -16,6 +16,7 @@ import { getConfig, writeConfig, type School } from "../config.js";
 import { listCourses } from "../courseResolver.js";
 import { detectSchool, findPreset, PRESETS } from "../schools.js";
 import { amICooked } from "../tools/cooked.js";
+import { reportSetup } from "../telemetry.js";
 
 /**
  * Every app listed here starts Am I Cooked on the student's computer. `chatgpt` (ChatGPT on the web, over a
@@ -314,6 +315,7 @@ export async function setup(options: SetupOptions): Promise<number> {
     const { steps, outro } = finishMessage(outcomes);
     if (steps) p.note(steps, "Next");
     p.outro(outro);
+    await reportSetup(school.id);
     return 0;
   } catch (error) {
     const code = error instanceof SetupStop ? error.code : 1;
