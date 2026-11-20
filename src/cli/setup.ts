@@ -9,10 +9,12 @@ import { scheduleAfterQuit } from "./afterQuit.js";
 import { hasClaudeCode, installClaudeCode, installSkill } from "../clients/claudeCode.js";
 import { chatgptSteps, installChatGPT } from "../clients/chatgpt.js";
 import { codexEntryIs, codexSkillPath, hasCodex, installCodex, installCodexSkill } from "../clients/codex.js";
+import { checkMcp } from "../clients/check.js";
+import { geminiConfigPath, geminiDesktopHelper, geminiDesktopHomeError, geminiEntry, hasGeminiCli, installGemini, installGeminiSkill, GEMINI_DOWNLOAD, GEMINI_CLI_DOWNLOAD, type GeminiClient } from "../clients/gemini.js";
 import { SKILL_MD } from "../skill.js";
 import { selfCommand } from "../clients/self.js";
 import { client } from "../client.js";
-import { getConfig, writeConfig, type School } from "../config.js";
+import { getConfig, homeDir, writeConfig, type School } from "../config.js";
 import { listCourses } from "../courseResolver.js";
 import { detectSchool, findPreset, PRESETS } from "../schools.js";
 import { amICooked } from "../tools/cooked.js";
@@ -22,10 +24,10 @@ import { reportSetup } from "../telemetry.js";
  * Every app listed here starts Am I Cooked on the student's computer. `chatgpt` (ChatGPT on the web, over a
  * tunnel) is built but hidden until the tunnel service is deployed; it only runs with AMICOOKED_TUNNEL_API set.
  */
-export type ClientId = "desktop" | "code" | "chatgpt-desktop" | "chatgpt";
-const PUBLIC_IDS: ClientId[] = ["desktop", "code", "chatgpt-desktop"];
+export type ClientId = "desktop" | "code" | "chatgpt-desktop" | "chatgpt" | GeminiClient;
+const PUBLIC_IDS: ClientId[] = ["desktop", "code", "chatgpt-desktop", "gemini-desktop", "gemini-cli"];
 const CLIENT_IDS: ClientId[] = [...PUBLIC_IDS, "chatgpt"];
-const ALIASES: Record<string, ClientId> = { codex: "chatgpt-desktop", "chatgpt-app": "chatgpt-desktop", "chatgpt-web": "chatgpt" };
+const ALIASES: Record<string, ClientId> = { gemini: "gemini-desktop", codex: "chatgpt-desktop", "chatgpt-app": "chatgpt-desktop", "chatgpt-web": "chatgpt" };
 
 export interface SetupOptions {
   school?: string;
@@ -90,7 +92,7 @@ async function chooseSchool(flag: string | undefined): Promise<School> {
   }
 }
 
-async function chooseClients(flag: string | undefined, detected: Record<ClientId, boolean>, yes: boolean): Promise<ClientId[]> {
+export async function chooseClients(flag: string | undefined, detected: Record<ClientId, boolean>, yes: boolean): Promise<ClientId[]> {
   if (flag) {
     const ids = flag.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean).map((id) => ALIASES[id] ?? id);
     const unknown = ids.filter((id) => !CLIENT_IDS.includes(id as ClientId));
@@ -108,6 +110,8 @@ async function chooseClients(flag: string | undefined, detected: Record<ClientId
       { value: "desktop" as const, label: "Claude Desktop", hint: detected.desktop ? "found" : "not found" },
       { value: "code" as const, label: "Claude Code", hint: detected.code ? "found" : "not found" },
       { value: "chatgpt-desktop" as const, label: "ChatGPT desktop app", hint: detected["chatgpt-desktop"] ? "found" : "not found" },
+      { value: "gemini-desktop" as const, label: "Gemini desktop (Mac)", hint: detected["gemini-desktop"] ? "found" : "not found" },
+      { value: "gemini-cli" as const, label: "Gemini CLI (terminal)", hint: detected["gemini-cli"] ? "found" : "not found" },
     ],
   });
   if (p.isCancel(chosen)) throw new SetupStop("Setup cancelled.");
@@ -177,6 +181,8 @@ async function connectDesktopApp(app: DesktopApp, label: string, write: () => vo
 async function configureClients(clients: ClientId[]): Promise<Outcome[]> {
   const outcomes: Outcome[] = [];
   const launch = selfCommand(["mcp"]);
+  // Persist the school/session location even when an agent or test uses a custom home.
+  const geminiLaunch = { ...launch, env: { ...launch.env, AMICOOKED_HOME: homeDir() } };
 
   if (clients.includes("desktop")) {
     const dir = claudeDesktopDir();
@@ -229,6 +235,34 @@ async function configureClients(clients: ClientId[]): Promise<Outcome[]> {
     }
   }
 
+  for (const target of ["gemini-desktop", "gemini-cli"] as GeminiClient[]) {
+    if (!clients.includes(target)) continue;
+    const label = target === "gemini-desktop" ? "Gemini desktop" : "Gemini CLI";
+    if (target === "gemini-desktop" && !geminiDesktopHelper()) {
+      outcomes.push({ app: label, next: process.platform === "darwin"
+        ? `install the current Gemini Mac app from ${GEMINI_DOWNLOAD}, then rerun amicooked setup --clients gemini-desktop.`
+        : "native setup currently supports macOS only. For Gemini CLI use --clients gemini-cli.", ready: false, connected: false });
+      continue;
+    }
+    installGemini(target, geminiLaunch);
+    if (target === "gemini-cli") installGeminiSkill();
+    const configured = geminiEntry(target);
+    if (!configured) throw new Error(`${label}: Am I Cooked is disabled or has an invalid entry in ${geminiConfigPath(target)}. Enable it in Gemini, then rerun setup.`);
+    const checked = await checkMcp(configured);
+    p.log.success(`${label}: MCP handshake and ${checked.tools} read-only tools verified. Config: ${geminiConfigPath(target)}`);
+    outcomes.push({
+      app: label,
+      next: target === "gemini-desktop"
+        ? "set up and MCP tested. Quit Gemini with Cmd+Q and reopen it, then start a new Task and ask: am I cooked? Approve its connection/network prompts if shown."
+        : hasGeminiCli()
+          ? "set up and MCP tested. In Gemini CLI run /mcp reload and /skills reload. Accept the folder-trust prompt if you trust the folder, then ask: am I cooked? For a new session, run gemini and choose Sign in with Google."
+          : `set up and MCP tested. With Node.js 22+, run npx -y @google/gemini-cli and choose Sign in with Google. Or install Gemini CLI: ${GEMINI_CLI_DOWNLOAD}`,
+      // Protocol verification is not proof the host has reloaded or the Google account is signed in.
+      ready: false,
+      connected: true,
+    });
+  }
+
   if (clients.includes("chatgpt") && !process.env.AMICOOKED_TUNNEL_API) {
     outcomes.push({ app: "ChatGPT on the web", next: "isn't available yet. Use the ChatGPT app instead: `--clients chatgpt-desktop`.", ready: false, connected: false });
   } else if (clients.includes("chatgpt")) {
@@ -267,7 +301,7 @@ export function finishMessage(outcomes: Outcome[]): { steps: string | null; outr
   if (!outcomes.length) {
     return {
       steps: null,
-      outro: `Nothing was set up. Get Claude Desktop (${APPS.claude.download}) or the ChatGPT app (${APPS.chatgpt.download}), then run \`amicooked setup\` again.`,
+      outro: `Nothing was set up. Get Claude Desktop (${APPS.claude.download}) or the ChatGPT app (${APPS.chatgpt.download}), or Gemini (${GEMINI_DOWNLOAD}), then run \`amicooked setup\` again.`,
     };
   }
   const steps = outcomes.map((o) => `${o.app}: ${o.next}`).join("\n");
@@ -292,6 +326,11 @@ export async function setup(options: SetupOptions): Promise<number> {
     const school = await chooseSchool(options.school);
     p.log.info(`School: ${school.name} (${school.host})`);
 
+    const detected = { desktop: Boolean(claudeDesktopDir()), code: hasClaudeCode(), "chatgpt-desktop": hasCodex(), chatgpt: false, "gemini-desktop": Boolean(geminiDesktopHelper()), "gemini-cli": hasGeminiCli() };
+    const clients = await chooseClients(options.clients, detected, Boolean(options.yes));
+    const sandboxError = clients.includes("gemini-desktop") ? geminiDesktopHomeError() : null;
+    if (sandboxError) throw new SetupStop(sandboxError);
+
     const browser = getConfig().browser ?? (await detectChannel());
     if (!browser) {
       throw new SetupStop("Am I Cooked logs in through Google Chrome or Microsoft Edge. Install one of them, then run setup again.");
@@ -309,8 +348,7 @@ export async function setup(options: SetupOptions): Promise<number> {
       p.log.success(`Signed in${me.FirstName ? ` as ${me.FirstName}` : ""}. Found ${courses.length} course${courses.length === 1 ? "" : "s"}.`);
     }
 
-    const detected = { desktop: Boolean(claudeDesktopDir()), code: hasClaudeCode(), "chatgpt-desktop": hasCodex(), chatgpt: false };
-    const outcomes = await configureClients(await chooseClients(options.clients, detected, Boolean(options.yes)));
+    const outcomes = await configureClients(clients);
     // Count the setup only if an app was connected. Started now so it runs alongside the first report
     const reported = outcomes.some((o) => o.connected) ? reportSetup(school.id) : undefined;
 
@@ -320,7 +358,7 @@ export async function setup(options: SetupOptions): Promise<number> {
     if (steps) p.note(steps, "Next");
     p.outro(outro);
     await reported;
-    return 0;
+    return outcomes.some((o) => o.app.startsWith("Gemini") && !o.connected) ? 1 : 0;
   } catch (error) {
     const code = error instanceof SetupStop ? error.code : 1;
     p.cancel(error instanceof Error ? error.message : String(error));

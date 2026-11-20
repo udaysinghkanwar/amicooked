@@ -1,7 +1,7 @@
 {
   "name": "amicooked",
   "version": "0.1.5",
-  "description": "Ask your AI if you're cooked. A local MCP server for D2L Brightspace: grades, deadlines and announcements in Claude and ChatGPT.",
+  "description": "Ask your AI if you're cooked. A local MCP server for D2L Brightspace: grades, deadlines and announcements in Claude, ChatGPT and Gemini.",
   "type": "module",
   "bin": {
     "amicooked": "dist/cli.js"
@@ -16,13 +16,14 @@
   "scripts": {
     "sync:skill": "node scripts/sync-skill.mjs",
     "build": "node scripts/sync-skill.mjs && tsc",
-    "test": "vitest run",
+    "test": "npm run build && vitest run && npm run test:gemini",
     "test:watch": "vitest",
     "prepack": "npm run build",
     "build:bin": "node scripts/sync-skill.mjs && node scripts/build-binaries.mjs",
     "preversion": "npm test",
     "version": "node scripts/sync-version.mjs && git add src/version.ts",
-    "stats": "node --env-file-if-exists=.env.local scripts/stats.mjs"
+    "stats": "node --env-file-if-exists=.env.local scripts/stats.mjs",
+    "test:gemini": "node scripts/test-gemini.mjs"
   },
   "keywords": [
     "mcp",
@@ -30,7 +31,8 @@
     "brightspace",
     "students",
     "claude",
-    "chatgpt"
+    "chatgpt",
+    "gemini"
   ],
   "author": "Uday Singh Kanwar",
   "contributors": [
@@ -46,6 +48,7 @@
   "dependencies": {
     "@clack/prompts": "^1.8.1",
     "@modelcontextprotocol/sdk": "1.32.2",
+    "jsonc-parser": "^3.3.1",
     "jszip": "^3.10.1",
     "mammoth": "^1.11.0",
     "unpdf": "^1.9.1",

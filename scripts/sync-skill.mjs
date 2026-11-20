@@ -4,9 +4,11 @@ import { copyFileSync, readFileSync, writeFileSync, existsSync } from "fs";
 
 const skill = readFileSync(new URL("../skill/SKILL.md", import.meta.url), "utf8");
 
+const usageSkill = skill.slice(0, skill.indexOf("## Setting it up (for agents)")) + skill.split("<!-- server-instructions -->")[1].split("<!-- /server-instructions -->")[0].trim() + "\n";
+
 writeFileSync(
   new URL("../src/skill.ts", import.meta.url),
-  `// Generated from skill/SKILL.md by scripts/sync-skill.mjs. Don't edit by hand.\nexport const SKILL_MD = ${JSON.stringify(skill)};\n`
+  `// Generated from skill/SKILL.md by scripts/sync-skill.mjs. Don't edit by hand.\nexport const SKILL_MD = ${JSON.stringify(skill)};\nexport const USAGE_SKILL_MD = ${JSON.stringify(usageSkill)};\n`
 );
 
 if (existsSync(new URL("../site/", import.meta.url))) {
