@@ -1,6 +1,8 @@
 # Lecture videos
 
-Turn selected course material into a lesson that explains a concept, shows how to use it, and gives the student a way to check understanding. The workflow lives in `skill/SKILL.md`, so the installed skill and MCP server instructions receive the same teaching guidance. Am I Cooked retrieves sources; the student's host agent writes and renders the lesson.
+Turn selected course material into a lesson that explains a concept, shows how to use it, and gives the student a way to check understanding. The main skill routes video requests to [the detailed workflow](../skill/references/lecture-videos.md); ordinary course conversations do not load that guide. Am I Cooked retrieves sources; the student's host agent writes and renders the lesson.
+
+Setup installs `references/lecture-videos.md` beside `SKILL.md` for local skill clients. MCP-only clients call the read-only `get_lecture_video_guide` tool to retrieve the same bundled text without filesystem access, school login or a website fetch. The guide remains separate from the MCP initialization instructions and is embedded in npm builds and standalone binaries. Reading it does not give a host rendering capabilities.
 
 ## Start with the student's intent
 
@@ -23,7 +25,7 @@ Examples:
 
 ## Local setup
 
-Use an agent with **local command execution and file access**, such as Codex or Claude Code, with Am I Cooked connected. A host that only exposes the nine Brightspace tools can retrieve text but cannot render a video. Client support for local files and commands must be checked separately; installing the Am I Cooked skill does not add those capabilities.
+Use an agent with **local command execution and file access**, such as Codex or Claude Code, with Am I Cooked connected. A host that only exposes MCP tools can retrieve the guide and course text but cannot render a video. Client support for local files and commands must be checked separately; installing the Am I Cooked skill does not add those capabilities.
 
 When trying this branch from source, run `npm install`, `npm run build`, then `node dist/cli.js setup --clients chatgpt-desktop --no-login` (or `--clients code` for Claude Code) to refresh the installed skill without starting school login. Restart/reconnect the client so it reloads the skill and MCP instructions. A released install needs a version containing this workflow.
 
