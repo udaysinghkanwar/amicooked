@@ -99,13 +99,13 @@ export async function uninstallCommand(purge: boolean): Promise<number> {
   }
   const codex = uninstallCodex();
   if (codex !== "absent") console.log(`ChatGPT desktop app: ${codex} (skill ${uninstallCodexSkill()})`);
+  if (uninstallChatGPT()) console.log("ChatGPT: background service stopped and disconnected");
   for (const target of ["gemini-desktop", "gemini-cli"] as const) {
     const removed = uninstallGemini(target);
     if (removed !== "absent") console.log(`${target}: ${removed}`);
   }
   uninstallGeminiSkill();
   if (process.platform === "darwin" && uninstallGeminiLocal()) console.log("Gemini desktop: local service stopped");
-  if (uninstallChatGPT()) console.log("ChatGPT: background service stopped and disconnected");
   if (purge) {
     fs.rmSync(paths().home, { recursive: true, force: true });
     console.log(`Deleted ${paths().home} (login, settings and file index). Downloaded files in ${getConfig().filesDir} were kept.`);

@@ -1,6 +1,6 @@
 # Am I Cooked
 
-> Am I Cooked is a free, open-source (MIT) MCP server that runs on a student's laptop and connects Claude Desktop, Claude Code or the ChatGPT desktop app to their D2L Brightspace courses: grades, assignments and due dates, announcements, course content and files. Every tool is read-only. Not affiliated with or endorsed by D2L or any university.
+> Am I Cooked is a free, open-source (MIT) MCP server that runs on a student's laptop and connects Claude Desktop, Claude Code, the ChatGPT desktop app, Gemini on Mac or Gemini CLI to their D2L Brightspace courses: grades, assignments and due dates, announcements, course content and files. Every tool is read-only. Not affiliated with or endorsed by D2L or any university.
 
 The student signs in on their school's own login page in a real browser window. Am I Cooked keeps the session in `~/.amicooked` on the laptop and never sees the password. Downloaded files go to `~/Downloads/amicooked`. Setup has presets for McMaster, Waterloo, Western, Queen's, Guelph, Laurier, TMU, uOttawa, Carleton, Brock, Windsor, Laurentian and Lakehead, and accepts any Brightspace URL. Login is tested at McMaster.
 
@@ -12,6 +12,8 @@ The student signs in on their school's own login page in a real browser window. 
 - Windows (PowerShell): `irm https://amicooked-mcp.vercel.app/install.ps1 | iex`
 - With Node.js 22 or newer: `npx -y amicooked@0 setup`
 - ChatGPT desktop app: `amicooked setup --clients chatgpt-desktop`, then restart the app. Runs locally, no tunnel.
+- Gemini Mac desktop app: select Gemini during normal setup, or use `amicooked setup --clients gemini-desktop`, then restart Gemini. Setup manages an authenticated connection on the student's own computer.
+- Gemini CLI: `amicooked setup --clients gemini-cli`, then start a new session or use `/mcp reload` and `/skills reload`.
 - Uninstall: `amicooked uninstall` (`--purge` also deletes login and settings)
 
 ## Tools

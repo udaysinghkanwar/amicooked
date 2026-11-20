@@ -7,6 +7,7 @@ describe("background service files", () => {
   it("writes a LaunchAgent that keeps serve running", () => {
     const plist = launchAgentPlist(launch, "/tmp/serve.log");
     expect(plist).toContain("<string>/Users/a b/.amicooked/bin/amicooked</string>\n    <string>serve</string>");
+    expect(plist).toContain("<string>app.amicooked.serve</string>");
     expect(plist).toContain("<key>KeepAlive</key>\n  <true/>");
     expect(plist).toContain("<key>PATH</key>\n    <string>/usr/bin:/bin</string>");
   });

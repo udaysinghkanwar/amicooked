@@ -95,6 +95,7 @@ it("installs a usage-only CLI skill and leaves locally edited skills on uninstal
 
 it("selects only the requested Gemini host and detects native/CLI independently", async () => {
   const detected = { desktop: true, code: true, "chatgpt-desktop": true, chatgpt: false, "gemini-desktop": true, "gemini-cli": false };
+  expect(await chooseClients("desktop,code,chatgpt-desktop", detected, true)).toEqual(["desktop", "code", "chatgpt-desktop"]);
   expect(await chooseClients("gemini", detected, true)).toEqual(["gemini-desktop"]);
   expect(await chooseClients("gemini-cli,gemini-cli", detected, true)).toEqual(["gemini-cli"]);
   expect(await chooseClients(undefined, detected, true)).toContain("gemini-desktop");
