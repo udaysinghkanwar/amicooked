@@ -350,6 +350,45 @@ async function fetchCourseData(course: Course, w: Window): Promise<CourseData> {
   return { finalGrade, gradeItems, folders, events, news, errors };
 }
 
+// ---- presentation ----
+// Claude Desktop doesn't pass a local server's instructions to the model, so the result itself carries
+// everything needed to present it well: a ready-made heat bar, a status per course, and the layout.
+
+export type CourseStatus = "On track" | "Watch" | "Needs work";
+
+/** Ten blocks filled to the score, e.g. "Heat ██░░░░░░░░ 2/10 · warming up". */
+export function heatBar(heat: number, label: string): string {
+  const filled = Math.max(0, Math.min(10, Math.round(heat)));
+  return `Heat ${"█".repeat(filled)}${"░".repeat(10 - filled)} ${filled}/10 · ${label}`;
+}
+
+/** One word for a course's table row, from the same signals the heat score uses. */
+export function courseStatus(signals: Signal[]): CourseStatus {
+  if (signals.includes("overdue_work") || signals.includes("grade_below_60")) return "Needs work";
+  if (signals.includes("grade_below_70") || signals.includes("heavy_week")) return "Watch";
+  return "On track";
+}
+
+const TONE: Record<string, string> = {
+  raw: "relaxed: nothing urgent, maybe get ahead on something",
+  "warming up": "a light nudge: one or two things to handle soon",
+  toasty: "focused: a real plan for the next few days",
+  cooked: "direct and supportive: triage what matters most",
+  "well done": "calm and practical: damage control, and who to talk to",
+};
+
+export function howToPresent(heatLabel: string): string[] {
+  return [
+    "Answer visually, not in paragraphs, and with no emoji.",
+    `1. Put summary.heatBar on its own line, then one sentence of verdict. Tone for "${heatLabel}": ${TONE[heatLabel] ?? "playful, never mean, always useful"}.`,
+    "2. A table with one row per course that has a grade or something due: Course | Grade so far | Still to come | Next due | Status. Use each course's status as given; mark estimated grades \"(est.)\"; take Still to come from grade.weightRemaining. Leave out courses with neither and say how many.",
+    "3. A \"Next 7 days\" table, soonest first, in the student's local time: When | Course | Item | Submitted. Put overdue work first, saying when its late window closes if stillOpenUntil is set.",
+    "4. If your app can draw a chart, add one (each course's grade so far as a bar); otherwise skip it.",
+    "5. End with the top 3 actions as a numbered list, then one line on anything important from announcements.",
+    "For grades under 60%, suggest office hours, the TA or an academic advisor. Explain a grade with its keyItems and their weights; never work weights out backwards.",
+  ];
+}
+
 export async function amICooked(args: { daysAhead?: number; overdueDaysBack?: number; announcementsDays?: number; courses?: string[] }) {
   // Log in once up front so a fan-out over every course doesn't race to open login windows
   await getToken();
@@ -380,6 +419,7 @@ export async function amICooked(args: { daysAhead?: number; overdueDaysBack?: nu
     summary: {
       heat,
       heatLabel,
+      heatBar: heatBar(heat, heatLabel),
       reasons,
       courses: courses.length,
       dueSoon: courses.reduce((n, c) => n + c.dueSoon.length, 0),
@@ -387,8 +427,9 @@ export async function amICooked(args: { daysAhead?: number; overdueDaysBack?: nu
       newAnnouncements: courses.reduce((n, c) => n + c.announcements.count, 0),
       lowestGrade: lowest ? { course: lowest.code, percent: lowest.grade.percent, source: lowest.grade.source } : null,
     },
-    courses: courses.sort((a, b) => a.code.localeCompare(b.code)),
+    courses: courses.sort((a, b) => a.code.localeCompare(b.code)).map((c) => ({ ...c, status: courseStatus(c.signals) })),
     skippedCourses: skipped,
+    howToPresent: howToPresent(heatLabel),
     notes: [
       "Times are UTC; convert to the student's local time.",
       "estimated_from_items grades ignore dropped or bonus items, so treat them as rough.",
@@ -401,7 +442,7 @@ export async function amICooked(args: { daysAhead?: number; overdueDaysBack?: nu
 export const amICookedTool: Tool = {
   name: "am_i_cooked",
   description:
-    'One-call overview across all current courses: grade so far, what is due soon, overdue unsubmitted work, and new announcements, plus a heat score (0-10: raw, warming up, toasty, cooked, well done). Start here for "am I cooked?", "what should I work on?", "how am I doing?" or "what\'s due this week?".',
+    'One-call overview across all current courses: grade so far, what is due soon, overdue unsubmitted work, and new announcements, plus a heat score (0-10: raw, warming up, toasty, cooked, well done). Start here for "am I cooked?", "what should I work on?", "how am I doing?" or "what\'s due this week?". The result includes howToPresent: follow it (heat bar, a table per course, the next 7 days, top 3 actions).',
   schema: {
     daysAhead: z.coerce.number().min(1).max(60).optional().describe("How far ahead to look for due dates (default 7)"),
     overdueDaysBack: z.coerce.number().min(0).max(60).optional().describe("How far back to look for missed work (default 14)"),

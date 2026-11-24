@@ -154,3 +154,30 @@ describe("heatScore", () => {
     expect(heatScore([r, r, r]).heatLabel).toBe("well done");
   });
 });
+
+describe("presentation", () => {
+  it("draws the heat bar to the score", async () => {
+    const { heatBar } = await import("../../src/tools/cooked.js");
+    expect(heatBar(0, "raw")).toBe("Heat ░░░░░░░░░░ 0/10 · raw");
+    expect(heatBar(7, "cooked")).toBe("Heat ███████░░░ 7/10 · cooked");
+    expect(heatBar(12, "well done")).toBe("Heat ██████████ 10/10 · well done");
+  });
+
+  it("gives each course one status word", async () => {
+    const { courseStatus } = await import("../../src/tools/cooked.js");
+    expect(courseStatus(["overdue_work"])).toBe("Needs work");
+    expect(courseStatus(["grade_below_60"])).toBe("Needs work");
+    expect(courseStatus(["grade_below_70"])).toBe("Watch");
+    expect(courseStatus(["heavy_week"])).toBe("Watch");
+    expect(courseStatus(["no_grades_released"])).toBe("On track");
+  });
+
+  it("tells the AI how to lay out the answer, in the label's tone", async () => {
+    const { howToPresent } = await import("../../src/tools/cooked.js");
+    const steps = howToPresent("toasty").join("\n");
+    expect(steps).toContain("summary.heatBar");
+    expect(steps).toContain("Course | Grade so far | Still to come | Next due | Status");
+    expect(steps).toContain("focused");
+    expect(steps).toContain("no emoji");
+  });
+});
