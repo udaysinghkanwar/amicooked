@@ -14,7 +14,7 @@ import { json, type Tool } from "./types.js";
 export const getCourseContent: Tool = {
   name: "get_course_content",
   description:
-    "A course's content: modules, lectures, readings and files with their IDs. With no IDs you get the whole outline; pass moduleId to open one section, or topicId for one item's details and URL (then use download_file to read it).",
+    "A course's content: modules, lectures, readings and files with their IDs. With no IDs you get the whole outline; pass moduleId to open one section, or topicId for one item's details and URL (then use download_file to read it). Also the place to start when a student wants to study or be quizzed on a course: find the lectures the test covers here.",
   schema: {
     ...courseParams,
     moduleId: z.coerce.number().optional().describe("Open one module/section from the outline"),
