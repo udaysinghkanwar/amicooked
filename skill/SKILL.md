@@ -1,6 +1,6 @@
 ---
 name: amicooked
-description: Use when a student asks about their D2L Brightspace courses, grades, deadlines, assignments, announcements or course files, asks "am I cooked?", or wants to set up Am I Cooked.
+description: Use when a student asks about their D2L Brightspace courses, grades, deadlines, assignments, announcements or course files, asks "am I cooked?", or wants to set up Am I Cooked. Also use when they want to study for one of their courses, like preparing for a test, midterm or exam, "quiz me", or reviewing or summarising lectures, so the questions come from their own course material.
 ---
 
 # Am I Cooked
@@ -36,6 +36,16 @@ If you can run commands:
 - Check `get_announcements` for a course before a final verdict on it; deadlines and exam details often change there.
 - To read slides, handouts or assignment PDFs: `get_course_content` to find the file, then `download_file`. Use `read_file` for files already downloaded.
 - If a tool says a login window opened, tell the student to sign in there and ask again.
+
+## Studying
+
+When a student wants to study, review or be quizzed on one of their courses, use their own course material, not a generic version of the subject.
+
+1. Find the course from their words: a code like "3O03" or a name like "linear optimization" both work as `course`.
+2. Check `get_announcements` for what the test covers (chapters, weeks, format, allowed aids). If nothing says, ask which weeks or topics to cover.
+3. Open those weeks with `get_course_content` and read the slides or notes with `download_file`.
+4. Build questions from that material, using the course's own notation and examples, and say which lecture each topic comes from.
+5. If the material can't be loaded, say so, then fall back to general questions and say they're general.
 
 ## The verdict
 
