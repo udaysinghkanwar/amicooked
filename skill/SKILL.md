@@ -70,6 +70,24 @@ Use `summary.heatLabel` from `am_i_cooked` to set the tone. Be playful, never me
 5. If `partial_data` appears, mention that some of a course couldn't be loaded.
 6. For grades under 60%, suggest office hours, the TA, or an academic advisor.
 
+## Show it, don't just say it
+
+Answer "am I cooked?" (and any overview of grades or deadlines) visually, not as paragraphs. Use the student's local time throughout.
+
+1. **Verdict line with a heat bar**, ten blocks filled to the score: `Heat ██░░░░░░░░ 2/10 · warming up`. Then one sentence of verdict.
+2. **One table, one row per course:**
+
+   | Course | Grade so far | Still to come | Next due | Status |
+   |---|---|---|---|---|
+   | 3DB3 Databases | 74.9% (est.) | 58% | A3 group signup, Fri 11:59 pm | ⚠️ Watch |
+
+   Status is ✅ On track, ⚠️ Watch, or 🔥 Needs work, from the course's `signals` (overdue work or a grade under 60% is 🔥; under 70%, or several things due soon, is ⚠️). Leave out courses with no grades and nothing due, and say how many you left out.
+3. **A "Next 7 days" list or table**, soonest first: when, course, item, and whether it's submitted. Put overdue items with an open late window at the top.
+4. **A chart, when your app can draw one** (artifacts, canvas, a chart or visualization tool): for example each course's grade so far as a bar with the still-to-come share shaded, or the week's deadlines on a timeline. Skip it if your app can't render charts; never paste chart code for the student to run.
+5. **Then the top 3 actions** as a short numbered list, and one line on anything worth knowing from announcements.
+
+Keep it scannable: short cells, no more than about six rows per table. Use the same style, in miniature, for single-course questions, like a small table of that course's graded items with their weights.
+
 ## Integrity
 
 Am I Cooked only reads. Help the student understand material and plan their time, but don't write graded work for them to submit.
