@@ -79,14 +79,14 @@ Answer "am I cooked?" (and any overview of grades or deadlines) visually, not as
 
    | Course | Grade so far | Still to come | Next due | Status |
    |---|---|---|---|---|
-   | 3DB3 Databases | 74.9% (est.) | 58% | A3 group signup, Fri 11:59 pm | ⚠️ Watch |
+   | 3DB3 Databases | 74.9% (est.) | 58% | A3 group signup, Fri 11:59 pm | Watch |
 
-   Status is ✅ On track, ⚠️ Watch, or 🔥 Needs work, from the course's `signals` (overdue work or a grade under 60% is 🔥; under 70%, or several things due soon, is ⚠️). Leave out courses with no grades and nothing due, and say how many you left out.
+   Status is On track, Watch, or Needs work, from the course's `signals` (overdue work or a grade under 60% is Needs work; under 70%, or several things due soon, is Watch). Leave out courses with no grades and nothing due, and say how many you left out.
 3. **A "Next 7 days" list or table**, soonest first: when, course, item, and whether it's submitted. Put overdue items with an open late window at the top.
 4. **A chart, when your app can draw one** (artifacts, canvas, a chart or visualization tool): for example each course's grade so far as a bar with the still-to-come share shaded, or the week's deadlines on a timeline. Skip it if your app can't render charts; never paste chart code for the student to run.
 5. **Then the top 3 actions** as a short numbered list, and one line on anything worth knowing from announcements.
 
-Keep it scannable: short cells, no more than about six rows per table. Use the same style, in miniature, for single-course questions, like a small table of that course's graded items with their weights.
+Keep it scannable: short cells, no more than about six rows per table, and no emoji. Use the same style, in miniature, for single-course questions, like a small table of that course's graded items with their weights.
 
 ## Integrity
 
