@@ -1,3 +1,4 @@
+import { toolGuide } from "../instructions.js";
 import { z } from "zod";
 import { getToken } from "../auth.js";
 import { client, D2LApiError } from "../client.js";
@@ -352,7 +353,8 @@ async function fetchCourseData(course: Course, w: Window): Promise<CourseData> {
 
 // ---- presentation ----
 // Claude Desktop doesn't pass a local server's instructions to the model, so the result itself carries
-// everything needed to present it well: a ready-made heat bar, a status per course, and the layout.
+// everything needed to present it well: a ready-made heat bar, a status per course, and the layout
+// (from SKILL.md's "Show it, don't just say it" section).
 
 export type CourseStatus = "On track" | "Watch" | "Needs work";
 
@@ -367,26 +369,6 @@ export function courseStatus(signals: Signal[]): CourseStatus {
   if (signals.includes("overdue_work") || signals.includes("grade_below_60")) return "Needs work";
   if (signals.includes("grade_below_70") || signals.includes("heavy_week")) return "Watch";
   return "On track";
-}
-
-const TONE: Record<string, string> = {
-  raw: "relaxed: nothing urgent, maybe get ahead on something",
-  "warming up": "a light nudge: one or two things to handle soon",
-  toasty: "focused: a real plan for the next few days",
-  cooked: "direct and supportive: triage what matters most",
-  "well done": "calm and practical: damage control, and who to talk to",
-};
-
-export function howToPresent(heatLabel: string): string[] {
-  return [
-    "Answer visually, not in paragraphs, and with no emoji.",
-    `1. Put summary.heatBar on its own line, then one sentence of verdict. Tone for "${heatLabel}": ${TONE[heatLabel] ?? "playful, never mean, always useful"}.`,
-    "2. A table with one row per course that has a grade or something due: Course | Grade so far | Still to come | Next due | Status. Use each course's status as given; mark estimated grades \"(est.)\"; take Still to come from grade.weightRemaining. Leave out courses with neither and say how many.",
-    "3. A \"Next 7 days\" table, soonest first, in the student's local time: When | Course | Item | Submitted. Put overdue work first, saying when its late window closes if stillOpenUntil is set.",
-    "4. If your app can draw a chart, add one (each course's grade so far as a bar); otherwise skip it.",
-    "5. End with the top 3 actions as a numbered list, then one line on anything important from announcements.",
-    "For grades under 60%, suggest office hours, the TA or an academic advisor. Explain a grade with its keyItems and their weights; never work weights out backwards.",
-  ];
 }
 
 export async function amICooked(args: { daysAhead?: number; overdueDaysBack?: number; announcementsDays?: number; courses?: string[] }) {
@@ -429,7 +411,7 @@ export async function amICooked(args: { daysAhead?: number; overdueDaysBack?: nu
     },
     courses: courses.sort((a, b) => a.code.localeCompare(b.code)).map((c) => ({ ...c, status: courseStatus(c.signals) })),
     skippedCourses: skipped,
-    howToPresent: howToPresent(heatLabel),
+    howToPresent: toolGuide("am_i_cooked"),
     notes: [
       "Times are UTC; convert to the student's local time.",
       "estimated_from_items grades ignore dropped or bonus items, so treat them as rough.",

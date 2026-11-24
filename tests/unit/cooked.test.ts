@@ -172,12 +172,4 @@ describe("presentation", () => {
     expect(courseStatus(["no_grades_released"])).toBe("On track");
   });
 
-  it("tells the AI how to lay out the answer, in the label's tone", async () => {
-    const { howToPresent } = await import("../../src/tools/cooked.js");
-    const steps = howToPresent("toasty").join("\n");
-    expect(steps).toContain("summary.heatBar");
-    expect(steps).toContain("Course | Grade so far | Still to come | Next due | Status");
-    expect(steps).toContain("focused");
-    expect(steps).toContain("no emoji");
-  });
 });
