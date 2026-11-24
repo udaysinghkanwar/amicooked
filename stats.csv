@@ -1,2 +1,3 @@
-date,installer_runs,binary_downloads,npm_downloads,setups,schools,repo_views_14d,repo_uniques_14d,repo_clones_14d
+date,installer_runs,binary_downloads,npm_downloads,setups,schools,repo_views_14d,repo_uniques_14d,repo_clones_14d,copies,prompt_opens
 2026-11-20,21,38,407,0,0,,,
+2026-11-24,24,46,934,2,1,,,,0,0
