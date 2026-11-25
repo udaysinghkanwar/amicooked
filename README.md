@@ -20,7 +20,9 @@ irm https://amicooked-mcp.vercel.app/install.ps1 | iex
 
 With Node.js 22+: `npx -y amicooked@0 setup`
 
-Setup asks for your school, opens a browser window to sign in, and connects the AI apps you use. Then ask: **am I cooked?**
+Setup asks for your school and which AI apps to connect, then opens a browser window for school sign-in. After setup, ask **am I cooked?**
+
+For Gemini, choose it during regular setup. It works with the Mac app and its bundled CLI, or with [Antigravity CLI](https://antigravity.google/docs/cli-getting-started) on Windows. See the [setup guide](skill/references/setup.md) for troubleshooting.
 
 ## What you can ask
 
@@ -65,19 +67,13 @@ Presets for McMaster, Waterloo, Western, Queen's, Guelph, Laurier, TMU, uOttawa,
 
 ChatGPT on the web and on phones can't start programs on your computer, so they aren't supported yet. Neither is Claude on the web.
 
-## Gemini
-
-For Gemini Mac and its bundled Antigravity CLI, run `amicooked setup --clients gemini` (`gemini-desktop` is an alias). They share one authenticated loopback MCP registration. Setup starts the local service and tests the connection; restart Gemini or start a new Antigravity session, then approve its normal connection prompts. Run `amicooked doctor --live` to check school access.
-
-On Windows, install [Antigravity CLI](https://antigravity.google/docs/cli-getting-started), then use the same setup command and start a new `agy` session. The CLI starts Am I Cooked directly. The standalone Gemini Windows app, web, mobile and legacy `gemini` CLI are outside this integration. See [setup and troubleshooting](skill/references/setup.md).
-
 ## Commands
 
 ```
 amicooked setup      pick your school, sign in, connect apps
 amicooked login      sign in again
 amicooked status     what's set up
-amicooked doctor     verify Gemini MCP (--clients <target>, --live for school access)
+amicooked doctor     verify the Gemini connection (--live checks school access)
 amicooked update     update app and skills (--check to only check)
 amicooked features   list features; add an id to read a guide
 amicooked uninstall  disconnect apps (--purge deletes your login and settings)
