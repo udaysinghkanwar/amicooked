@@ -7,6 +7,7 @@ import { SKILL_MD, SKILL_FILES } from "../../src/skill.js";
 import { skillBundleIs } from "../../src/clients/skillFiles.js";
 import { installSkill, skillPath, uninstallSkill } from "../../src/clients/claudeCode.js";
 import { installCodexSkill, codexSkillPath, uninstallCodexSkill } from "../../src/clients/codex.js";
+import { installGeminiSkill, geminiSkillPath, uninstallGeminiSkill } from "../../src/clients/gemini.js";
 
 const videoGuide = readFileSync("skill/references/lecture-videos.md", "utf8");
 
@@ -42,6 +43,7 @@ afterEach(() => {
 describe.each([
   { name: "Claude Code", install: installSkill, file: skillPath, uninstall: uninstallSkill },
   { name: "Codex", install: installCodexSkill, file: codexSkillPath, uninstall: uninstallCodexSkill },
+  { name: "Gemini", install: installGeminiSkill, file: geminiSkillPath, uninstall: uninstallGeminiSkill },
 ])("$name skill reference", ({ install, file, uninstall }) => {
   function fixture() {
     const home = mkdtempSync(path.join(os.tmpdir(), "amicooked-skill-"));

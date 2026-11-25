@@ -11,7 +11,7 @@ import { chatgptSteps, installChatGPT } from "../clients/chatgpt.js";
 import { codexEntryIs, codexSkillPath, hasCodex, installCodex, installCodexSkill } from "../clients/codex.js";
 import { installGeminiLocal } from "../clients/geminiLocal.js";
 import { checkMcp } from "../clients/check.js";
-import { assertGeminiEnabled, geminiDesktopHomeError, geminiEntry, geminiStdioLaunch, hasGeminiClient, installGeminiHttp, installGeminiStdio, ANTIGRAVITY_CLI_INSTALL, GEMINI_DOWNLOAD } from "../clients/gemini.js";
+import { assertGeminiEnabled, geminiDesktopHomeError, geminiEntry, geminiStdioLaunch, hasGeminiClient, installGeminiHttp, installGeminiSkill, installGeminiStdio, ANTIGRAVITY_CLI_INSTALL, GEMINI_DOWNLOAD } from "../clients/gemini.js";
 import { skillBundleIs } from "../clients/skillFiles.js";
 import { refreshSkills } from "../skills.js";
 import { selfCommand } from "../clients/self.js";
@@ -259,6 +259,7 @@ async function configureClients(clients: ClientId[]): Promise<Outcome[]> {
         const configured = geminiEntry();
         if (!configured) throw new Error("Gemini did not accept the connection. Rerun setup.");
         const tools = await checkMcp(configured);
+        installGeminiSkill();
         p.log.success(`Gemini: MCP handshake and ${tools} read-only tools verified.`);
         const reopen = windows ? "Start a new Antigravity CLI session" : "Reopen Gemini or start a new Antigravity CLI session";
         outcomes.push({ app: "Gemini", ready: false, connected: true, next: `set up. ${reopen}, then ask: am I cooked?` });

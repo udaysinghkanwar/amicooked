@@ -4,7 +4,7 @@ import { claudeDesktopDir, InvalidConfigError, SERVER_NAME, uninstallClaudeDeskt
 import { hasClaudeCode, skillPath, uninstallClaudeCode, uninstallSkill } from "../clients/claudeCode.js";
 import { chatgptSteps, chatgptUrl, uninstallChatGPT } from "../clients/chatgpt.js";
 import { codexConfigured, hasCodex, uninstallCodex, uninstallCodexSkill } from "../clients/codex.js";
-import { geminiConfigPath, geminiEntry, hasGeminiClient, uninstallGemini } from "../clients/gemini.js";
+import { geminiConfigPath, geminiEntry, hasGeminiClient, uninstallGemini, uninstallGeminiSkill } from "../clients/gemini.js";
 import { uninstallGeminiLocal } from "../clients/geminiLocal.js";
 import { OAuthStore } from "../remote/oauth.js";
 import { client } from "../client.js";
@@ -112,6 +112,8 @@ export async function uninstallCommand(purge: boolean): Promise<number> {
     console.error(`Gemini: ${error.message}`);
     geminiRemoved = false;
   }
+  const geminiSkill = uninstallGeminiSkill();
+  if (geminiSkill !== "absent") console.log(`Gemini skill: ${geminiSkill}`);
   if (process.platform === "darwin" && uninstallGeminiLocal()) console.log("Gemini desktop: local service stopped");
   removeExtraSkills();
   if (purge) {
