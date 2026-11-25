@@ -10,7 +10,7 @@ The student signs in on their school's own login page in a real browser window. 
 - Setup has to run on the student's computer. If you're a web or phone chat with no terminal, don't attempt it: send them to Claude Desktop (https://claude.ai/download) or the ChatGPT app (https://chatgpt.com/download), or give them the install command below to paste into Terminal or PowerShell.
 - macOS and Linux: `curl -fsSL https://amicooked-mcp.vercel.app/install.sh | sh`
 - Windows (PowerShell): `irm https://amicooked-mcp.vercel.app/install.ps1 | iex`
-- With Node.js 22 or newer: `npx -y amicooked@0 setup`
+- With Node.js 22 or newer: `npm install --global amicooked`, then `amicooked setup`. Quick start: `npx -y amicooked@0 setup`.
 - ChatGPT desktop app: `amicooked setup --clients chatgpt-desktop`, then restart the app. Runs locally, no tunnel.
 - Uninstall: `amicooked uninstall` (`--purge` also deletes login and settings)
 

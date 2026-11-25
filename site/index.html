@@ -63,11 +63,14 @@
             <svg class="i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i-check" aria-hidden="true"><use href="#i-check"/></svg>
           </button>
         </div>
-        <div class="cmd" role="tabpanel" id="os-npm-panel" aria-labelledby="os-npm" hidden>
-          <code id="cmd-npm">npx -y amicooked@0 setup</code>
-          <button class="icon-button" type="button" data-copy="cmd-npm" aria-label="Copy the npm setup command (needs Node 22 or newer)">
-            <svg class="i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i-check" aria-hidden="true"><use href="#i-check"/></svg>
-          </button>
+        <div class="tab-panel" role="tabpanel" id="os-npm-panel" aria-labelledby="os-npm" hidden>
+          <div class="cmd">
+            <code id="cmd-npm">npm install --global amicooked</code>
+            <button class="icon-button" type="button" data-copy="cmd-npm" aria-label="Copy the npm install command">
+              <svg class="i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i-check" aria-hidden="true"><use href="#i-check"/></svg>
+            </button>
+          </div>
+          <p class="panel-hint">Requires Node.js 22+. After installing, run <code>amicooked setup</code>. For a quick start, run <code>npx -y amicooked@0 setup</code>.</p>
         </div>
         <div class="tab-panel" role="tabpanel" id="os-agent-panel" aria-labelledby="os-agent" hidden>
           <div class="cmd cmd-prompt">
@@ -138,7 +141,7 @@
 
     <section class="band wrap" aria-label="How it works">
       <ol class="steps">
-        <li><span class="num">1</span>Paste one command</li>
+        <li><span class="num">1</span>Install Am I Cooked</li>
         <li><span class="num">2</span>Log in on your school’s page</li>
         <li><span class="num">3</span>Ask: am I cooked?</li>
       </ol>
