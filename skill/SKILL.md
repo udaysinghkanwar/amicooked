@@ -130,7 +130,7 @@ npx --yes hyperframes@0.9.93 doctor --json
 npx --yes hyperframes@0.9.93 docs compositions
 ```
 
-Inspect the doctor's individual checks and `ok`, not only its exit status. `init` supplies the project and production skills; read its installed HyperFrames instructions when available. Use `--help` for actual flags. Commands here use the tested version 0.9.93 for reproducibility; upgrades require rechecking the project, not merely changing its version. If an existing renderer already works, use it instead of installing another. The renderer is independent of Claude, ChatGPT or Gemini.
+Inspect the doctor's individual checks and `ok`, not only its exit status. Some versions include missing optional music/transcription tools in `ok:false`: document those omissions, require working Node/Chrome/FFmpeg/FFprobe, and verify narration with the explicit voice test below. Do not install unused music or transcription packages just to make a doctor summary green. `init` supplies the project and production skills; read its installed HyperFrames instructions when available. Use `--help` for actual flags. Commands here use the tested version 0.9.93 for reproducibility; upgrades require rechecking the project, not merely changing its version. If an existing renderer already works, use it instead of installing another. The renderer is independent of Claude, ChatGPT or Gemini.
 
 ### 2. Get natural narration working first
 
@@ -184,7 +184,7 @@ One starter example is sufficient: for **2x + 3 = 11**, reveal **2x = 8** while 
 
 ### 4. Author and verify with the renderer
 
-The host writes ordinary, editable project HTML/CSS and timed scenes, following the renderer's documented format. Use the scaffold's local runtime/assets; export must not fetch remote fonts/scripts. For HyperFrames, every timed element has a stable id, `class="clip"`, `data-start` and `data-duration`; each composition registers a paused GSAP timeline in `window.__timelines`. Keep audio tags separate, with stable ids. Do not use timers or audio `play()` calls as the render clock. Scene sub-compositions use `<template>` and their own matching host/timeline ids. Keep all key text comfortably inside the frame, captions readable, and backgrounds high contrast.
+The host writes ordinary, editable project HTML/CSS and timed scenes, following the renderer's documented format. Use local runtime/assets; export must not fetch remote fonts/scripts. If the scaffold includes a GSAP CDN URL, download that exact script once into `assets/gsap.min.js` and change the script tag to that local path. Keep the scaffold's GSAP version; copy fonts locally when needed. For HyperFrames, every timed element has a stable id, `class="clip"`, `data-start` and `data-duration`; each composition registers a paused GSAP timeline in `window.__timelines`. Keep audio tags separate, with stable ids. Do not use timers or audio `play()` calls as the render clock. Scene sub-compositions use `<template>` and their own matching host/timeline ids. Keep all key text comfortably inside the frame, captions readable, and backgrounds high contrast.
 
 ```sh
 npx --yes hyperframes@0.9.93 check --json
