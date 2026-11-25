@@ -39,6 +39,15 @@ it.each(['{broken', 'null', '[]', '{"mcpServers":[]}', '{"mcpServers":null}', '{
   expect(fs.existsSync(file + ".amicooked.bak")).toBe(false);
 });
 
+it.each(["", "  \n"])("treats an empty Gemini config as a fresh one: %j", empty => {
+  const file = put(empty);
+  expect(geminiEntry(home)).toBeNull();
+  expect(uninstallGemini(home)).toBe("absent");
+  expect(installGeminiHttp(connection, home)).toBe("added");
+  expect(geminiEntry(home)).toEqual(connection);
+  expect(JSON.parse(fs.readFileSync(file, "utf8"))).toEqual({ mcpServers: { amicooked: { serverUrl: connection.url, headers: connection.headers } } });
+});
+
 it("preserves disabled state and does not create configuration during status/uninstall", () => {
   expect(geminiEntry(home)).toBeNull();
   expect(uninstallGemini(home)).toBe("absent");

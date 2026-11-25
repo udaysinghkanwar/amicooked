@@ -6,6 +6,7 @@ import { homeDir, writePrivateFile } from "../config.js";
 import { InvalidConfigError, SERVER_NAME, type WriteResult } from "./claudeDesktop.js";
 import type { HttpConnection } from "./check.js";
 import { selfCommand, type LaunchCommand } from "./self.js";
+import { installSkillBundle, removeSkillBundle } from "./skillFiles.js";
 
 export const GEMINI_DOWNLOAD = "https://gemini.google/desktop/";
 export const ANTIGRAVITY_CLI_INSTALL = "https://antigravity.google/docs/cli-getting-started";
@@ -47,7 +48,9 @@ const httpFields = ["serverUrl", "url", "httpUrl", "headers"];
 function read(home: string) {
   const file = geminiConfigPath(home);
   try {
-    const config: unknown = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, "utf8")) : {};
+    // Gemini can leave a 0-byte mcp_config.json; treat it like a missing file.
+    const text = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : "";
+    const config: unknown = text.trim() ? JSON.parse(text) : {};
     if (!object(config) || (config.mcpServers !== undefined && !object(config.mcpServers))) throw new Error();
     const servers = (config.mcpServers ?? {}) as Record<string, unknown>;
     const entry = servers[SERVER_NAME];
@@ -106,6 +109,18 @@ function setTransport(transport: Record<string, unknown>, replacedFields: string
   if (JSON.stringify(entry) === JSON.stringify(next)) return "unchanged";
   write(file, { ...config, mcpServers: { ...servers, [SERVER_NAME]: next } });
   return entry ? "updated" : "added";
+}
+
+// ---- the skill: the Mac app's Antigravity and the agy CLI read global skills from ~/.gemini/config/skills ----
+
+export const geminiSkillPath = (home = os.homedir()) => path.join(home, ".gemini", "config", "skills", SERVER_NAME, "SKILL.md");
+
+export function installGeminiSkill(home = os.homedir()): WriteResult {
+  return installSkillBundle(path.dirname(geminiSkillPath(home)));
+}
+
+export function uninstallGeminiSkill(home = os.homedir()): WriteResult {
+  return removeSkillBundle(path.dirname(geminiSkillPath(home)));
 }
 
 export function uninstallGemini(home = os.homedir()): WriteResult {

@@ -5,11 +5,12 @@ import { VERSION } from "./version.js";
 import { getConfig, paths, writePrivateFile } from "./config.js";
 import { skillPath } from "./clients/claudeCode.js";
 import { codexSkillPath } from "./clients/codex.js";
+import { geminiSkillPath } from "./clients/gemini.js";
 import { installSkillBundle, removeSkillBundle } from "./clients/skillFiles.js";
 
 /** Refresh skills without rewriting MCP configuration, restarting apps or repeating login. */
 export function refreshSkills(home = os.homedir()): string[] {
-  const existingClients = [skillPath(home), codexSkillPath(home)]
+  const existingClients = [skillPath(home), codexSkillPath(home), geminiSkillPath(home)]
     .filter(fs.existsSync)
     .map(file => path.dirname(file));
   const dirs = [...new Set([

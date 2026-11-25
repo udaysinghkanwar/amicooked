@@ -364,6 +364,26 @@ export function heatBar(heat: number, label: string): string {
   return `Heat ${"█".repeat(filled)}${"░".repeat(10 - filled)} ${filled}/10 · ${label}`;
 }
 
+const VERDICT: Record<string, string> = {
+  raw: "Not cooked.",
+  "warming up": "Warming up, not cooked.",
+  toasty: "Toasty, not cooked yet.",
+  cooked: "Cooked, but fixable.",
+  "well done": "Well done. Time for damage control.",
+};
+
+/**
+ * The first two lines of the answer, already written: the heat bar (in code formatting so it stays aligned)
+ * and a factual verdict. Models reshuffle steps they're asked to follow, but reliably show a finished block.
+ */
+export function opening(heat: number, label: string, overdue: number, dueSoon: number, daysAhead: number): string {
+  const facts = [
+    overdue ? `${overdue} overdue` : "Nothing overdue",
+    `${dueSoon === 0 ? "nothing" : dueSoon} due in the next ${daysAhead} day${daysAhead === 1 ? "" : "s"}`,
+  ];
+  return `\`${heatBar(heat, label)}\`\n\n**${VERDICT[label] ?? "Here's where you stand."}** ${facts.join(", ")}.`;
+}
+
 /** One word for a course's table row, from the same signals the heat score uses. */
 export function courseStatus(signals: Signal[]): CourseStatus {
   if (signals.includes("overdue_work") || signals.includes("grade_below_60")) return "Needs work";
@@ -393,8 +413,12 @@ export async function amICooked(args: { daysAhead?: number; overdueDaysBack?: nu
   const { heat, heatLabel, reasons } = heatScore(courses);
   const graded = courses.filter((c) => c.grade.percent !== null);
   const lowest = graded.sort((a, b) => a.grade.percent! - b.grade.percent!)[0];
+  const dueSoon = courses.reduce((n, c) => n + c.dueSoon.length, 0);
+  const overdue = courses.reduce((n, c) => n + c.overdue.length, 0);
 
   return {
+    // First, so it's the first thing the model reads: start the answer with this, exactly as given
+    showFirst: opening(heat, heatLabel, overdue, dueSoon, w.daysAhead),
     generatedAt: new Date(w.now).toISOString(),
     school: getSchool().name,
     window: { daysAhead: w.daysAhead, overdueDaysBack: w.overdueDaysBack },
@@ -404,8 +428,8 @@ export async function amICooked(args: { daysAhead?: number; overdueDaysBack?: nu
       heatBar: heatBar(heat, heatLabel),
       reasons,
       courses: courses.length,
-      dueSoon: courses.reduce((n, c) => n + c.dueSoon.length, 0),
-      overdue: courses.reduce((n, c) => n + c.overdue.length, 0),
+      dueSoon,
+      overdue,
       newAnnouncements: courses.reduce((n, c) => n + c.announcements.count, 0),
       lowestGrade: lowest ? { course: lowest.code, percent: lowest.grade.percent, source: lowest.grade.source } : null,
     },
