@@ -82,7 +82,7 @@ function smokeTest(tools: Tools) {
     const duration = Number(runTool(tools.ffprobe, ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", audio], env));
     if (!Number.isFinite(duration) || duration <= 0) throw new Error("The narration test produced no audio.");
     fs.writeFileSync(path.join(work, "index.html"), `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Video setup check</title></head>
-<body style="margin:0;background:#16232c;color:#fff"><div id="main" data-composition-id="main" data-width="640" data-height="360" data-duration="${duration + 0.3}">
+<body style="margin:0;background:#16232c;color:#fff"><div id="main" data-no-timeline data-composition-id="main" data-width="640" data-height="360" data-duration="${duration + 0.3}">
 <h1 style="margin:60px">Am I Cooked video setup</h1>
 <audio id="voice" class="clip" data-start="0" data-duration="${duration}" data-track-index="1" src="voice.wav"></audio>
 </div></body></html>`);
@@ -127,14 +127,12 @@ export async function prepareVideo(log: (message: string) => void = console.erro
       ffmpeg: path.join("node_modules", "@ffmpeg-installer", target, exe("ffmpeg")),
       ffprobe: path.join("node_modules", "@ffprobe-installer", target, exe("ffprobe")),
       hyperframes: "node_modules/hyperframes/bin/hyperframes.mjs",
-      voice: "voice.mjs",
     };
     const node = path.join(nodeRoot, nodeRelative);
-    const packages = await installComponent(store, fingerprint([target, assets.node.sha256, npmLock, voiceScript]), Object.values(packageFiles), async directory => {
+    const packages = await installComponent(store, fingerprint([target, assets.node.sha256, npmLock]), Object.values(packageFiles), async directory => {
       log("Installing the locked renderer, FFmpeg, and narration packages…");
       fs.writeFileSync(path.join(directory, "package.json"), JSON.stringify(manifest));
       fs.writeFileSync(path.join(directory, "package-lock.json"), JSON.stringify(npmLock));
-      fs.writeFileSync(path.join(directory, packageFiles.voice), voiceScript);
       runTool(node, [path.join(nodeRoot, npmRelative), "ci", "--ignore-scripts", "--no-audit", "--no-fund", "--include=optional",
         "--cache", path.join(root(), "npm-cache"), "--userconfig", path.join(directory, ".npmrc")],
       { ...Object.fromEntries(Object.entries(process.env).filter(([key]) => !/^(npm_config_|node_options$)/i.test(key))), PATH: `${path.dirname(node)}${path.delimiter}${process.env.PATH ?? ""}` }, directory);
@@ -149,12 +147,14 @@ export async function prepareVideo(log: (message: string) => void = console.erro
       log("Downloading the local narration model…");
       for (const [file, asset] of Object.entries(voiceModel)) await download(asset, path.join(directory, file));
     });
+    const voice = path.join(packages, `voice-${fingerprint(voiceScript)}.mjs`);
+    if (!fs.existsSync(voice)) writePrivateFile(voice, voiceScript);
     const tools = {
       node, browser: path.join(browserRoot, browserRelative), model,
       ffmpeg: path.join(packages, packageFiles.ffmpeg),
       ffprobe: path.join(packages, packageFiles.ffprobe),
       hyperframes: path.join(packages, packageFiles.hyperframes),
-      voice: path.join(packages, packageFiles.voice),
+      voice,
     };
     log("Testing a narrated video render…");
     smokeTest(tools);

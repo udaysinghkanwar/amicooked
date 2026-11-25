@@ -92,7 +92,7 @@ try {
       first = readFileSync(marker, "utf8");
       const tools = JSON.parse(first).tools;
       assert.notEqual(tools.voice, previousTools.voice);
-      for (const key of ["node", "browser", "model"]) assert.equal(tools[key], previousTools[key]);
+      for (const key of ["node", "browser", "model", "ffmpeg", "ffprobe", "hyperframes"]) assert.equal(tools[key], previousTools[key]);
       execFileSync(process.execPath, [npmScript, "exec", "--yes", "--package", tarball, "--", "amicooked", ...setup], {
         cwd: root, env, stdio: "inherit", timeout: 900_000,
       });
@@ -105,7 +105,7 @@ try {
     const duration = Number(cli("video", "run", "ffprobe", "--", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", "voice.wav"));
     assert(duration > 0);
     writeFileSync(path.join(project, "index.html"), `<!doctype html><html><head><meta charset="utf-8"><title>Petri net</title></head>
-<body style="margin:0;background:#15222c;color:white"><main data-composition-id="main" data-width="640" data-height="360" data-duration="${duration + 0.3}">
+<body style="margin:0;background:#15222c;color:white"><main data-no-timeline data-composition-id="main" data-width="640" data-height="360" data-duration="${duration + 0.3}">
 <h1>One place, one token</h1><audio id="voice" class="clip" data-start="0" data-duration="${duration}" data-track-index="1" src="voice.wav"></audio></main></body></html>`);
     cli("video", "run", "hyperframes", "--", "render", "--workers", "1", "--quality", "draft", "--no-best-effort", "--output", "lesson.mp4");
     const streams = JSON.parse(cli("video", "run", "ffprobe", "--", "-v", "error", "-show_entries", "stream=codec_type", "-of", "json", "lesson.mp4")).streams;
