@@ -2,7 +2,7 @@ import { spawnSync, type SpawnSyncReturns } from "child_process";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
-import { installSkillFiles } from "./skill.js";
+import { installSkillFiles, removeSkillFiles } from "./skill.js";
 import { SERVER_NAME, type WriteResult } from "./claudeDesktop.js";
 import type { LaunchCommand } from "./self.js";
 
@@ -40,8 +40,5 @@ export function installSkill(home = os.homedir()): WriteResult {
 }
 
 export function uninstallSkill(home = os.homedir()): WriteResult {
-  const dir = path.dirname(skillPath(home));
-  if (!fs.existsSync(dir)) return "absent";
-  fs.rmSync(dir, { recursive: true, force: true });
-  return "removed";
+  return removeSkillFiles(skillPath(home));
 }

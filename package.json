@@ -15,14 +15,14 @@
   },
   "scripts": {
     "sync:skill": "node scripts/sync-skill.mjs",
-    "build": "node scripts/sync-skill.mjs && node scripts/build-video-assets.mjs && tsc",
+    "build": "node scripts/sync-skill.mjs && node scripts/build-video-assets.mjs && node scripts/clean-dist.mjs && tsc",
     "test": "vitest run",
     "test:watch": "vitest",
     "prepack": "npm run build",
     "build:bin": "node scripts/sync-skill.mjs && node scripts/build-video-assets.mjs && node scripts/build-binaries.mjs",
     "preversion": "npm test",
     "version": "node scripts/sync-version.mjs && git add src/version.ts",
-    "pretest": "node scripts/build-video-assets.mjs",
+    "pretest": "npm run build",
     "stats": "node --env-file-if-exists=.env.local scripts/stats.mjs"
   },
   "keywords": [

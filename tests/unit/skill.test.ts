@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { existsSync, readFileSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from "fs";
+import { existsSync, readFileSync, mkdtempSync, mkdirSync, writeFileSync, rmSync, readdirSync } from "fs";
 import * as os from "os";
 import * as path from "path";
 import { serverInstructions } from "../../src/instructions.js";
@@ -82,5 +82,15 @@ describe.each([
     expect(install(home)).toBe("updated");
     expect(readFileSync(guide, "utf8")).toBe(LECTURE_VIDEO_GUIDE_MD);
     expect(skillIsCurrent(entry)).toBe(true);
+    const backups = path.join(path.dirname(entry), ".backups");
+    expect(readdirSync(backups).some(name => {
+      const saved = path.join(backups, name, "references/lecture-videos.md");
+      return existsSync(saved) && readFileSync(saved, "utf8") === "An older workflow.";
+    })).toBe(true);
+    const custom = path.join(path.dirname(entry), "my-notes.md");
+    writeFileSync(custom, "Keep my notes");
+    uninstall(home);
+    expect(readFileSync(custom, "utf8")).toBe("Keep my notes");
+    expect(existsSync(backups)).toBe(true);
   });
 });

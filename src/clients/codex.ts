@@ -2,7 +2,7 @@ import { spawnSync } from "child_process";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
-import { installSkillFiles } from "./skill.js";
+import { installSkillFiles, removeSkillFiles } from "./skill.js";
 import { SERVER_NAME, type WriteResult } from "./claudeDesktop.js";
 import type { LaunchCommand } from "./self.js";
 
@@ -127,8 +127,5 @@ export function installCodexSkill(home = os.homedir()): WriteResult {
 }
 
 export function uninstallCodexSkill(home = os.homedir()): WriteResult {
-  const dir = path.dirname(codexSkillPath(home));
-  if (!fs.existsSync(dir)) return "absent";
-  fs.rmSync(dir, { recursive: true, force: true });
-  return "removed";
+  return removeSkillFiles(codexSkillPath(home));
 }
