@@ -1,90 +1,14 @@
 ---
 name: amicooked
-description: Use when a student asks about their D2L Brightspace courses, grades, deadlines, assignments, announcements or course files, asks "am I cooked?", or wants to set up Am I Cooked. Also use when they want to study for one of their courses, like preparing for a test, midterm or exam, "quiz me", or reviewing or summarising lectures, so the questions come from their own course material.
+description: Use when a student asks about their D2L Brightspace courses, grades, deadlines, assignments, announcements or course files, asks "am I cooked?", wants a source-grounded lecture video, or wants to set up Am I Cooked. Also use when they want to study for one of their courses, like preparing for a test, midterm or exam, "quiz me", or reviewing or summarising lectures, so the questions come from their own course material.
 ---
 
 # Am I Cooked
 
 Am I Cooked connects an AI assistant to a student's D2L Brightspace account (Avenue to Learn, LEARN, onQ, OWL Brightspace, CourseLink, MyLearningSpace and others). It runs on the student's own computer and is read-only.
 
-## Setting it up (for agents)
+## Choose a workflow
 
-**First, check that you can run commands on the student's computer.** Setup installs a program there, so it only works from an agent with a terminal, like Claude Code, Codex or the ChatGPT desktop app. If you're on a website (chatgpt.com, claude.ai, gemini.google.com), in a phone app, or in a chat with no command tool, don't try. Tell the student instead:
-
-- Get an app that can do it: Claude Desktop (https://claude.ai/download) or the ChatGPT app (https://chatgpt.com/download), then paste the same request there. Or install it themselves by pasting this into Terminal (Mac): `curl -fsSL https://amicooked-mcp.vercel.app/install.sh | sh`, or this into PowerShell (Windows): `irm https://amicooked-mcp.vercel.app/install.ps1 | iex`.
-- Either way, it ends by opening their AI app, ready to ask "am I cooked?".
-
-If you can run commands:
-
-1. Ask the student which school they go to. Presets: mcmaster, waterloo, western, queens, guelph, laurier, tmu, uottawa, carleton, brock, windsor, laurentian, lakehead. Any other Brightspace school works with the URL they log in through.
-2. Install it:
-   - macOS / Linux: `curl -fsSL https://amicooked-mcp.vercel.app/install.sh | sh -s -- --no-setup`
-   - Windows (PowerShell): `$env:AMICOOKED_NO_SETUP=1; irm https://amicooked-mcp.vercel.app/install.ps1 | iex`
-   - With Node.js installed, `npx -y amicooked@0` works in place of `amicooked` below.
-3. Run setup with flags, and a long command timeout (at least 5 minutes), because the student signs in through a browser window that opens:
-   `amicooked setup --school mcmaster --clients desktop,code`
-   Use `--school https://...` for schools without a preset. Add `chatgpt-desktop` to `--clients` if they use the ChatGPT desktop app, then tell them to restart it. ChatGPT and Claude on the web or on phones aren't supported.
-4. Tell the student to sign in to their school in the browser window. Never ask for their password; you never need it.
-5. Setup ends with a "Next" list: one line per app saying it's open and ready, needs a restart, needs opening, or needs installing (with a link). Tell the student each line as written. If you're running inside Claude Desktop, they need to quit it; Am I Cooked then reopens it with everything set up.
-6. If something fails, run `amicooked status` and read what it says.
-
-<!-- server-instructions -->
-## Answering questions
-
-- Start broad questions ("am I cooked?", "what should I work on?", "how am I doing?", "what's due?") with `am_i_cooked`. It covers every current course in one call.
-- Other tools take a course code directly, like `course: "3BB4"`. Only call `get_my_courses` when a code is ambiguous or the student asks what they're enrolled in.
-- Check `get_announcements` for a course before a final verdict on it; deadlines and exam details often change there.
-- To read slides, handouts or assignment PDFs: `get_course_content` to find the file, then `download_file`. Use `read_file` for files already downloaded.
-- If a tool says a login window opened, tell the student to sign in there and ask again.
-
-## Studying
-
-When a student wants to study, review or be quizzed on one of their courses, use their own course material, not a generic version of the subject.
-
-1. Find the course from their words: a code like "3O03" or a name like "linear optimization" both work as `course`.
-2. Check `get_announcements` for what the test covers (chapters, weeks, format, allowed aids). If nothing says, ask which weeks or topics to cover.
-3. Open those weeks with `get_course_content` and read the slides or notes with `download_file`.
-4. Build questions from that material, using the course's own notation and examples, and say which lecture each topic comes from.
-5. If the material can't be loaded, say so, then fall back to general questions and say they're general.
-
-## The verdict
-
-Use `summary.heatLabel` from `am_i_cooked` to set the tone. Be playful, never mean, and always useful.
-
-| heatLabel | Tone |
-|---|---|
-| raw | Relaxed. Nothing urgent; maybe get ahead on something. |
-| warming up | Light nudge. One or two things to handle soon. |
-| toasty | Focused. A real plan for the next few days. |
-| cooked | Direct and supportive. Triage what matters most. |
-| well done | Calm and practical. Damage control, and who to talk to. |
-
-1. Lead with a one-line verdict, e.g. "Toasty, not cooked."
-2. Then the top 3 actions, each with course, item and due time in the student's local time (D2L times are UTC).
-3. Say whether a grade is `final_calculated` or `estimated_from_items`; estimates ignore dropped and bonus items.
-   - For an estimate, say how much is left, like "67.6% so far. 60% of your grade is still to come." Use `weightRemaining` for that number.
-   - Name the `keyItems` when a grade needs explaining, with their weight: "the midterm (59.5%, worth 25%) is pulling it down."
-   - Never work weights out backwards from a result. Use the `weight` values the tools return.
-   - `basis: "points"` means the gradebook has no weights. Say the estimate is by points and the real weighting may differ. If the student asks how the grade is calculated, find the course outline with `get_course_content` and read the weights from it.
-4. `late_window_open` means a missed assignment can still be submitted: say so first, it's the easiest win.
-5. If `partial_data` appears, mention that some of a course couldn't be loaded.
-6. For grades under 60%, suggest office hours, the TA, or an academic advisor.
-
-<!-- tool:am_i_cooked -->
-## Show it, don't just say it
-
-Answer "am I cooked?" and any overview of grades or deadlines visually, not in paragraphs, and with no emoji. Use the student's local time (D2L times are UTC).
-
-1. Put `summary.heatBar` (like `Heat ██░░░░░░░░ 2/10 · warming up`) on its own line, then one sentence of verdict in the tone for `summary.heatLabel`: raw is relaxed, warming up a light nudge, toasty focused, cooked direct and supportive, well done calm and practical.
-2. A table with one row per course that has a grade or something due: Course | Grade so far | Still to come | Next due | Status. Use each course's `status` as given (On track, Watch, Needs work), mark estimated grades "(est.)", and take Still to come from `grade.weightRemaining`. Leave out courses with neither, and say how many.
-3. A "Next 7 days" table, soonest first: When | Course | Item | Submitted. Put overdue work first, with when its late window closes if `stillOpenUntil` is set.
-4. If your app can draw charts, add one, like each course's grade so far as a bar. Otherwise skip it; never paste chart code.
-5. End with the top 3 actions as a numbered list, then one line on anything important from announcements.
-
-Keep tables to about six rows. For one course, use the same style in miniature, like a small table of graded items with their weights.
-<!-- /tool:am_i_cooked -->
-
-## Integrity
-
-Am I Cooked only reads. Help the student understand material and plan their time, but don't write graded work for them to submit.
-<!-- /server-instructions -->
+- **Course questions and study help:** Read [courses.md](references/courses.md) for grades, deadlines, submissions, announcements and course files. Use it for an “am I cooked?” overview, a study plan, or practice questions grounded in the student's course material.
+- **Lecture and study videos:** Read [lecture-videos.md](references/lecture-videos.md) when the student asks for a video. It covers choosing a lesson mode, grounding it in course sources, and rendering and checking a narrated lesson with local tools.
+- **Install and connect an AI app:** Read [setup.md](references/setup.md) to install Am I Cooked, link the student's AI app, and guide them through signing in on their school's page.

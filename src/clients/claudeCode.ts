@@ -1,8 +1,7 @@
 import { spawnSync, type SpawnSyncReturns } from "child_process";
-import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
-import { SKILL_MD } from "../skill.js";
+import { installSkillBundle, removeSkillBundle } from "./skillFiles.js";
 import { SERVER_NAME, type WriteResult } from "./claudeDesktop.js";
 import type { LaunchCommand } from "./self.js";
 
@@ -36,17 +35,9 @@ export function skillPath(home = os.homedir()): string {
 
 /** Install the skill that teaches Claude Code how to use the tools. */
 export function installSkill(home = os.homedir()): WriteResult {
-  const file = skillPath(home);
-  if (fs.existsSync(file) && fs.readFileSync(file, "utf8") === SKILL_MD) return "unchanged";
-  const existed = fs.existsSync(file);
-  fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.writeFileSync(file, SKILL_MD);
-  return existed ? "updated" : "added";
+  return installSkillBundle(path.dirname(skillPath(home)));
 }
 
 export function uninstallSkill(home = os.homedir()): WriteResult {
-  const dir = path.dirname(skillPath(home));
-  if (!fs.existsSync(dir)) return "absent";
-  fs.rmSync(dir, { recursive: true, force: true });
-  return "removed";
+  return removeSkillBundle(path.dirname(skillPath(home)));
 }
