@@ -6,6 +6,9 @@ import { createHash } from "node:crypto";
 import os from "node:os";
 import path from "node:path";
 
+// The ordinary local suite stays offline. The existing GitHub matrix runs the full acceptance test.
+if (process.argv.includes("--ci") && process.env.GITHUB_ACTIONS !== "true") process.exit(0);
+
 const root = mkdtempSync(path.join(os.tmpdir(), "amicooked video acceptance "));
 const windows = process.platform === "win32";
 const source = path.resolve(`build/amicooked-${windows ? "windows" : process.platform}-${process.arch}${windows ? ".exe" : ""}`);
@@ -91,7 +94,7 @@ try {
       assert.notEqual(tools.voice, previousTools.voice);
       for (const key of ["node", "browser", "model"]) assert.equal(tools[key], previousTools[key]);
       execFileSync(process.execPath, [npmScript, "exec", "--yes", "--package", tarball, "--", "amicooked", ...setup], {
-        cwd: project, env, stdio: "inherit", timeout: 900_000,
+        cwd: root, env, stdio: "inherit", timeout: 900_000,
       });
       assert.equal(readFileSync(marker, "utf8"), first);
     }
