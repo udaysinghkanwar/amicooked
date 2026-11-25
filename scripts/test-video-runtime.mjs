@@ -43,6 +43,7 @@ try {
     const data = path.join(home, ".amicooked");
     const project = path.join(home, "lesson with spaces");
     const env = { ...process.env, HOME: home, USERPROFILE: home, CODEX_HOME: path.join(home, ".codex"),
+      APPDATA: path.join(home, "AppData/Roaming"), LOCALAPPDATA: path.join(home, "AppData/Local"),
       AMICOOKED_HOME: data, AMICOOKED_NO_TELEMETRY: "1", D2L_HOST: "", D2L_LOGIN_URL: "" };
     delete env.AMICOOKED_SKIP_VIDEO_DEPS;
     delete env.AMICOOKED_VERSION;

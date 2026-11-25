@@ -3,6 +3,7 @@ import * as fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import { updateCommand } from "../../src/cli/update.js";
 import { reloadConfig, writeConfig } from "../../src/config.js";
 import { acquireLock } from "../../src/lock.js";
 import { download, installComponent } from "../../src/video/install.js";
@@ -80,4 +81,23 @@ it("respects opt-out and rejects concurrent preparation", async () => {
   try {
     await expect(prepareVideo()).rejects.toThrow("Another video setup is running");
   } finally { release(); }
+});
+
+it("retries missing tools on a regular eligible update check", async () => {
+  if (videoStatus().state === "unsupported") return;
+  writeConfig({ school: { id: "test", name: "Test", lmsName: "D2L", host: "test.invalid" } });
+  const downloads = vi.fn().mockRejectedValue(new Error("offline"));
+  vi.stubGlobal("fetch", downloads);
+  const release = async () => new Response(JSON.stringify({ tag_name: "v1.0.0" }));
+  const output = vi.spyOn(console, "log").mockImplementation(() => {});
+  const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+  try {
+    expect(await updateCommand({ check: true, json: true }, { fetch: release, version: "1.0.0" })).toBe(0);
+    expect(downloads).not.toHaveBeenCalled();
+    expect(await updateCommand({ compatibleOnly: true, json: true }, { fetch: release, version: "1.0.0" })).toBe(0);
+    expect(downloads).toHaveBeenCalledOnce();
+  } finally {
+    output.mockRestore();
+    errors.mockRestore();
+  }
 });
