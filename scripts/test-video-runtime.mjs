@@ -76,11 +76,16 @@ try {
       env, cwd: project, encoding: "utf8", timeout: 900_000, stdio: ["ignore", "pipe", "inherit"],
     }).trim();
     assert.equal(JSON.parse(cli("video", "status")).state, "missing");
-    cli(...setup);
-    assert.equal(existsSync(path.join(data, "video")), false);
-    assert.match(cli("features", "lecture-videos"), /run `amicooked video prepare` yourself/);
-    if (channel === "native") cli("video", "prepare");
-    else cli(...setup, "--with-video-deps");
+    if (channel === "npm") {
+      cli(...setup, "--skip-video-deps");
+      cli(...setup);
+      cli("refresh-skills");
+      assert.equal(existsSync(path.join(data, "video")), false);
+      assert.match(cli("features", "lecture-videos"), /run `amicooked video prepare` yourself/);
+      cli(...setup, "--with-video-deps");
+    } else {
+      cli(...setup);
+    }
     assert.equal(JSON.parse(cli("video", "status")).state, "ready");
     for (const tool of ["ffmpeg", "ffprobe"]) {
       assert.match(cli("video", "run", tool, "--", "-version"), new RegExp(`^${tool} version 9[.]1(?:\\D|$)`));
@@ -93,9 +98,17 @@ try {
       const previousTools = JSON.parse(first).tools;
       olderRecipe();
       assert.equal(JSON.parse(cli("video", "status")).state, "previous");
-      cli("refresh-skills");
-      assert.equal(readFileSync(marker, "utf8"), first);
-      cli("refresh-skills", "--with-video-deps");
+      // Run the installed background worker, with only GitHub release metadata replaced for this fixture.
+      const release = JSON.stringify({ tag_name: `v${cli("--version")}` });
+      const fixture = `data:text/javascript,${encodeURIComponent(`
+        const fetchAsset = globalThis.fetch;
+        globalThis.fetch = (url, options) => url === "https://api.github.com/repos/udaysinghkanwar/amicooked/releases/latest"
+          ? Promise.resolve(new Response(${JSON.stringify(release)}))
+          : fetchAsset(url, options);
+      `)}`;
+      execFileSync(command, ["--import", fixture, ...prefix, "auto-update", "run"], {
+        cwd: project, env, stdio: "inherit", timeout: 900_000,
+      });
       assert.equal(JSON.parse(cli("video", "status")).state, "ready");
       first = readFileSync(marker, "utf8");
       const tools = JSON.parse(first).tools;
@@ -130,7 +143,7 @@ try {
       cli("uninstall", "--purge");
       assert.equal(existsSync(data), false);
     }
-    console.log(`${process.platform}-${process.arch} ${channel}: setup without downloads, optional preparation, narration, full MP4 decode and reinstall passed.`);
+    console.log(`${process.platform}-${process.arch} ${channel}: automatic preparation, narration, full MP4 decode and reinstall passed.`);
   }
 } finally {
   server.kill();

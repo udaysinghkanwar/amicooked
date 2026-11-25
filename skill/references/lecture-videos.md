@@ -1,6 +1,6 @@
 # Lecture videos
 
-Use this workflow only for a requested lecture/study video. Am I Cooked supplies course material and teaching guidance; the host agent creates the lesson using an external renderer. Setup or a manual update can prepare the local tools in advance. Prepare them when the student requests a video if they were skipped. A lecture request still needs an AI client that can work with local files and commands.
+Use this workflow only for a requested lecture/study video. Am I Cooked supplies course material and teaching guidance; the host agent creates the lesson using an external renderer. Setup and updates prepare the local tools automatically. Prepare them when the student requests a video if they were skipped or could not be installed. A lecture request still needs an AI client that can work with local files and commands.
 
 ## Choose the lesson
 

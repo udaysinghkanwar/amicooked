@@ -6,7 +6,7 @@ import type { Tool } from "./tools/types.js";
 // Add one entry and its reference when shipping a feature. Dependencies remain optional.
 export const FEATURES = [
   { id: "courses", name: "Course planning", description: "Grades, deadlines, announcements and course files.", requires: "A Brightspace login.", guide: "references/courses.md" },
-  { id: "lecture-videos", name: "Lecture videos", description: "Source-grounded narrated lessons and local study players.", requires: "Local command and file access. The managed video tools can be installed on demand.", guide: "references/lecture-videos.md" },
+  { id: "lecture-videos", name: "Lecture videos", description: "Source-grounded narrated lessons and local study players.", requires: "Local command and file access. Setup prepares the managed video tools.", guide: "references/lecture-videos.md" },
   { id: "updates", name: "Updates", description: "Update the app and skills, manually or with automatic patch updates.", requires: "An installed app with local command access.", guide: "references/updates.md" },
   { id: "setup", name: "Setup", description: "Connect your school and AI apps.", requires: "Local command access and Chrome or Edge.", guide: "references/setup.md" },
 ] as const;

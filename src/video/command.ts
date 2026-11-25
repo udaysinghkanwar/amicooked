@@ -1,21 +1,13 @@
 import { spawnSync } from "node:child_process";
 import path from "node:path";
-import { confirm, isCancel } from "@clack/prompts";
+import { getConfig } from "../config.js";
 import { getVideoTools, prepareVideo, videoEnvironment, videoStatus } from "./runtime.js";
 
-export async function chooseVideoPreparation(options: { requested?: boolean; prompt?: boolean; upgrading?: boolean }) {
+export async function prepareVideoSafely(force = false) {
+  const config = getConfig();
+  if (!force && (!config.school || config.uninstalled || config.prepareVideo === false)) return;
   const { state } = videoStatus();
-  if (state === "unsupported" || (state === "ready" && !options.upgrading)) return false;
-  if (options.requested) return true;
-  if (!options.prompt || !process.stdin.isTTY || !process.stdout.isTTY) return false;
-  const choice = await confirm({
-    message: "Set up the lecture-video tools now? Downloads require internet and roughly 1–2 GB of disk space.",
-    initialValue: false,
-  });
-  return !isCancel(choice) && choice;
-}
-
-export async function prepareVideoSafely() {
+  if (state === "ready" || state === "unsupported") return;
   try {
     await prepareVideo();
     console.error("Lecture video tools are ready.");
