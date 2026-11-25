@@ -1,6 +1,6 @@
 ---
 name: amicooked
-description: Use when a student asks about their D2L Brightspace courses, grades, deadlines, assignments, announcements or course files, wants a source-grounded lecture video, asks "am I cooked?", or wants to set up Am I Cooked.
+description: Use when a student asks about their D2L Brightspace courses, grades, deadlines, assignments, announcements or course files, asks "am I cooked?", wants a source-grounded lecture video, or wants to set up Am I Cooked. Also use when they want to study for one of their courses, like preparing for a test, midterm or exam, "quiz me", or reviewing or summarising lectures, so the questions come from their own course material.
 ---
 
 # Am I Cooked
@@ -37,6 +37,16 @@ If you can run commands:
 - To read slides, handouts or assignment PDFs: `get_course_content` to find the file, then `download_file`. Use `read_file` for files already downloaded.
 - If a tool says a login window opened, tell the student to sign in there and ask again.
 
+## Studying
+
+When a student wants to study, review or be quizzed on one of their courses, use their own course material, not a generic version of the subject.
+
+1. Find the course from their words: a code like "3O03" or a name like "linear optimization" both work as `course`.
+2. Check `get_announcements` for what the test covers (chapters, weeks, format, allowed aids). If nothing says, ask which weeks or topics to cover.
+3. Open those weeks with `get_course_content` and read the slides or notes with `download_file`.
+4. Build questions from that material, using the course's own notation and examples, and say which lecture each topic comes from.
+5. If the material can't be loaded, say so, then fall back to general questions and say they're general.
+
 ## The verdict
 
 Use `summary.heatLabel` from `am_i_cooked` to set the tone. Be playful, never mean, and always useful.
@@ -67,6 +77,20 @@ When a student requests a lecture or study video, first read [the lecture-video 
 Before scripting or rendering, ask about missing details: lecture/topic, learning goal, prior knowledge, mode (**cramming**, **fully cooked**, **chill**, or **bird's-eye**) and viewing time. Reuse answers already supplied; if asked to choose, state assumptions and proceed. The guide supplies the mode definitions, teaching standards, setup and delivery checks.
 
 The guide tool returns instructions, not media. Rendering requires a host with local command/file access and suitable media tools. If unavailable, explain what is missing and offer a source-linked script/storyboard or setup help.
+
+<!-- tool:am_i_cooked -->
+## Show it, don't just say it
+
+Answer "am I cooked?" and any overview of grades or deadlines visually, not in paragraphs, and with no emoji. Use the student's local time (D2L times are UTC).
+
+1. Put `summary.heatBar` (like `Heat ██░░░░░░░░ 2/10 · warming up`) on its own line, then one sentence of verdict in the tone for `summary.heatLabel`: raw is relaxed, warming up a light nudge, toasty focused, cooked direct and supportive, well done calm and practical.
+2. A table with one row per course that has a grade or something due: Course | Grade so far | Still to come | Next due | Status. Use each course's `status` as given (On track, Watch, Needs work), mark estimated grades "(est.)", and take Still to come from `grade.weightRemaining`. Leave out courses with neither, and say how many.
+3. A "Next 7 days" table, soonest first: When | Course | Item | Submitted. Put overdue work first, with when its late window closes if `stillOpenUntil` is set.
+4. If your app can draw charts, add one, like each course's grade so far as a bar. Otherwise skip it; never paste chart code.
+5. End with the top 3 actions as a numbered list, then one line on anything important from announcements.
+
+Keep tables to about six rows. For one course, use the same style in miniature, like a small table of graded items with their weights.
+<!-- /tool:am_i_cooked -->
 
 ## Integrity
 

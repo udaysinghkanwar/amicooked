@@ -133,7 +133,7 @@ function findLibraryFile(query: string): string {
 export const downloadFileTool: Tool = {
   name: "download_file",
   description:
-    "Download a course file (slides, handouts, assignment PDFs) and return its text. Pass the file URL from get_course_content (e.g. /content/enforced/12345-COURSE/week7.pdf). Files are saved once into the student's course folder and served from disk afterwards. Set refresh=true only if the student says the file changed.",
+    "Download a course file (slides, handouts, assignment PDFs) and return its text. Pass the file URL from get_course_content (e.g. /content/enforced/12345-COURSE/week7.pdf). Saved once, then served from disk. Set refresh=true only if the student says the file changed. Use it to read lecture slides before quizzing a student or summarising what a test covers. Help the student understand the material; don't write graded work for them to submit.",
   schema: {
     url: z.string().describe("File URL or path from get_course_content"),
     refresh: z.boolean().optional().describe("Re-check D2L for a newer version"),
