@@ -37,7 +37,7 @@ try {
   run(installed, geminiSetup);
   assert.equal(fs.readFileSync(configFile, "utf8"), config);
   const launch = JSON.parse(config).mcpServers.amicooked;
-  assert.equal(launch.command.toLowerCase(), installed.toLowerCase());
+  assert.equal(fs.realpathSync.native(launch.command), fs.realpathSync.native(installed));
   assert.deepEqual(launch.args, ["mcp"]);
   assert.match(run(installed, ["doctor"]), /10 read-only tools verified/);
   client = new Client({ name: "windows-antigravity-config-test", version: "1" });
