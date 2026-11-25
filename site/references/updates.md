@@ -6,6 +6,8 @@
 - App and skill references ship together. Use the release package, not loose files from GitHub main. Existing changed skill files are saved under each skill folder's `.backups/`; keep personal instructions in a separate file. Restart/reload the AI app after updates.
 - Native binaries update from GitHub releases; npm installations use npm. A source checkout uses `git pull --ff-only`, `npm ci` and `npm run build`; the update command explains this rather than modifying a developer's checkout.
 
+App upgrades also prepare the matching lecture-video tools unless setup opted out. Existing components are reused. If a download or test fails, course tools remain available and a previous compatible video runtime can still be used. Run `amicooked video status` or `amicooked video prepare` to check or retry.
+
 ## Automatic patch updates
 
 Automatic patch updates are enabled after setup for installed copies. View `amicooked auto-update status --json`, turn them off with `amicooked auto-update disable`, or turn them back on with `amicooked auto-update enable`. Uninstall suspends checks until setup runs again. Setup and reinstall preserve an explicit opt-out.

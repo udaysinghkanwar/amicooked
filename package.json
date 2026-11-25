@@ -26,7 +26,8 @@
     "test:gemini": "node scripts/test-gemini.mjs",
     "pretest": "npm run build",
     "test:updates": "node scripts/test-updates.mjs",
-    "test:updates:native": "node scripts/test-updates.mjs --build-native && node scripts/test-installer.mjs"
+    "test:updates:native": "node scripts/test-updates.mjs --build-native && node scripts/test-installer.mjs",
+    "test:video": "node scripts/test-video-runtime.mjs"
   },
   "keywords": [
     "mcp",

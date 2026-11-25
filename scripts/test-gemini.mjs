@@ -16,7 +16,7 @@ const home = mkdtempSync(path.join(tmpdir(), "amicooked-gemini-e2e-"));
 const env = { ...process.env, HOME: home, USERPROFILE: home,
   APPDATA: path.join(home, "AppData/Roaming"), LOCALAPPDATA: path.join(home, "AppData/Local"),
   CODEX_HOME: path.join(home, ".codex"), AMICOOKED_HOME: path.join(home, ".amicooked"),
-  AMICOOKED_NO_TELEMETRY: "1", D2L_HOST: "", D2L_LOGIN_URL: "" };
+  AMICOOKED_SKIP_VIDEO_DEPS: "1", AMICOOKED_NO_TELEMETRY: "1", D2L_HOST: "", D2L_LOGIN_URL: "" };
 const run = (args, expected = 0) => {
   const r = spawnSync(process.execPath, [path.join(root, "dist/cli.js"), ...args], { cwd: home, env, encoding: "utf8", timeout: 45000 });
   assert.equal(r.status, expected, `${args.join(" ")}\n${r.stdout}\n${r.stderr}`);

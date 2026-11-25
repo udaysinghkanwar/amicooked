@@ -1,10 +1,12 @@
 import { execFileSync } from "child_process";
-import { createHash, randomUUID } from "crypto";
+import { createHash } from "crypto";
+import { acquireLock } from "../lock.js";
 import * as fs from "fs";
 import * as path from "path";
 import { currentRuntime, installationChannel, type Runtime } from "../clients/self.js";
 import { installedSkillVersion, refreshSkills } from "../skills.js";
 import { paths } from "../config.js";
+import { prepareVideoIfEnabled } from "../video/runtime.js";
 import { reportUpgrade } from "../telemetry.js";
 import { VERSION } from "../version.js";
 
@@ -56,7 +58,7 @@ export function replaceBinary(staged: string, target: string, platform = process
 
 type Run = (command: string, args: string[]) => string;
 const execute: Run = (command, args) => execFileSync(command, args, {
-  encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], timeout: 300_000,
+  encoding: "utf8", stdio: ["ignore", "pipe", "inherit"], timeout: 900_000,
 }).trim();
 
 /** Run npm through Node when possible; avoids shell quoting and npm.cmd on Windows. */
@@ -144,36 +146,7 @@ async function request(url: string, fetcher: typeof fetch): Promise<Response> {
   return response;
 }
 
-/** Serialize automatic and manual updates, recovering only a confirmed dead owner. */
-export function acquireUpdateLock(): () => void {
-  const file = path.join(paths().home, "update.lock");
-  fs.mkdirSync(paths().home, { recursive: true, mode: 0o700 });
-  const owner = JSON.stringify({ pid: process.pid, id: randomUUID() });
-  for (let attempt = 0; attempt < 2; attempt++) {
-    let fd: number;
-    try { fd = fs.openSync(file, "wx", 0o600); }
-    catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
-      const previous = fs.readFileSync(file, "utf8");
-      let dead = false;
-      try {
-        const pid = JSON.parse(previous).pid;
-        if (!Number.isSafeInteger(pid) || pid <= 0) throw new Error("Invalid update lock");
-        try { process.kill(pid, 0); }
-        catch (e) { dead = (e as NodeJS.ErrnoException).code === "ESRCH"; }
-      } catch { /* An incomplete/unknown lock may belong to a starting updater. */ }
-      if (!dead) throw new Error("Another update is running. Wait for it to finish, then retry.");
-      if (fs.readFileSync(file, "utf8") === previous) fs.rmSync(file);
-      continue;
-    }
-    try { fs.writeFileSync(fd, owner); } finally { fs.closeSync(fd); }
-    return () => {
-      try { if (fs.readFileSync(file, "utf8") === owner) fs.rmSync(file); }
-      catch (error) { if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error; }
-    };
-  }
-  throw new Error("Another update started. Retry later.");
-}
+export const acquireUpdateLock = () => acquireLock(path.join(paths().home, "update.lock"), "update");
 
 export async function updateCommand(options: { check?: boolean; json?: boolean; compatibleOnly?: boolean } = {}, deps: {
   fetch?: typeof fetch; runtime?: Runtime; run?: Run; version?: string; arch?: string; allowed?: () => boolean; report?: typeof reportUpgrade;
@@ -202,6 +175,7 @@ export async function updateCommand(options: { check?: boolean; json?: boolean; 
       runtime, arch: deps.arch ?? process.arch, fetch: fetcher, run: deps.run ?? execute,
     });
     const skills = !options.check && !available ? refreshSkills() : [];
+    if (!options.check && !available && (!options.compatibleOnly || changed)) await prepareVideoIfEnabled();
     const skillsChanged = skills.some(result => !result.endsWith(": unchanged"));
     const result = {
       previousVersion,

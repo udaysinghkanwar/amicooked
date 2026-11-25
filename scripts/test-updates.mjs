@@ -9,7 +9,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 
 const root = fs.mkdtempSync(path.join(os.tmpdir(), "amicooked-cli-e2e-"));
-const env = { ...process.env, HOME: root, USERPROFILE: root, CODEX_HOME: path.join(root, ".codex"), APPDATA: path.join(root, "AppData/Roaming"), LOCALAPPDATA: path.join(root, "AppData/Local"), AMICOOKED_HOME: path.join(root, ".amicooked"), AMICOOKED_NO_TELEMETRY: "1" };
+const env = { ...process.env, HOME: root, USERPROFILE: root, CODEX_HOME: path.join(root, ".codex"), APPDATA: path.join(root, "AppData/Roaming"), LOCALAPPDATA: path.join(root, "AppData/Local"), AMICOOKED_HOME: path.join(root, ".amicooked"), AMICOOKED_SKIP_VIDEO_DEPS: "1", AMICOOKED_NO_TELEMETRY: "1" };
 delete env.D2L_HOST;
 delete env.D2L_LOGIN_URL;
 const nativeFile = `build/amicooked-${process.platform === "win32" ? "windows" : process.platform}-${process.arch}${process.platform === "win32" ? ".exe" : ""}`;

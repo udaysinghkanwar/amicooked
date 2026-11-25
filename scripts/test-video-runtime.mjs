@@ -1,0 +1,125 @@
+// External downloads are intentional here. A fresh home exercises the real user setup path.
+import assert from "node:assert/strict";
+import { execFileSync, spawn } from "node:child_process";
+import { mkdtempSync, mkdirSync, existsSync, readFileSync, rmSync, writeFileSync, copyFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import os from "node:os";
+import path from "node:path";
+
+const root = mkdtempSync(path.join(os.tmpdir(), "amicooked video acceptance "));
+const windows = process.platform === "win32";
+const source = path.resolve(`build/amicooked-${windows ? "windows" : process.platform}-${process.arch}${windows ? ".exe" : ""}`);
+const npmScript = process.env.npm_execpath;
+const checksum = createHash("sha256").update(readFileSync(source)).digest("hex");
+const server = spawn(process.execPath, ["-e", String.raw`
+  const fs = require("node:fs");
+  const http = require("node:http");
+  const [binary, checksum] = process.argv.slice(1);
+  const filename = require("node:path").basename(binary);
+  const server = http.createServer((request, response) => {
+    if (request.url === "/SHA256SUMS") response.end(checksum + "  " + filename + "\n");
+    else if (request.url === "/" + filename) fs.createReadStream(binary).pipe(response);
+    else response.writeHead(404).end();
+  });
+  server.listen(0, "127.0.0.1", () => process.send(server.address().port));
+`, source, checksum], { stdio: ["ignore", "ignore", "inherit", "ipc"] });
+const setup = ["setup", "--school", "mcmaster", "--clients", "none", "--no-login", "--yes"];
+try {
+  const port = await new Promise((resolve, reject) => {
+    server.once("message", resolve);
+    server.once("error", reject);
+    server.once("exit", () => reject(new Error("Installer fixture server stopped")));
+  });
+  const packArgs = ["pack", "--json", "--pack-destination", root];
+  const packed = npmScript
+    ? execFileSync(process.execPath, [npmScript, ...packArgs], { encoding: "utf8" })
+    : execFileSync("npm", packArgs, { encoding: "utf8" });
+  const tarball = path.join(root, JSON.parse(packed)[0].filename);
+  for (const channel of ["native", "npm"]) {
+    const home = path.join(root, channel);
+    const data = path.join(home, ".amicooked");
+    const project = path.join(home, "lesson with spaces");
+    const env = { ...process.env, HOME: home, USERPROFILE: home, CODEX_HOME: path.join(home, ".codex"),
+      AMICOOKED_HOME: data, AMICOOKED_NO_TELEMETRY: "1", D2L_HOST: "", D2L_LOGIN_URL: "" };
+    delete env.AMICOOKED_SKIP_VIDEO_DEPS;
+    delete env.AMICOOKED_VERSION;
+    delete env.AMICOOKED_NO_SETUP;
+    mkdirSync(project, { recursive: true });
+    mkdirSync(data, { recursive: true });
+    writeFileSync(path.join(data, "config.json"), JSON.stringify({ version: 1, browser: "chrome", filesDir: path.join(home, "downloads") }));
+    let olderRecipe;
+    let command;
+    let prefix;
+    if (channel === "native") {
+      command = path.join(data, "bin", windows ? "amicooked.exe" : "amicooked");
+      const installEnv = { ...env, AMICOOKED_DOWNLOAD_BASE: `http://127.0.0.1:${port}`, AMICOOKED_NO_SETUP: "1", AMICOOKED_NO_PATH: "1" };
+      const installer = windows ? "pwsh" : "sh";
+      const installerArgs = windows
+        ? ["-NoProfile", "-NonInteractive", "-File", path.resolve("install/install.ps1")]
+        : [path.resolve("install/install.sh")];
+      execFileSync(installer, installerArgs, { env: installEnv, stdio: "inherit" });
+      prefix = [];
+    } else {
+      assert(npmScript, "Run this workflow through npm so the isolated package can be installed");
+      execFileSync(process.execPath, [npmScript, "install", "--prefix", home, "--no-fund", "--no-audit", tarball], { env, stdio: "inherit" });
+      command = process.execPath;
+      prefix = [path.join(home, "node_modules/amicooked/dist/cli.js")];
+      const voice = path.join(path.dirname(prefix[0]), "video", "voice.js");
+      const current = readFileSync(voice, "utf8");
+      writeFileSync(voice, current.replace("voiceScript = `", "voiceScript = `\n// Earlier narration recipe"));
+      assert.notEqual(readFileSync(voice, "utf8"), current);
+      olderRecipe = () => writeFileSync(voice, current);
+    }
+    const cli = (...args) => execFileSync(command, [...prefix, ...args], {
+      env, cwd: project, encoding: "utf8", timeout: 900_000, stdio: ["ignore", "pipe", "inherit"],
+    }).trim();
+    assert.equal(JSON.parse(cli("video", "status")).state, "missing");
+    cli(...setup);
+    assert.equal(JSON.parse(cli("video", "status")).state, "ready");
+    const marker = path.join(data, "video", "ready.json");
+    let first = readFileSync(marker, "utf8");
+    cli(...setup);
+    assert.equal(readFileSync(marker, "utf8"), first);
+    if (olderRecipe) {
+      const previousTools = JSON.parse(first).tools;
+      olderRecipe();
+      assert.equal(JSON.parse(cli("video", "status")).state, "previous");
+      cli("refresh-skills");
+      assert.equal(JSON.parse(cli("video", "status")).state, "ready");
+      first = readFileSync(marker, "utf8");
+      const tools = JSON.parse(first).tools;
+      assert.notEqual(tools.voice, previousTools.voice);
+      for (const key of ["node", "browser", "model"]) assert.equal(tools[key], previousTools[key]);
+      execFileSync(process.execPath, [npmScript, "exec", "--yes", "--package", tarball, "--", "amicooked", ...setup], {
+        cwd: project, env, stdio: "inherit", timeout: 900_000,
+      });
+      assert.equal(readFileSync(marker, "utf8"), first);
+    }
+    writeFileSync(path.join(project, "narration.txt"), "A place in a Petri net can hold a token.");
+    cli("video", "run", "voice", "--", "narration.txt", "voice.wav");
+    const duration = Number(cli("video", "run", "ffprobe", "--", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", "voice.wav"));
+    assert(duration > 0);
+    writeFileSync(path.join(project, "index.html"), `<!doctype html><html><head><meta charset="utf-8"><title>Petri net</title></head>
+<body style="margin:0;background:#15222c;color:white"><main data-composition-id="main" data-width="640" data-height="360" data-duration="${duration + 0.3}">
+<h1>One place, one token</h1><audio id="voice" class="clip" data-start="0" data-duration="${duration}" data-track-index="1" src="voice.wav"></audio></main></body></html>`);
+    cli("video", "run", "hyperframes", "--", "render", "--workers", "1", "--quality", "draft", "--no-best-effort", "--output", "lesson.mp4");
+    const streams = JSON.parse(cli("video", "run", "ffprobe", "--", "-v", "error", "-show_entries", "stream=codec_type", "-of", "json", "lesson.mp4")).streams;
+    assert.deepEqual(streams.map(stream => stream.codec_type).sort(), ["audio", "video"]);
+    cli("video", "run", "ffmpeg", "--", "-v", "error", "-xerror", "-i", "lesson.mp4", "-f", "null", "-");
+    cli("uninstall");
+    cli(...setup);
+    assert.equal(readFileSync(marker, "utf8"), first);
+    if (process.env.AMICOOKED_VIDEO_TEST_OUTPUT) {
+      mkdirSync(process.env.AMICOOKED_VIDEO_TEST_OUTPUT, { recursive: true });
+      copyFileSync(path.join(project, "lesson.mp4"), path.join(process.env.AMICOOKED_VIDEO_TEST_OUTPUT, `${channel}.mp4`));
+    }
+    if (!windows || channel === "npm") {
+      cli("uninstall", "--purge");
+      assert.equal(existsSync(data), false);
+    }
+    console.log(`${process.platform}-${process.arch} ${channel}: cold setup, repeat setup, narration, full MP4 decode and reinstall passed.`);
+  }
+} finally {
+  server.kill();
+  rmSync(root, { recursive: true, force: true });
+}

@@ -24,6 +24,8 @@ If you can run commands locally:
 4. Have the student sign in on their school's page. Never ask for their password.
 5. Relay the Next steps printed by setup. When the selected app is ready, start a chat or session there and ask “am I cooked?” If an app asks for connection approval, use its normal prompts.
 
+Setup prepares the local lecture-video tools after client setup. Use `amicooked setup --skip-video-deps` to skip preparation on this install and future app updates. Run `amicooked video status` to check readiness or `amicooked video prepare` to retry and enable future preparation.
+
 For troubleshooting, run `amicooked status`. For Gemini, `amicooked doctor --live` checks school access. If running inside a Gemini sandbox home such as `.gemini/users/…`, have the student run the regular installer from their Mac Terminal. Windows users need [Antigravity CLI](https://antigravity.google/docs/cli-getting-started). The standalone Windows Gemini app, legacy Gemini CLI, and web or phone chats are outside this setup flow.
 
 ## Other local AI clients
