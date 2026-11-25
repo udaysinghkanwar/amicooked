@@ -2,7 +2,7 @@ import { afterEach, beforeEach, expect, it } from "vitest";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
-import { geminiConfigPath, geminiDesktopHomeError, geminiEntry, installGeminiHttp, uninstallGemini } from "../../src/clients/gemini.js";
+import { geminiConfigPath, geminiDesktopHomeError, geminiEntry, installGeminiHttp, installGeminiStdio, uninstallGemini } from "../../src/clients/gemini.js";
 import { chooseClients } from "../../src/cli/setup.js";
 
 let home: string;
@@ -46,6 +46,15 @@ it("preserves disabled state and does not create configuration during status/uni
   put(JSON.stringify({ mcpServers: { amicooked: { disabled: true } } }));
   installGeminiHttp(connection, home);
   expect(geminiEntry(home)).toBeNull();
+});
+
+it("replaces the Mac HTTP registration with a local executable and preserves preferences", () => {
+  const file = put(JSON.stringify({ mcpServers: { amicooked: { serverUrl: connection.url, headers: connection.headers, disabledTools: ["read_file"] } } }));
+  const launch = { command: "C:\\Program Files\\Am I Cooked\\amicooked.exe", args: ["mcp"], env: { AMICOOKED_HOME: "C:\\Custom Home" } };
+  expect(installGeminiStdio(launch, home)).toBe("updated");
+  expect(installGeminiStdio(launch, home)).toBe("unchanged");
+  expect(geminiEntry(home)).toEqual(launch);
+  expect(JSON.parse(fs.readFileSync(file, "utf8")).mcpServers.amicooked).toEqual({ ...launch, disabledTools: ["read_file"] });
 });
 
 it("selects Gemini explicitly and rejects the removed legacy target", async () => {

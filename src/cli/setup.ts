@@ -11,7 +11,7 @@ import { chatgptSteps, installChatGPT } from "../clients/chatgpt.js";
 import { codexEntryIs, codexSkillPath, hasCodex, installCodex, installCodexSkill } from "../clients/codex.js";
 import { installGeminiLocal } from "../clients/geminiLocal.js";
 import { checkMcp } from "../clients/check.js";
-import { geminiConfigPath, geminiDesktopHelper, geminiDesktopHomeError, geminiEntry, installGeminiHttp, GEMINI_DOWNLOAD } from "../clients/gemini.js";
+import { geminiConfigPath, geminiDesktopHomeError, geminiEntry, geminiStdioLaunch, hasGeminiClient, installGeminiHttp, installGeminiStdio, ANTIGRAVITY_CLI_INSTALL, GEMINI_DOWNLOAD } from "../clients/gemini.js";
 import { skillBundleIs } from "../clients/skillFiles.js";
 import { refreshSkills } from "../skills.js";
 import { selfCommand } from "../clients/self.js";
@@ -114,7 +114,7 @@ export async function chooseClients(flag: string | undefined, detected: Record<C
       { value: "desktop" as const, label: "Claude Desktop", hint: detected.desktop ? "found" : "not found" },
       { value: "code" as const, label: "Claude Code", hint: detected.code ? "found" : "not found" },
       { value: "chatgpt-desktop" as const, label: "ChatGPT desktop app", hint: detected["chatgpt-desktop"] ? "found" : "not found" },
-      { value: "gemini-desktop" as const, label: "Gemini desktop (Mac)", hint: detected["gemini-desktop"] ? "found" : "not found" },
+      { value: "gemini-desktop" as const, label: process.platform === "win32" ? "Gemini (Antigravity CLI)" : "Gemini desktop (Mac)", hint: detected["gemini-desktop"] ? "found" : "not found" },
     ],
   });
   if (p.isCancel(chosen)) throw new SetupStop("Setup cancelled.");
@@ -238,19 +238,26 @@ async function configureClients(clients: ClientId[]): Promise<Outcome[]> {
   }
 
   if (clients.includes("gemini-desktop")) {
-    if (!geminiDesktopHelper()) {
-      outcomes.push({ app: "Gemini", next: process.platform === "darwin"
-        ? `install Gemini from ${GEMINI_DOWNLOAD}, then rerun amicooked setup --clients gemini.`
-        : "the Gemini/Antigravity adapter currently supports macOS only.", ready: false, connected: false });
+    const windows = process.platform === "win32";
+    if (!hasGeminiClient()) {
+      const next = windows ? `install Antigravity CLI from ${ANTIGRAVITY_CLI_INSTALL}, then rerun setup.`
+        : process.platform === "darwin" ? `install Gemini from ${GEMINI_DOWNLOAD}, then rerun setup.`
+          : "automatic setup is available for Gemini on Mac and Antigravity CLI on Windows.";
+      outcomes.push({ app: "Gemini", next, ready: false, connected: false });
     } else {
-      geminiEntry(); // Validate existing JSON before changing the service.
-      installGeminiHttp(await installGeminiLocal(selfCommand(["gemini-serve"])));
+      if (windows) {
+        installGeminiStdio(geminiStdioLaunch());
+      } else {
+        geminiEntry(); // Validate existing JSON before changing the service.
+        installGeminiHttp(await installGeminiLocal(selfCommand(["gemini-serve"])));
+      }
       const configured = geminiEntry();
       if (!configured) throw new Error(`Am I Cooked is disabled in ${geminiConfigPath()}. Enable it in Gemini, then rerun setup.`);
       const tools = await checkMcp(configured);
       p.log.success(`Gemini: MCP handshake and ${tools} read-only tools verified. Config: ${geminiConfigPath()}`);
+      const restart = windows ? "Start a new Antigravity CLI session" : "Quit/reopen Gemini or start a new Antigravity CLI session";
       outcomes.push({ app: "Gemini", ready: false, connected: true,
-        next: "local connection tested. Quit/reopen Gemini or start a new Antigravity CLI session, then ask: am I cooked? Approve normal connection prompts. Host login is separate from this protocol check." });
+        next: `local connection tested. ${restart}, then ask: am I cooked? Approve normal connection prompts. Host login is separate from this protocol check.` });
     }
   }
 
@@ -317,9 +324,9 @@ export async function setup(options: SetupOptions): Promise<number> {
     const school = await chooseSchool(options.school);
     p.log.info(`School: ${school.name} (${school.host})`);
 
-    const detected = { desktop: Boolean(claudeDesktopDir()), code: hasClaudeCode(), "chatgpt-desktop": hasCodex(), chatgpt: false, "gemini-desktop": Boolean(geminiDesktopHelper()) };
+    const detected = { desktop: Boolean(claudeDesktopDir()), code: hasClaudeCode(), "chatgpt-desktop": hasCodex(), chatgpt: false, "gemini-desktop": hasGeminiClient() };
     const clients = await chooseClients(options.clients, detected, Boolean(options.yes));
-    const sandboxError = clients.includes("gemini-desktop") ? geminiDesktopHomeError() : null;
+    const sandboxError = process.platform === "darwin" && clients.includes("gemini-desktop") ? geminiDesktopHomeError() : null;
     if (sandboxError) throw new SetupStop(sandboxError);
 
     const browser = getConfig().browser ?? (await detectChannel());

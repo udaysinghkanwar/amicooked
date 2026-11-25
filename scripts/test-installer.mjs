@@ -24,6 +24,33 @@ try {
  fs.writeFileSync(path.join(env.AMICOOKED_HOME,"config.json"),JSON.stringify({version:1,browser:"chrome",filesDir:path.join(root,"downloads")}));
  const skill=path.join(root,"other/skills/amicooked");const setup=["setup","--clients","none","--school","mcmaster","--skill-dir",skill,"--no-login","--yes"];
  run(installed,setup);fs.writeFileSync(path.join(env.AMICOOKED_HOME,"token.json"),"retained installer session");
+ if (windows) {
+  // Emulate only detection of an installed Antigravity CLI. Run the real setup and MCP executable.
+  const agy = path.join(env.LOCALAPPDATA, "agy", "bin", "agy.exe");
+  fs.mkdirSync(path.dirname(agy), { recursive: true });
+  fs.writeFileSync(agy, "");
+  run(installed, ["auto-update", "disable"]);
+  const geminiSetup = ["setup", "--clients", "gemini", "--school", "mcmaster", "--no-login", "--yes"];
+  assert.match(run(installed, geminiSetup), /MCP handshake and 10 read-only tools verified/);
+  const configFile = path.join(root, ".gemini", "config", "mcp_config.json");
+  const config = fs.readFileSync(configFile, "utf8");
+  run(installed, geminiSetup);
+  assert.equal(fs.readFileSync(configFile, "utf8"), config);
+  const launch = JSON.parse(config).mcpServers.amicooked;
+  assert.equal(launch.command.toLowerCase(), installed.toLowerCase());
+  assert.deepEqual(launch.args, ["mcp"]);
+  assert.match(run(installed, ["doctor"]), /10 read-only tools verified/);
+  client = new Client({ name: "windows-antigravity-config-test", version: "1" });
+  await client.connect(new StdioClientTransport({ ...launch, stderr: "ignore" }));
+  const result = await client.callTool({ name: "get_feature_guide", arguments: { feature: "lecture-videos" } });
+  assert.notEqual(result.isError, true);
+  assert.match(JSON.parse(result.content[0].text).instructions, /Lecture videos/);
+  await client.close();
+  client = null;
+  run(installed, ["uninstall"]);
+  assert.equal(JSON.parse(fs.readFileSync(configFile, "utf8")).mcpServers.amicooked, undefined);
+  console.log("Windows native executable returned the lecture video guide over MCP using the Antigravity registration.");
+ }
  client=new Client({name:"installer-replacement",version:"1"});await client.connect(new StdioClientTransport({command:installed,args:["mcp"],env}));
  install();if (!windows) assert.equal(fs.readFileSync(path.join(root,".profile"),"utf8"),profile);assert.equal(run(installed,["--version"]).trim(),version);
  assert((await client.listTools()).tools.some(t=>t.name==="am_i_cooked"));await client.close();client=null;

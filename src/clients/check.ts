@@ -1,11 +1,15 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import type { LaunchCommand } from "./self.js";
 
 export interface HttpConnection { url: string; headers: Record<string, string> }
 /** Test the configured endpoint/process. This does not establish host-session permissions. */
-export async function checkMcp(connection: HttpConnection, live = false, timeout = 15000): Promise<number> {
+export async function checkMcp(connection: HttpConnection | LaunchCommand, live = false, timeout = 15000): Promise<number> {
   const client = new Client({ name: "amicooked-doctor", version: "1" });
-  const transport = new StreamableHTTPClientTransport(new URL(connection.url), { requestInit: { headers: connection.headers } });
+  const transport = "url" in connection
+    ? new StreamableHTTPClientTransport(new URL(connection.url), { requestInit: { headers: connection.headers } })
+    : new StdioClientTransport({ ...connection, stderr: "ignore" });
   try {
     await client.connect(transport, { timeout });
     if (client.getServerVersion()?.name !== "amicooked") throw new Error("Configured connection did not start Am I Cooked.");

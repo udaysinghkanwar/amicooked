@@ -12,7 +12,7 @@ The student signs in on their school's own login page in a real browser window. 
 - Windows (PowerShell): `irm https://amicooked-mcp.vercel.app/install.ps1 | iex`
 - With Node.js 22 or newer: `npx -y amicooked@0 setup`
 - ChatGPT desktop app: `amicooked setup --clients chatgpt-desktop`, then restart the app. Runs locally, no tunnel.
-- Gemini for Mac: run `amicooked setup --clients gemini`, then reopen Gemini or start a new session in its bundled Antigravity CLI.
+- Gemini for Mac or Antigravity CLI on Windows: run `amicooked setup --clients gemini`, then reopen Gemini on Mac or start a new Antigravity CLI session. The standalone Gemini app on Windows is outside this integration.
 - Updates: `amicooked update --check` checks availability and `amicooked update` installs the latest stable release. Installed copies check automatically for patches after setup. Use `amicooked auto-update status` or `amicooked auto-update disable` to manage them.
 - Uninstall: `amicooked uninstall` (`--purge` also deletes login and settings)
 

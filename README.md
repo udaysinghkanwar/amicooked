@@ -69,7 +69,7 @@ ChatGPT on the web and on phones can't start programs on your computer, so they 
 
 For Gemini Mac and its bundled Antigravity CLI, run `amicooked setup --clients gemini` (`gemini-desktop` is an alias). They share one authenticated loopback MCP registration. Setup starts the local service and tests the connection; restart Gemini or start a new Antigravity session, then approve its normal connection prompts. Run `amicooked doctor --live` to check school access.
 
-This adapter targets the tested Mac app/helper. Other MCP clients can launch `amicooked mcp` through the generic setup below. The legacy `gemini` CLI has no dedicated adapter; its individual Google sign-in was retired. Native Windows/web/mobile are outside this adapter's scope. See [setup and troubleshooting](skill/references/setup.md).
+On Windows, install [Antigravity CLI](https://antigravity.google/docs/cli-getting-started), then use the same setup command and start a new `agy` session. The CLI starts Am I Cooked directly. The standalone Gemini Windows app, web, mobile and legacy `gemini` CLI are outside this integration. See [setup and troubleshooting](skill/references/setup.md).
 
 ## Commands
 

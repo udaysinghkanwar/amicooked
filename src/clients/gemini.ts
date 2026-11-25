@@ -1,17 +1,32 @@
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
-import { writePrivateFile } from "../config.js";
+import { spawnSync } from "node:child_process";
+import { homeDir, writePrivateFile } from "../config.js";
 import { InvalidConfigError, SERVER_NAME, type WriteResult } from "./claudeDesktop.js";
 import type { HttpConnection } from "./check.js";
+import { selfCommand, type LaunchCommand } from "./self.js";
 
 export const GEMINI_DOWNLOAD = "https://gemini.google/desktop/";
+export const ANTIGRAVITY_CLI_INSTALL = "https://antigravity.google/docs/cli-getting-started";
 
 export function geminiDesktopHelper(home = os.homedir(), platform = process.platform): string | null {
   if (platform !== "darwin") return null;
   return ["/Applications", path.join(home, "Applications")]
     .map(root => path.join(root, "Gemini.app/Contents/Helpers/agy"))
     .find(fs.existsSync) ?? null;
+}
+
+export function hasGeminiClient(): boolean {
+  if (process.platform !== "win32") return Boolean(geminiDesktopHelper());
+  const appData = process.env.LOCALAPPDATA || path.join(os.homedir(), "AppData", "Local");
+  return fs.existsSync(path.join(appData, "agy", "bin", "agy.exe")) ||
+    spawnSync("where.exe", ["agy.exe"], { windowsHide: true, timeout: 3000 }).status === 0;
+}
+
+export function geminiStdioLaunch(): LaunchCommand {
+  const launch = selfCommand(["mcp"]);
+  return { ...launch, env: { ...launch.env, AMICOOKED_HOME: homeDir() } };
 }
 
 /** A native task's virtual HOME is not the desktop application's configuration home. */
@@ -21,9 +36,13 @@ export function geminiDesktopHomeError(home = os.homedir()): string | null {
     : null;
 }
 
-// Native Gemini and its bundled Antigravity CLI share this HTTP registration.
+// The Mac app and Antigravity CLI use this shared registration path.
 export const geminiConfigPath = (home = os.homedir()) => path.join(home, ".gemini/config/mcp_config.json");
 const object = (value: unknown): value is Record<string, unknown> => !!value && typeof value === "object" && !Array.isArray(value);
+const stringMap = (value: unknown): value is Record<string, string> =>
+  object(value) && Object.values(value).every(item => typeof item === "string");
+const stdioFields = ["command", "args", "env"];
+const httpFields = ["serverUrl", "url", "httpUrl", "headers"];
 
 function read(home: string) {
   const file = geminiConfigPath(home);
@@ -51,12 +70,16 @@ function localConnection(connection: HttpConnection): boolean {
     !url.username && !url.password && connection.headers.Authorization?.startsWith("Bearer ") === true;
 }
 
-export function geminiEntry(home = os.homedir()): HttpConnection | null {
+export function geminiEntry(home = os.homedir()): HttpConnection | LaunchCommand | null {
   const { entry } = read(home);
-  if (!entry || entry.disabled || typeof entry.serverUrl !== "string" ||
-      ["command", "args", "env", "url", "httpUrl"].some(key => Object.hasOwn(entry, key)) ||
-      !object(entry.headers) || !Object.values(entry.headers).every(value => typeof value === "string")) return null;
-  const connection = { url: entry.serverUrl, headers: entry.headers as Record<string, string> };
+  if (!entry || entry.disabled) return null;
+  if (typeof entry.command === "string" && Array.isArray(entry.args) && entry.args.every(arg => typeof arg === "string") &&
+      (entry.env === undefined || stringMap(entry.env)) && !httpFields.some(key => Object.hasOwn(entry, key))) {
+    return { command: entry.command, args: entry.args, env: entry.env };
+  }
+  if (typeof entry.serverUrl !== "string" || !stringMap(entry.headers) ||
+      [...stdioFields, "url", "httpUrl"].some(key => Object.hasOwn(entry, key))) return null;
+  const connection = { url: entry.serverUrl, headers: entry.headers };
   try { return localConnection(connection) ? connection : null; }
   catch { return null; }
 }
@@ -64,9 +87,18 @@ export function geminiEntry(home = os.homedir()): HttpConnection | null {
 /** Replace only our transport fields; preserve host preferences and unrelated servers. */
 export function installGeminiHttp(connection: HttpConnection, home = os.homedir()): WriteResult {
   if (!localConnection(connection)) throw new Error("Gemini requires an authenticated loopback MCP connection.");
+  return setTransport({ serverUrl: connection.url, headers: connection.headers }, [...stdioFields, "url", "httpUrl"], home);
+}
+
+export function installGeminiStdio(launch: LaunchCommand, home = os.homedir()): WriteResult {
+  return setTransport({ command: launch.command, args: launch.args, ...(launch.env && { env: launch.env }) }, [...httpFields, ...stdioFields], home);
+}
+
+function setTransport(transport: Record<string, unknown>, replacedFields: string[], home: string): WriteResult {
   const { file, config, servers, entry } = read(home);
-  const next: Record<string, unknown> = { ...entry, serverUrl: connection.url, headers: connection.headers };
-  for (const key of ["command", "args", "env", "url", "httpUrl"]) delete next[key];
+  const next = { ...entry };
+  for (const key of replacedFields) delete next[key];
+  Object.assign(next, transport);
   if (JSON.stringify(entry) === JSON.stringify(next)) return "unchanged";
   write(file, { ...config, mcpServers: { ...servers, [SERVER_NAME]: next } });
   return entry ? "updated" : "added";

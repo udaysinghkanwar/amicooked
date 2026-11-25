@@ -1,11 +1,19 @@
 import { checkMcp } from "../clients/check.js";
-import { geminiConfigPath, geminiEntry } from "../clients/gemini.js";
+import { geminiConfigPath, geminiEntry, geminiStdioLaunch } from "../clients/gemini.js";
 
 export async function doctorCommand(live = false): Promise<number> {
   try {
     const entry = geminiEntry();
     if (!entry) throw new Error(`No enabled Am I Cooked connection in ${geminiConfigPath()}. Run setup --clients gemini.`);
-    const tools = await checkMcp(entry, live);
+    let connection = entry;
+    if ("command" in entry) {
+      const launch = geminiStdioLaunch();
+      if (entry.command !== launch.command || JSON.stringify(entry.args) !== JSON.stringify(launch.args)) {
+        throw new Error("Gemini points to a different Am I Cooked command. Run setup --clients gemini from this installation.");
+      }
+      connection = launch;
+    }
+    const tools = await checkMcp(connection, live);
     console.log(`Gemini: MCP handshake, usage instructions and ${tools} read-only tools verified${live ? "; school access verified" : ""}.`);
     console.log("Reload Gemini/Antigravity and ask 'am I cooked?' to verify the host/account too.");
     return 0;

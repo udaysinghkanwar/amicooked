@@ -4,7 +4,7 @@ import { claudeDesktopDir, SERVER_NAME, uninstallClaudeDesktop } from "../client
 import { hasClaudeCode, skillPath, uninstallClaudeCode, uninstallSkill } from "../clients/claudeCode.js";
 import { chatgptSteps, chatgptUrl, uninstallChatGPT } from "../clients/chatgpt.js";
 import { codexConfigured, hasCodex, uninstallCodex, uninstallCodexSkill } from "../clients/codex.js";
-import { geminiConfigPath, geminiDesktopHelper, geminiEntry, uninstallGemini } from "../clients/gemini.js";
+import { geminiConfigPath, geminiEntry, hasGeminiClient, uninstallGemini } from "../clients/gemini.js";
 import { uninstallGeminiLocal } from "../clients/geminiLocal.js";
 import { OAuthStore } from "../remote/oauth.js";
 import { client } from "../client.js";
@@ -50,7 +50,7 @@ function desktopConfigured(): boolean {
 function geminiStatus(): string {
   try {
     if (geminiEntry()) return "configured (run doctor to test; Gemini may need reloading)";
-    return geminiDesktopHelper() ? "installed, not set up or disabled" : "not installed";
+    return hasGeminiClient() ? "installed, not set up or disabled" : "not installed";
   } catch {
     return `invalid config: ${geminiConfigPath()}`;
   }
@@ -85,7 +85,7 @@ export async function statusCommand(json: boolean): Promise<number> {
   console.log(`  ChatGPT app:    ${status.chatgptDesktop}`);
   // ChatGPT on the web is hidden until the tunnel service exists; only show it where it's been set up
   if (chatgptUrl()) console.log(`  ChatGPT web:    ${status.chatgpt}`);
-  console.log(`  Gemini desktop: ${status.geminiDesktop}`);
+  console.log(`  Gemini:         ${status.geminiDesktop}`);
   console.log(`  Data:           ${status.dataFolder}`);
   console.log(`  Files:          ${status.filesFolder}`);
   console.log(`  Auto updates:   ${status.automaticUpdates ? "on (patches at next startup)" : "off"}`);
