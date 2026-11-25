@@ -15,7 +15,7 @@ A local MCP server that lets students' AI apps read their D2L Brightspace course
 | `src/courseResolver.ts` | Course code → org unit ID; current-term detection |
 | `src/tools/` | The read-only course tools and feature-guide retrieval (`cooked.ts` is the flagship) |
 | `src/server.ts` | Registers tools on the MCP server |
-| `src/clients/` | Writers for Claude Desktop, Claude Code and ChatGPT |
+| `src/clients/` | Writers for Claude Desktop, Claude Code, ChatGPT and Gemini |
 | `src/remote/` | ChatGPT: OAuth store, HTTP server, tunnel, background service |
 | `skill/` | Small skill entry point and on-demand references |
 | `src/features.ts`, `src/skills.ts`, `src/cli/update.ts` | Feature guides, skill lifecycle and release updates |

@@ -144,13 +144,16 @@ export const downloadFileTool: Tool = {
 export const readFileTool: Tool = {
   name: "read_file",
   description:
-    "Read the text of a file you already downloaded with download_file, by file name or path. Use offset to continue a long file.",
+    "Read the text of a file you already downloaded with download_file, by file name or path (file argument; path is also accepted). Use offset to continue a long file.",
   schema: {
-    file: z.string().describe("File name (or part of it) or full path of a downloaded file"),
+    file: z.string().optional().describe("File name (or part of it) or full path of a downloaded file"),
+    path: z.string().optional().describe("Alias for file; use the path returned by download_file"),
     offset: z.coerce.number().min(0).optional().describe("Character offset to continue from"),
   },
   handler: async (args) => {
-    const filePath = findLibraryFile(args.file);
+    if (!args.file && !args.path) throw new Error("Provide file (or path) from download_file.");
+    if (args.file && args.path && args.file !== args.path) throw new Error("Provide one downloaded file; file and path disagree.");
+    const filePath = findLibraryFile(args.file ?? args.path);
     const text = await readTextCached(filePath, extractContent);
     return json({ path: filePath, size: fs.statSync(filePath).size, ...page(text, args.offset) });
   },

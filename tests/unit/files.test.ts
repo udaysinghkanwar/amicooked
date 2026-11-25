@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import * as fs from "fs";
 import * as os from "os";
@@ -29,6 +30,15 @@ describe("read_file", () => {
     await addToLibrary("Week 7 notes.txt", "pipelining");
     const result = JSON.parse(await readFileTool.handler({ file: "week 7" }));
     expect(result.content).toBe("pipelining");
+  });
+
+  it("accepts the path alias used by native clients without expanding library access", async () => {
+    const file = await addToLibrary("lecture.txt", "read through either argument");
+    const args = z.object(readFileTool.schema).parse({ path: file });
+    expect(JSON.parse(await readFileTool.handler(args)).content).toBe("read through either argument");
+    await expect(readFileTool.handler({ path: path.join(home, "outside.txt") })).rejects.toThrow(/No downloaded file/);
+    await expect(readFileTool.handler({})).rejects.toThrow(/Provide file/);
+    await expect(readFileTool.handler({ file, path: "different" })).rejects.toThrow(/disagree/);
   });
 
   it("refuses files that aren't in the library", async () => {

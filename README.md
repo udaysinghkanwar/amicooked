@@ -1,6 +1,6 @@
 # Am I Cooked
 
-Ask your AI if you're cooked. Am I Cooked connects Claude and ChatGPT to your D2L Brightspace courses (Avenue to Learn, LEARN, onQ, OWL Brightspace, CourseLink and others) so they can read your grades, deadlines, announcements and course files, and tell you straight.
+Ask your AI if you're cooked. Am I Cooked connects Claude, ChatGPT and Gemini to your D2L Brightspace courses (Avenue to Learn, LEARN, onQ, OWL Brightspace, CourseLink and others) so they can read your grades, deadlines, announcements and course files, and tell you straight.
 
 It runs on your own computer. You sign in to your school in a normal browser window; your password never touches anything else.
 
@@ -65,12 +65,19 @@ Presets for McMaster, Waterloo, Western, Queen's, Guelph, Laurier, TMU, uOttawa,
 
 ChatGPT on the web and on phones can't start programs on your computer, so they aren't supported yet. Neither is Claude on the web.
 
+## Gemini
+
+For Gemini Mac and its bundled Antigravity CLI, run `amicooked setup --clients gemini` (`gemini-desktop` is an alias). They share one authenticated loopback MCP registration. Setup starts the local service and tests the connection; restart Gemini or start a new Antigravity session, then approve its normal connection prompts. Run `amicooked doctor --live` to check school access.
+
+This adapter targets the tested Mac app/helper. Other MCP clients can launch `amicooked mcp` through the generic setup below. The legacy `gemini` CLI has no dedicated adapter; its individual Google sign-in was retired. Native Windows/web/mobile are outside this adapter's scope. See [setup and troubleshooting](skill/references/setup.md).
+
 ## Commands
 
 ```
 amicooked setup      pick your school, sign in, connect apps
 amicooked login      sign in again
 amicooked status     what's set up
+amicooked doctor     verify Gemini MCP (--clients <target>, --live for school access)
 amicooked update     update app and skills (--check to only check)
 amicooked features   list features; add an id to read a guide
 amicooked uninstall  disconnect apps (--purge deletes your login and settings)
