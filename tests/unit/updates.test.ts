@@ -76,14 +76,14 @@ describe("release updates", () => {
   }) as unknown as typeof fetch;
 
   it.each([
-    ["darwin", "arm64", "amicooked-darwin-arm64"], ["darwin", "x64", "amicooked-darwin-x64"],
-    ["linux", "x64", "amicooked-linux-x64"], ["win32", "x64", "amicooked-windows-x64.exe"],
-  ])("selects and installs a verified %s/%s binary, retaining the old one", async (platform, arch, asset) => {
+    ["darwin", "arm64", "amicooked-darwin-arm64", true], ["darwin", "x64", "amicooked-darwin-x64", false],
+    ["linux", "x64", "amicooked-linux-x64", false], ["win32", "x64", "amicooked-windows-x64.exe", true],
+  ])("selects and installs a verified %s/%s binary, retaining the old one", async (platform, arch, asset, withVideo) => {
     const target = path.join(dir, platform === "win32" ? "amicooked.exe" : "amicooked");
     fs.writeFileSync(target, "old executable");
     const calls: string[][] = [];
     await installRelease(releaseFor(platform as NodeJS.Platform, arch), {
-      runtime: { execPath: target, argv: [target], platform: platform as NodeJS.Platform, isCompiled: true }, arch, fetch: fetchFor(asset),
+      runtime: { execPath: target, argv: [target], platform: platform as NodeJS.Platform, isCompiled: true }, arch, fetch: fetchFor(asset), withVideo,
       run: (command, args) => {
         calls.push([command, ...args]);
         expect(fs.readFileSync(command, "utf8")).toBe(bytes.toString());
@@ -92,7 +92,7 @@ describe("release updates", () => {
     });
     expect(fs.readFileSync(target, "utf8")).toBe(bytes.toString());
     expect(fs.readFileSync(`${target}.previous`, "utf8")).toBe("old executable");
-    expect(calls[1]).toEqual([target, "refresh-skills"]);
+    expect(calls[1]).toEqual(withVideo ? [target, "refresh-skills", "--with-video-deps"] : [target, "refresh-skills"]);
   });
 
   it("rejects corrupt downloads before touching the installed executable", async () => {
@@ -110,6 +110,7 @@ describe("release updates", () => {
   });
 
   it.each(["global", "local", "npx"])("updates a %s npm installation using arguments rather than a shell command", async kind => {
+    const refresh = ["refresh-skills", "--with-video-deps"];
     const parent = kind === "npx" ? path.join(dir, "_npx/cache/node_modules") : path.join(dir, "prefix/node_modules");
     const script = path.join(parent, "amicooked/dist/cli.js");
     fs.mkdirSync(path.dirname(script), { recursive: true });
@@ -119,7 +120,7 @@ describe("release updates", () => {
     const calls: { command: string; args: string[] }[] = [];
     await installRelease(releaseFor(), {
       runtime: { execPath: process.execPath, argv: [process.execPath, script], platform: process.platform, isCompiled: false },
-      arch: process.arch, fetch: vi.fn(), run: (command, args) => {
+      arch: process.arch, fetch: vi.fn(), withVideo: true, run: (command, args) => {
         calls.push({ command, args });
         if (args.includes("root")) return globalRoot;
         if (args.includes("prefix")) return path.dirname(globalRoot);
@@ -128,12 +129,12 @@ describe("release updates", () => {
     });
     if (kind === "npx") {
       expect(calls).toHaveLength(1);
-      expect(calls[0].args).toEqual(expect.arrayContaining(["exec", "--yes", "--package=amicooked@0.1.5", "--", "amicooked", "refresh-skills"]));
+      expect(calls[0].args).toEqual(expect.arrayContaining(["exec", "--yes", "--package=amicooked@0.1.5", "--", "amicooked", ...refresh]));
     } else {
       const install = calls.find(c => c.args.includes("install"))!;
       expect(install.args).toContain("amicooked@0.1.5");
       expect(install.args.includes("--global")).toBe(kind === "global");
-      expect(calls.at(-1)).toEqual({ command: process.execPath, args: [fs.realpathSync(script), "refresh-skills"] });
+      expect(calls.at(-1)).toEqual({ command: process.execPath, args: [fs.realpathSync(script), ...refresh] });
     }
   });
 

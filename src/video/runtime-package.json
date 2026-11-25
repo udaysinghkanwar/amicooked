@@ -1,0 +1,8 @@
+{
+  "name": "amicooked-video-tools",
+  "private": true,
+  "dependencies": {
+    "hyperframes": "0.9.93",
+    "kokoro-js": "1.2.1"
+  }
+}

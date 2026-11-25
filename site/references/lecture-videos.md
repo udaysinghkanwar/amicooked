@@ -1,6 +1,6 @@
 # Lecture videos
 
-Use this workflow only for a requested lecture/study video. Am I Cooked supplies course material and teaching guidance; the host agent creates the lesson using an external renderer. There is no `amicooked video` command. A newly installed skill needs no pre-existing personal video scripts or models. Set up the optional tools below on the first video request.
+Use this workflow only for a requested lecture/study video. Am I Cooked supplies course material and teaching guidance; the host agent creates the lesson using an external renderer. Setup or a manual update can prepare the local tools in advance. Prepare them when the student requests a video if they were skipped. A lecture request still needs an AI client that can work with local files and commands.
 
 ## Choose the lesson
 
@@ -19,67 +19,26 @@ These are starting points, not quotas. Narrow the topic or split it when the exp
 
 The host needs local command execution, file access and permission to open a browser. MCP access alone, a chat subscription, or installing this skill does not provide those capabilities. If missing, offer source-linked notes/storyboard and explain which capability is needed for an MP4. Never claim an export was produced when only a script exists.
 
-For a new local setup, check:
+Run `amicooked video status`. If setup used npx, replace `amicooked` with `npx -y amicooked@0` throughout this guide. If the result is `missing` or `previous`, tell the student you're preparing the video tools and run `amicooked video prepare` yourself as part of their video request. Allow several minutes and roughly 1–2 GB of disk space on the first run. Check status again after preparation. If an update fails and status remains `previous`, use the verified previous tools. If the host cannot run commands or download the tools, give the student the prepare command to run locally. Never install system packages to satisfy the renderer.
 
-| Tool | Check | If missing |
-|---|---|---|
-| Node.js 22+ and npm/npx | `node --version`, `npm --version` | Install a supported LTS from https://nodejs.org/en/download |
-| Chrome/Chromium | Renderer doctor below | `npx --yes hyperframes@0.9.93 browser ensure`; follow its reported platform requirements |
-| FFmpeg and FFprobe | `ffmpeg -version`, `ffprobe -version` | Use https://ffmpeg.org/download.html; use the OS package manager if already installed, then reopen the terminal/check PATH |
-| Python 3.10–3.13, for local Kokoro only | `python3 --version` (Mac/Linux) or `py --list` (Windows) | https://www.python.org/downloads/; choose a version supported by `kokoro-onnx` |
-
-Explain optional downloads before installing. Respect the host's normal approval mechanism. Do not install media dependencies for ordinary course questions. Initial downloads need internet and disk space; stop and explain network/permission/disk failures rather than silently switching to a paid service. A supplied human/provider recording can replace Kokoro; that provider's account, cost and source-sharing permissions remain separate.
-
-Create a new project in a user-selected directory, preferably `<course>/Study Videos/<topic>/`; never overwrite a previous delivery:
+Create a fresh project in the student's chosen directory, preferably `<course>/Study Videos/<topic>/`, and read the renderer's composition rules:
 
 ```sh
-npx --yes hyperframes@0.9.93 init "lesson"
+amicooked video run hyperframes -- init "lesson" --non-interactive --skip-skills
 cd "lesson"
-npx --yes hyperframes@0.9.93 doctor --json
-npx --yes hyperframes@0.9.93 docs compositions
+amicooked video run hyperframes -- docs compositions
 ```
-
-Inspect the doctor's individual checks and `ok`, not only its exit status. Some versions include missing optional music/transcription tools in `ok:false`: document those omissions, require working Node/Chrome/FFmpeg/FFprobe, and verify narration with the explicit voice test below. Do not install unused music or transcription packages just to make a doctor summary green. `init` supplies the project and production skills; read its installed HyperFrames instructions when available. Use `--help` for actual flags. Commands here use the tested version 0.9.93 for reproducibility; upgrades require rechecking the project, not merely changing its version. If an existing renderer already works, use it instead of installing another. The renderer is independent of Claude, ChatGPT or Gemini.
 
 ## 2. Get natural narration working first
 
-Prefer local Kokoro `am_michael`, at normal conversational speed; no cloud/API key is required. Test the opening and one math-heavy passage before producing the lesson. Avoid silently substituting robotic system speech. Use an isolated virtual environment, not system-wide pip:
+The managed voice tool uses local Kokoro `am_michael`. Save a short opening and a passage with representative notation in a UTF-8 file and synthesize it before the full lesson:
 
 ```sh
-# macOS/Linux (use a supported Python executable if python3 is newer):
-python3 -m venv .voice
-.voice/bin/python -m pip install kokoro-onnx soundfile
+amicooked video run voice -- narration.txt assets/voice-test.wav
+amicooked video run ffprobe -- -v error -show_entries format=duration -of json assets/voice-test.wav
 ```
 
-```powershell
-# Windows; py --list shows installed versions. No activation script is required:
-py -3.12 -m venv .voice
-.voice\Scripts\python.exe -m pip install kokoro-onnx soundfile
-```
-
-Use the official model release: https://github.com/thewh1teagle/kokoro-onnx/releases/tag/model-files-v1.1. The host can write this small **project-local** `voice_test.py`; it requires no Am I Cooked runtime code or personal paths:
-
-```python
-from pathlib import Path
-from urllib.request import urlretrieve
-from kokoro_onnx import Kokoro
-import soundfile as sf
-
-models = Path(".voice/models")
-models.mkdir(parents=True, exist_ok=True)
-base = "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.1/"
-for name in ("kokoro-v1.0.onnx", "voices-v1.0.bin"):
-    target = models / name
-    if not target.exists():
-        urlretrieve(base + name, target)
-engine = Kokoro(str(models / "kokoro-v1.0.onnx"), str(models / "voices-v1.0.bin"))
-audio, rate = engine.create("Subtract three from both sides. Two x equals eight, so x equals four.",
-                            voice="am_michael", speed=1.0, lang="en-us")
-Path("assets").mkdir(exist_ok=True)
-sf.write("assets/voice-test.wav", audio, rate)
-```
-
-Run with `.voice/bin/python voice_test.py` or `.voice\Scripts\python.exe voice_test.py`. Then measure it with `ffprobe -v error -show_entries format=duration -of json assets/voice-test.wav`. Fix Python/package/model/PATH failures at this small step. Use the same environment and measured audio segments for production; load the model once for a batch. Existing complete model files may be reused. If a download was interrupted, remove the incomplete file and download it again. Keep model files outside the distributable lesson assets.
+Write and measure a narration file per segment so cues come from actual speaking time. Create the output directory before synthesis. A supplied human or provider recording can be used instead. External providers' account, cost and source-sharing permissions remain separate.
 
 ## 3. Ground and teach
 
@@ -104,13 +63,13 @@ One starter example is sufficient: for **2x + 3 = 11**, reveal **2x = 8** while 
 The host writes ordinary, editable project HTML/CSS and timed scenes, following the renderer's documented format. Use local runtime/assets; export must not fetch remote fonts/scripts. If the scaffold includes a GSAP CDN URL, download that exact script once into `assets/gsap.min.js` and change the script tag to that local path. Keep the scaffold's GSAP version; copy fonts locally when needed. For HyperFrames, every timed element has a stable id, `class="clip"`, `data-start` and `data-duration`; each composition registers a paused GSAP timeline in `window.__timelines`. Keep audio tags separate, with stable ids. Do not use timers or audio `play()` calls as the render clock. Scene sub-compositions use `<template>` and their own matching host/timeline ids. Keep all key text comfortably inside the frame, captions readable, and backgrounds high contrast.
 
 ```sh
-npx --yes hyperframes@0.9.93 check --json
-npx --yes hyperframes@0.9.93 snapshot --review
-npx --yes hyperframes@0.9.93 preview --background
+amicooked video run hyperframes -- check --json
+amicooked video run hyperframes -- snapshot --review
+amicooked video run hyperframes -- preview --background
 # After fixing findings and inspecting the preview:
-npx --yes hyperframes@0.9.93 render --quality delivery --output lesson.mp4
-ffprobe -v error -show_streams -show_format -of json lesson.mp4
-ffmpeg -v error -i lesson.mp4 -f null -
+amicooked video run hyperframes -- render --quality delivery --output lesson.mp4
+amicooked video run ffprobe -- -v error -show_streams -show_format -of json lesson.mp4
+amicooked video run ffmpeg -- -v error -i lesson.mp4 -f null -
 ```
 
 A check with `ok:false` blocks delivery even if the command exits zero. Inspect snapshots from every chapter, dense calculation and ending; inspect decoded MP4 frames too. Independently recompute worked examples and algorithm traces. Confirm audio/video tracks, measured duration and full decoding. Test actual playback, seeking and sidecar captions in a browser/player. Listen to the opening and a difficult passage when the host supports audio review; audio levels, ASR and successful encoding alone do not prove pronunciation or teaching quality. Fix findings, and distinguish checks performed from human listening/watch-through. Finish and inspect the first installment before scaling a series.
