@@ -202,4 +202,12 @@ A check with `ok:false` blocks delivery even if the command exits zero. Inspect 
 
 Keep MP4, VTT/SRT captions, transcript, source-linked chapter notes, and editable project together. Provide a simple local `player.html` with chapter navigation, replay and practice-answer reveals unless MP4-only was requested. Player controls use normal browser playback; renderer scenes use deterministic timeline seeking. Include caption tracks and links to notes/transcript. Open the actual delivered player and test its controls. Serve over loopback when necessary; media seeking needs a server that supports HTTP byte ranges. Do not assume a generic static server does; test for a `206` response to a Range request, or use a working file/player fallback and disclose limits.
 
+For a tested byte-range server, run this from the lesson folder, keep the terminal open, and open `http://127.0.0.1:8058/player.html`:
+
+```sh
+npx --yes http-server@14.1.1 . -a 127.0.0.1 -p 8058 -c-1
+```
+
+This optional Node tool is separate from Am I Cooked. If the port is occupied, choose another unused port and update the link; do not stop unrelated services. Verify the served MP4 responds `206` to a Range request.
+
 Return clickable watch/file links, actual runtime, scope, omissions and a reopen command if a server is needed. Keep materials/renders private; uploading or publishing is a separate action. An ordinary MP4 can always be opened directly without a running service. Preserve previous deliveries before revising. Watching a video is not evidence of mastery.
