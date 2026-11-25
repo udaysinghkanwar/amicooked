@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import "./validationRuntime.js";
 import { parseArgs } from "util";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { loginCommand, pairCommand, statusCommand, uninstallCommand } from "./cli/manage.js";
