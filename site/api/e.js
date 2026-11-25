@@ -11,8 +11,17 @@ export const PLATFORMS = ["darwin-arm64", "darwin-x64", "linux-x64", "linux-arm6
 // The install tabs on the site, as site/main.js names them
 export const TABS = ["agent", "mac", "win", "npm"];
 
-/** Redis commands for one event, or null if the event isn't one we count. */
+/**
+ * Redis commands for one event, or null if the event isn't one we count. Every event also adds to
+ * `<event>:hours`, keyed by UTC hour ("2026-11-25T14"), so stats can show when things happen.
+ */
 export function commandsFor(event, now = new Date()) {
+  const commands = countsFor(event, now);
+  if (commands) commands.push(["HINCRBY", `${event.e}:hours`, now.toISOString().slice(0, 13), "1"]);
+  return commands;
+}
+
+function countsFor(event, now) {
   if (!event || typeof event !== "object") return null;
   const day = now.toISOString().slice(0, 10);
   if (event.e === "copy") {

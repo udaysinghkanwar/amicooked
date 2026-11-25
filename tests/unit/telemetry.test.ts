@@ -81,6 +81,7 @@ describe("site/api/e.js", () => {
       ["HINCRBY", "setup:days", "2026-11-20", "1"],
       ["HINCRBY", "setup:schools", "waterloo", "1"],
       ["HINCRBY", "setup:platforms", "win32-x64", "1"],
+      ["HINCRBY", "setup:hours", "2026-11-20T12", "1"],
     ]);
     expect(PLATFORMS).toContain("darwin-arm64");
   });
@@ -91,6 +92,7 @@ describe("site/api/e.js", () => {
       ["INCR", "upgrade:total"], ["HINCRBY", "upgrade:days", "2026-11-25", "1"],
       ["HINCRBY", "upgrade:modes", "automatic", "1"], ["HINCRBY", "upgrade:channels", "native", "1"],
       ["HINCRBY", "upgrade:platforms", "darwin-arm64", "1"], ["HINCRBY", "upgrade:versions", "0.1.7->0.1.8", "1"],
+      ["HINCRBY", "upgrade:hours", "2026-11-25T12", "1"],
     ]);
     for (const patch of [{ from: "private.example.edu" }, { to: "0.1.7" }, { mode: "check" }, { channel: "other" }, { from: 123 }]) {
       expect(commandsFor({ ...event, ...patch })).toBeNull();
@@ -101,9 +103,13 @@ describe("site/api/e.js", () => {
     expect(commandsFor({ e: "copy", tab: "win" }, new Date("2026-11-20T12:00:00Z"))).toEqual([
       ["HINCRBY", "copy:tabs", "win", "1"],
       ["HINCRBY", "copy:days", "2026-11-20", "1"],
+      ["HINCRBY", "copy:hours", "2026-11-20T12", "1"],
     ]);
     expect(commandsFor({ e: "copy", tab: "elsewhere" })).toBeNull();
-    expect(commandsFor({ e: "prompt" })).toEqual([["INCR", "prompt:opens"]]);
+    expect(commandsFor({ e: "prompt" }, new Date("2026-11-25T09:30:00Z"))).toEqual([
+      ["INCR", "prompt:opens"],
+      ["HINCRBY", "prompt:hours", "2026-11-25T09", "1"],
+    ]);
   });
 
   it("knows every copy button on the site", () => {
@@ -139,12 +145,12 @@ describe("site/api/e.js", () => {
 
   it("writes the counters to Redis in one pipeline", async () => {
     const env = { KV_REST_API_URL: "https://redis.test", KV_REST_API_TOKEN: "t" };
-    const fetchImpl = redis([{ result: 1 }, { result: 1 }, { result: 1 }, { result: 1 }]);
+    const fetchImpl = redis([{ result: 1 }, { result: 1 }, { result: 1 }, { result: 1 }, { result: 1 }]);
     const res = await handle(new Request("https://x/api/e", { method: "POST", body: JSON.stringify({ e: "setup", school: "mcmaster" }) }), env, fetchImpl);
     expect(res.status).toBe(204);
     const [url, init] = fetchImpl.mock.calls[0] as [string, RequestInit];
     expect(url).toBe("https://redis.test/pipeline");
-    expect(JSON.parse(String(init.body))).toHaveLength(4);
+    expect(JSON.parse(String(init.body))).toHaveLength(5);
   });
 
   it("reports a failure when Redis rejects a command inside a 200 response", async () => {

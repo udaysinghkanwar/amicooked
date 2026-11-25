@@ -69,6 +69,9 @@ async function npmDownloads() {
   return total;
 }
 
+// Events that /api/e also counts per UTC hour, in `<event>:hours` (recorded from 2026-11-25)
+const HOURLY = ["setup", "upgrade", "copy", "prompt"];
+
 async function setups() {
   const url = process.env.KV_REST_API_URL ?? process.env.UPSTASH_REDIS_REST_URL;
   const key =
@@ -83,11 +86,12 @@ async function setups() {
         ["HGETALL", "copy:tabs"], ["GET", "prompt:opens"],
         ["GET", "upgrade:total"], ["HGETALL", "upgrade:modes"], ["HGETALL", "upgrade:channels"],
         ["HGETALL", "upgrade:platforms"], ["HGETALL", "upgrade:versions"],
+        ...HOURLY.map((e) => ["HGETALL", `${e}:hours`]),
       ]),
       signal: AbortSignal.timeout(15000),
     });
     if (!res.ok) return null;
-    const [total, schools, platforms, tabs, prompt, upgrades, modes, channels, upgradePlatforms, versions] = (await res.json()).map((r) => r.result);
+    const [total, schools, platforms, tabs, prompt, upgrades, modes, channels, upgradePlatforms, versions, ...hourly] = (await res.json()).map((r) => r.result);
     const pairs = (flat) =>
       Object.fromEntries((flat ?? []).flatMap((v, i, a) => (i % 2 ? [] : [[v, Number(a[i + 1])]])));
     const copies = pairs(tabs);
@@ -96,6 +100,7 @@ async function setups() {
       upgradePlatforms: pairs(upgradePlatforms), upgradeVersions: pairs(versions),
       total: Number(total ?? 0), schools: pairs(schools), platforms: pairs(platforms),
       copies, copyTotal: Object.values(copies).reduce((a, b) => a + b, 0), promptOpens: Number(prompt ?? 0),
+      hours: Object.fromEntries(HOURLY.map((e, i) => [e, pairs(hourly[i])])),
     };
   } catch {
     return null;
@@ -138,6 +143,22 @@ if (setup?.upgrades) {
   row("Platforms", "", top(setup.upgradePlatforms));
   row("Versions", "", top(setup.upgradeVersions));
 }
+console.log("\nRecent activity (last 7 days, your local time)");
+if (setup) {
+  // Merge every event's hourly counts into one list, newest hour first
+  const byHour = {};
+  for (const [event, hours] of Object.entries(setup.hours)) {
+    for (const [hour, n] of Object.entries(hours)) (byHour[hour] ??= []).push(n > 1 ? `${event} ×${n}` : event);
+  }
+  const since = new Date(Date.now() - 7 * 864e5).toISOString().slice(0, 13);
+  const recent = Object.keys(byHour).filter((h) => h >= since).sort().reverse();
+  const when = (hour) =>
+    new Date(`${hour}:00:00Z`).toLocaleString(undefined, { weekday: "short", month: "short", day: "numeric", hour: "numeric" });
+  for (const hour of recent.slice(0, 20)) console.log(`  ${when(hour).padEnd(24)}${byHour[hour].join(", ")}`);
+  if (!recent.length) console.log("  nothing yet");
+  if (recent.length > 20) console.log(`  … ${recent.length - 20} more hours`);
+} else console.log("  -");
+
 console.log("\nGitHub repo (last 14 days)");
 row("Views", views?.count, views ? `${views.uniques} unique` : "needs a token with push access");
 row("Clones", clones?.count, clones ? `${clones.uniques} unique` : "");
