@@ -9,7 +9,7 @@ import { scheduleAfterQuit } from "./afterQuit.js";
 import { hasClaudeCode, installClaudeCode, installSkill } from "../clients/claudeCode.js";
 import { chatgptSteps, installChatGPT } from "../clients/chatgpt.js";
 import { codexEntryIs, codexSkillPath, hasCodex, installCodex, installCodexSkill } from "../clients/codex.js";
-import { SKILL_MD } from "../skill.js";
+import { skillBundleIs } from "../clients/skillFiles.js";
 import { selfCommand } from "../clients/self.js";
 import { client } from "../client.js";
 import { getConfig, writeConfig, type School } from "../config.js";
@@ -259,7 +259,7 @@ function desktopHas(dir: string, launch: ReturnType<typeof selfCommand>): boolea
 
 /** True when the ChatGPT app's config already starts this exact install, and the skill is in place. */
 function codexHas(launch: ReturnType<typeof selfCommand>): boolean {
-  return codexEntryIs(launch) && fs.existsSync(codexSkillPath()) && fs.readFileSync(codexSkillPath(), "utf8") === SKILL_MD;
+  return codexEntryIs(launch) && skillBundleIs(path.dirname(codexSkillPath()));
 }
 
 /** The end of setup: every app's next step, then one line saying whether they're done. */
