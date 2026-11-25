@@ -27,7 +27,7 @@ describe("guidance for the AI", () => {
 
   it("gives am_i_cooked its presentation guide, also sent as server instructions", () => {
     const guide = toolGuide("am_i_cooked");
-    expect(guide).toContain("summary.heatBar");
+    expect(guide).toContain("showFirst");
     expect(guide).toContain("Course | Grade so far | Still to come | Next due | Status");
     expect(guide).not.toMatch(/<!--/);
     expect(serverInstructions()).toContain(guide);
