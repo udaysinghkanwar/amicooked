@@ -6,7 +6,7 @@ import * as path from "path";
 import { currentRuntime, installationChannel, type Runtime } from "../clients/self.js";
 import { installedSkillVersion, refreshSkills } from "../skills.js";
 import { paths } from "../config.js";
-import { chooseVideoPreparation, prepareVideoSafely } from "../video/command.js";
+import { prepareVideoSafely } from "../video/command.js";
 import { reportUpgrade } from "../telemetry.js";
 import { VERSION } from "../version.js";
 
@@ -172,14 +172,11 @@ export async function updateCommand(options: { check?: boolean; json?: boolean; 
       releaseLock = acquireUpdateLock();
       if (compareVersions(previousVersion, version) > 0 && !available) throw new Error("Installed skills are newer than this runtime. Reload your AI app or run the newer installation; older instructions were not written.");
     }
-    const withVideo = !options.check && !options.compatibleOnly && await chooseVideoPreparation({
-      requested: options.withVideo, prompt: !options.json, upgrading: available,
-    });
     if (!options.check && available) await installRelease(release, {
-      runtime, arch: deps.arch ?? process.arch, fetch: fetcher, run: deps.run ?? execute, withVideo,
+      runtime, arch: deps.arch ?? process.arch, fetch: fetcher, run: deps.run ?? execute, withVideo: options.withVideo,
     });
     const skills = !options.check && !available ? refreshSkills() : [];
-    if (withVideo && !available) await prepareVideoSafely();
+    if (!options.check && !available) await prepareVideoSafely({ force: options.withVideo, humanOutput: !options.json });
     const skillsChanged = skills.some(result => !result.endsWith(": unchanged"));
     const result = {
       previousVersion,

@@ -25,7 +25,7 @@ const report=async event=>{upgradeEvents.push(event);return true;};
 let client;
 try {
  fs.mkdirSync(env.AMICOOKED_HOME,{recursive:true});
- fs.writeFileSync(path.join(env.AMICOOKED_HOME,"config.json"),JSON.stringify({version:1,browser:"chrome",filesDir:path.join(root,"downloads"),school:{id:"mcmaster",name:"McMaster",lmsName:"Avenue",host:"avenue.cllmcmaster.ca"}}));
+ fs.writeFileSync(path.join(env.AMICOOKED_HOME,"config.json"),JSON.stringify({version:1,prepareVideo:false,browser:"chrome",filesDir:path.join(root,"downloads"),school:{id:"mcmaster",name:"McMaster",lmsName:"Avenue",host:"avenue.cllmcmaster.ca"}}));
  fs.writeFileSync(path.join(env.AMICOOKED_HOME,"token.json"),"preserved session fixture");
  const saved=fs.readFileSync(path.join(env.AMICOOKED_HOME,"token.json"),"utf8");
  const skill=path.join(root,"client/skills/amicooked");fs.mkdirSync(skill,{recursive:true});
@@ -52,7 +52,7 @@ try {
  assert.equal(fs.readFileSync(path.join(env.AMICOOKED_HOME,"automatic-update.json"),"utf8"),firstAttempt);
 
  run(target,["uninstall"]);assert.equal(JSON.parse(run(target,["auto-update","status","--json"])).enabled,false);assert.equal(fs.readFileSync(path.join(skill,"personal.md"),"utf8"),"Keep my notes");
- run(target,["setup","--clients","none","--skill-dir",skill,"--school","mcmaster","--no-login","--yes"]);
+ run(target,["setup","--clients","none","--skill-dir",skill,"--school","mcmaster","--no-login","--yes","--skip-video-deps"]);
  assert.equal(JSON.parse(run(target,["auto-update","status","--json"])).enabled,true);
  assert.equal(await updateCommand({json:true},{report,fetch:fetcher,runtime:{execPath:target,argv:[target],platform:process.platform,isCompiled:true}}),0);
  assert.equal(upgradeEvents.length,1);
@@ -64,7 +64,7 @@ try {
  assert.equal(await updateCommand({json:true},{report,version:"0.1.5",fetch:fetcher,runtime:{execPath:process.execPath,argv:[process.execPath,script],platform:process.platform,isCompiled:false},run:(cmd,args)=>run(cmd,args.map(a=>a===`amicooked@${VERSION}`?tarball:a)).trim()}),0);
  assert.deepEqual(upgradeEvents[1],{from:"0.1.5",to:VERSION,mode:"manual",channel:"npm"});
  assert.equal(run(process.execPath,[script,"--version"]).trim(),VERSION);assert(JSON.parse(run(process.execPath,[script,"features","--json"])).features.some(f=>f.id==="lecture-videos"));
- run(process.execPath,[script,"uninstall"]);run(process.execPath,[script,"setup","--clients","none","--skill-dir",skill,"--school","mcmaster","--no-login","--yes"]);
+ run(process.execPath,[script,"uninstall"]);run(process.execPath,[script,"setup","--clients","none","--skill-dir",skill,"--school","mcmaster","--no-login","--yes","--skip-video-deps"]);
  assert.equal(fs.readFileSync(path.join(env.AMICOOKED_HOME,"token.json"),"utf8"),saved);
  results.push({upgradeEvent:"manual/npm",channel:"npm",from:"0.1.5",to:VERSION,realNpmReplacement:true,uninstallReinstall:true,retainedSession:true});
  console.log(JSON.stringify(results,null,2));

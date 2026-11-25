@@ -58,7 +58,7 @@ try {
   mkdirSync(path.dirname(helper), { recursive: true });
   writeFileSync(helper, "");
   const skill = path.join(home, "other-client", "skills", "amicooked");
-  const setup = run(["setup", "--school", "mcmaster", "--clients", "gemini", "--no-login", "--yes", "--skill-dir", skill], 1);
+  const setup = run(["setup", "--school", "mcmaster", "--clients", "gemini", "--no-login", "--yes", "--skip-video-deps", "--skill-dir", skill], 1);
   if (process.platform === "darwin" || process.platform === "win32") assert.match(setup, /isn't a valid Gemini config/);
   assert.equal(existsSync(path.join(skill, "SKILL.md")), true);
   assert.match(run(["uninstall"], 1), /isn't a valid Gemini config/);

@@ -22,7 +22,7 @@ try {
  install();const installed=path.join(env.AMICOOKED_HOME,windows ? "bin/amicooked.exe" : "bin/amicooked");assert(fs.existsSync(installed));
  const version=run(installed,["--version"]).trim();const profile=windows ? null : fs.readFileSync(path.join(root,".profile"),"utf8");
  fs.writeFileSync(path.join(env.AMICOOKED_HOME,"config.json"),JSON.stringify({version:1,browser:"chrome",filesDir:path.join(root,"downloads")}));
- const skill=path.join(root,"other/skills/amicooked");const setup=["setup","--clients","none","--school","mcmaster","--skill-dir",skill,"--no-login","--yes"];
+ const skill=path.join(root,"other/skills/amicooked");const setup=["setup","--clients","none","--school","mcmaster","--skill-dir",skill,"--no-login","--yes","--skip-video-deps"];
  run(installed,setup);fs.writeFileSync(path.join(env.AMICOOKED_HOME,"token.json"),"retained installer session");
  if (windows) {
   // Emulate only detection of an installed Antigravity CLI. Run the real setup and MCP executable.
@@ -30,7 +30,7 @@ try {
   fs.mkdirSync(path.dirname(agy), { recursive: true });
   fs.writeFileSync(agy, "");
   run(installed, ["auto-update", "disable"]);
-  const geminiSetup = ["setup", "--clients", "gemini", "--school", "mcmaster", "--no-login", "--yes"];
+  const geminiSetup = ["setup", "--clients", "gemini", "--school", "mcmaster", "--no-login", "--yes", "--skip-video-deps"];
   assert.match(run(installed, geminiSetup), /MCP handshake and 10 read-only tools verified/);
   const configFile = path.join(root, ".gemini", "config", "mcp_config.json");
   const config = fs.readFileSync(configFile, "utf8");

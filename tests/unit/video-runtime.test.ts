@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { updateCommand } from "../../src/cli/update.js";
-import { reloadConfig } from "../../src/config.js";
+import { reloadConfig, writeConfig } from "../../src/config.js";
 import { acquireLock } from "../../src/lock.js";
 import { download, installComponent } from "../../src/video/install.js";
 import { getVideoTools, prepareVideo, videoStatus } from "../../src/video/runtime.js";
@@ -13,6 +13,8 @@ let home: string;
 beforeEach(() => {
   home = fs.mkdtempSync(path.join(os.tmpdir(), "amicooked-video-"));
   vi.stubEnv("AMICOOKED_HOME", home);
+  vi.stubEnv("HOME", home);
+  vi.stubEnv("USERPROFILE", home);
   reloadConfig();
 });
 afterEach(() => {
@@ -78,21 +80,29 @@ it("rejects concurrent preparation", async () => {
   } finally { release(); }
 });
 
-it("prepares video tools only for a manual update with consent", async () => {
+it("prepares video tools during updates by default and honors the skip preference", async () => {
   if (videoStatus().state === "unsupported") return;
+  writeConfig({ school: { id: "fixture", name: "Fixture", host: "fixture.invalid", lmsName: "D2L" } });
   const downloads = vi.fn().mockRejectedValue(new Error("offline"));
   vi.stubGlobal("fetch", downloads);
-  const release = async () => new Response(JSON.stringify({ tag_name: "v1.0.0" }));
+  const deps = { fetch: async () => new Response(JSON.stringify({ tag_name: "v1.0.0" })), version: "1.0.0" };
   const output = vi.spyOn(console, "log").mockImplementation(() => {});
   const errors = vi.spyOn(console, "error").mockImplementation(() => {});
   try {
-    expect(await updateCommand({ check: true, json: true, withVideo: true }, { fetch: release, version: "1.0.0" })).toBe(0);
+    expect(await updateCommand({ check: true, json: true, withVideo: true }, deps)).toBe(0);
     expect(downloads).not.toHaveBeenCalled();
-    expect(await updateCommand({ compatibleOnly: true, json: true, withVideo: true }, { fetch: release, version: "1.0.0" })).toBe(0);
-    expect(await updateCommand({ json: true }, { fetch: release, version: "1.0.0" })).toBe(0);
+    expect(await updateCommand({ compatibleOnly: true, json: true }, { ...deps, allowed: () => false })).toBe(0);
     expect(downloads).not.toHaveBeenCalled();
-    expect(await updateCommand({ json: true, withVideo: true }, { fetch: release, version: "1.0.0" })).toBe(0);
-    expect(downloads).toHaveBeenCalledOnce();
+    writeConfig({ prepareVideo: false });
+    expect(await updateCommand({ compatibleOnly: true, json: true }, deps)).toBe(0);
+    expect(await updateCommand({ json: true }, deps)).toBe(0);
+    expect(downloads).not.toHaveBeenCalled();
+    writeConfig({ prepareVideo: true });
+    expect(await updateCommand({ compatibleOnly: true, json: true }, deps)).toBe(0);
+    expect(downloads).toHaveBeenCalledTimes(1);
+    expect(await updateCommand({ json: true }, deps)).toBe(0);
+    expect(downloads).toHaveBeenCalledTimes(2);
+    expect(errors).toHaveBeenCalledWith(expect.stringContaining("offline"));
   } finally {
     output.mockRestore();
     errors.mockRestore();
