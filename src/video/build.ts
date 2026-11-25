@@ -84,7 +84,7 @@ export async function buildVideo(
   }
   const prepared = new Map<
     string,
-    { file: string; key: string; extension: string }
+    { file: string; asset: string }
   >();
   const jobs = new Map<string, { text: string; output: string }>();
   for (const scene of lesson.scenes)
@@ -106,8 +106,7 @@ export async function buildVideo(
       const file = input ?? path.join(cache, `${key}.wav`);
       prepared.set(`${scene.id}/${cue.id}`, {
         file,
-        key,
-        extension: input ? path.extname(input) : ".wav",
+        asset: `assets/voice/${key}${input ? path.extname(input) : ".wav"}`,
       });
       if (!(await exists(file)))
         jobs.set(file, { text, output: `${file}.${process.pid}.tmp.wav` });
@@ -159,13 +158,8 @@ export async function buildVideo(
     const cues: CueTiming[] = [];
     let local = 0.25;
     for (const cue of scene.cues) {
-      const {
-        file: cached,
-        key,
-        extension,
-      } = prepared.get(`${scene.id}/${cue.id}`)!;
+      const { file: cached, asset } = prepared.get(`${scene.id}/${cue.id}`)!;
       const seconds = await duration(cached);
-      const asset = `assets/voice/${key}${extension}`;
       await fs.copyFile(cached, path.join(project, asset));
       cues.push({
         id: cue.id,

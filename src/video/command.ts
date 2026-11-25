@@ -21,13 +21,6 @@ Check/render use HyperFrames ${HF_VERSION} via npx (first use needs internet).
 Narration stays local; no AI provider, API key or school login is required.
 `;
 
-export function assertCheckPassed(report: { ok?: boolean }) {
-  if (report.ok !== true)
-    throw new Error(
-      "Video checks failed. Read check.json and fix the project before rendering.",
-    );
-}
-
 export async function checkVideo(directory: string) {
   const project = path.join(directory, "project");
   let raw: string;
@@ -47,7 +40,8 @@ export async function checkVideo(directory: string) {
     path.join(directory, "check.json"),
     JSON.stringify(report, null, 2),
   );
-  assertCheckPassed(report);
+  if (report.ok !== true)
+    throw new Error("Video checks failed. Read check.json and fix the project before rendering.");
   const timing: Timing = JSON.parse(
     await fs.readFile(path.join(directory, "timing.json"), "utf8"),
   );
@@ -67,7 +61,7 @@ export async function checkVideo(directory: string) {
 export async function renderVideo(directory: string) {
   // Inspect saved snapshots separately; automated validation is a gate, not a teaching-quality score.
   await checkVideo(directory);
-  const temporary = "lesson.rendering.mp4";
+  const temporary = path.join(directory, "lesson.rendering.mp4");
   try {
     await hyperframes(
       [
@@ -75,7 +69,7 @@ export async function renderVideo(directory: string) {
         "--quality",
         "delivery",
         "--output",
-        path.join(directory, temporary),
+        temporary,
       ],
       path.join(directory, "project"),
     );
@@ -87,7 +81,7 @@ export async function renderVideo(directory: string) {
         "-show_format",
         "-of",
         "json",
-        path.join(directory, temporary),
+        temporary,
       ]),
     );
     const timing: Timing = JSON.parse(
@@ -105,7 +99,7 @@ export async function renderVideo(directory: string) {
       throw new Error("Export is missing tracks or has an incorrect duration");
     await run(
       "ffmpeg",
-      ["-v", "error", "-i", path.join(directory, temporary), "-f", "null", "-"],
+      ["-v", "error", "-i", temporary, "-f", "null", "-"],
       { timeout: 300_000 },
     );
     const dest = path.join(directory, "lesson.mp4");
@@ -119,7 +113,7 @@ export async function renderVideo(directory: string) {
         dest,
         path.join(directory, `lesson.previous-${Date.now()}.mp4`),
       );
-    await fs.rename(path.join(directory, temporary), dest);
+    await fs.rename(temporary, dest);
     await run("ffmpeg", [
       "-v",
       "error",
@@ -151,7 +145,7 @@ export async function renderVideo(directory: string) {
     );
     return dest;
   } finally {
-    await fs.rm(path.join(directory, temporary), { force: true });
+    await fs.rm(temporary, { force: true });
   }
 }
 

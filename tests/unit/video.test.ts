@@ -11,7 +11,6 @@ import { VIDEO_EXAMPLES } from "../../src/video/examples.js";
 import { drawVisual } from "../../src/video/visuals.js";
 import { run } from "../../src/video/process.js";
 import { serveVideo } from "../../src/video/serve.js";
-import { assertCheckPassed } from "../../src/video/command.js";
 
 const fixture = (name = "break-even") =>
   structuredClone(VIDEO_EXAMPLES[name]) as any;
@@ -102,11 +101,6 @@ describe("portable lesson specifications", () => {
     expect(markings.every((m) => m.idle + m.busy === 1)).toBe(true);
     net.steps[0].fire = "finish";
     expect(() => petriMarkings(net)).toThrow("not enabled");
-  });
-  it("fails closed when a checker exits successfully but reports ok:false", () => {
-    expect(() => assertCheckPassed({ ok: false })).toThrow("checks failed");
-    expect(() => assertCheckPassed({})).toThrow();
-    expect(() => assertCheckPassed({ ok: true })).not.toThrow();
   });
 });
 

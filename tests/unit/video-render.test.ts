@@ -10,7 +10,8 @@ vi.mock("../../src/video/process.js", async (importOriginal) => ({
 }));
 import { hyperframes } from "../../src/video/process.js";
 import { renderVideo } from "../../src/video/command.js";
-it("does not start export when the checker exits zero but reports failure", async () => {
+it.each([{ ok: false }, {}])("does not start export when the checker exits zero without success: %j", async (report) => {
+  vi.mocked(hyperframes).mockResolvedValueOnce(JSON.stringify(report));
   const root = await fs.mkdtemp(
     path.join(os.tmpdir(), "amicooked-video-failed-check-"),
   );
@@ -21,7 +22,7 @@ it("does not start export when the checker exits zero but reports failure", asyn
     ]);
     expect(
       JSON.parse(await fs.readFile(path.join(root, "check.json"), "utf8")).ok,
-    ).toBe(false);
+    ).toBe(report.ok);
   } finally {
     await fs.rm(root, { recursive: true, force: true });
   }
