@@ -11,7 +11,7 @@ import { chatgptSteps, installChatGPT } from "../clients/chatgpt.js";
 import { codexEntryIs, codexSkillPath, hasCodex, installCodex, installCodexSkill } from "../clients/codex.js";
 import { installGeminiLocal } from "../clients/geminiLocal.js";
 import { checkMcp } from "../clients/check.js";
-import { geminiConfigPath, geminiDesktopHomeError, geminiEntry, geminiStdioLaunch, hasGeminiClient, installGeminiHttp, installGeminiStdio, ANTIGRAVITY_CLI_INSTALL, GEMINI_DOWNLOAD } from "../clients/gemini.js";
+import { assertGeminiEnabled, geminiDesktopHomeError, geminiEntry, geminiStdioLaunch, hasGeminiClient, installGeminiHttp, installGeminiStdio, ANTIGRAVITY_CLI_INSTALL, GEMINI_DOWNLOAD } from "../clients/gemini.js";
 import { skillBundleIs } from "../clients/skillFiles.js";
 import { refreshSkills } from "../skills.js";
 import { selfCommand } from "../clients/self.js";
@@ -114,7 +114,7 @@ export async function chooseClients(flag: string | undefined, detected: Record<C
       { value: "desktop" as const, label: "Claude Desktop", hint: detected.desktop ? "found" : "not found" },
       { value: "code" as const, label: "Claude Code", hint: detected.code ? "found" : "not found" },
       { value: "chatgpt-desktop" as const, label: "ChatGPT desktop app", hint: detected["chatgpt-desktop"] ? "found" : "not found" },
-      { value: "gemini-desktop" as const, label: process.platform === "win32" ? "Gemini (Antigravity CLI)" : "Gemini desktop (Mac)", hint: detected["gemini-desktop"] ? "found" : "not found" },
+      ...(desktopAppsSupported() ? [{ value: "gemini-desktop" as const, label: process.platform === "win32" ? "Gemini (Antigravity CLI)" : "Gemini", hint: detected["gemini-desktop"] ? "found" : "not found" }] : []),
     ],
   });
   if (p.isCancel(chosen)) throw new SetupStop("Setup cancelled.");
@@ -132,6 +132,8 @@ export interface Outcome {
   ready: boolean;
   /** True when our server is in the app's config (it may still need a restart). Only these count as a setup. */
   connected: boolean;
+  /** A selected app could not be connected and needs attention. */
+  failed?: boolean;
 }
 
 const quitHow = () => (process.platform === "darwin" ? "with Cmd+Q" : "fully, from its icon by the clock if it has one");
@@ -239,25 +241,30 @@ async function configureClients(clients: ClientId[]): Promise<Outcome[]> {
 
   if (clients.includes("gemini-desktop")) {
     const windows = process.platform === "win32";
-    if (!hasGeminiClient()) {
-      const next = windows ? `install Antigravity CLI from ${ANTIGRAVITY_CLI_INSTALL}, then rerun setup.`
-        : process.platform === "darwin" ? `install Gemini from ${GEMINI_DOWNLOAD}, then rerun setup.`
-          : "automatic setup is available for Gemini on Mac and Antigravity CLI on Windows.";
-      outcomes.push({ app: "Gemini", next, ready: false, connected: false });
+    if (!desktopAppsSupported()) {
+      outcomes.push({ app: "Gemini", next: "is available on Mac or through Antigravity CLI on Windows.", ready: false, connected: false, failed: true });
+    } else if (!hasGeminiClient()) {
+      const missing = windows
+        ? await missingApp("Gemini", "Antigravity CLI", ANTIGRAVITY_CLI_INSTALL)
+        : await missingApp("Gemini", "Gemini", GEMINI_DOWNLOAD);
+      outcomes.push({ ...missing, failed: true });
     } else {
-      if (windows) {
-        installGeminiStdio(geminiStdioLaunch());
-      } else {
-        geminiEntry(); // Validate existing JSON before changing the service.
-        installGeminiHttp(await installGeminiLocal(selfCommand(["gemini-serve"])));
+      try {
+        assertGeminiEnabled();
+        if (windows) {
+          installGeminiStdio(geminiStdioLaunch());
+        } else {
+          installGeminiHttp(await installGeminiLocal(selfCommand(["gemini-serve"])));
+        }
+        const configured = geminiEntry();
+        if (!configured) throw new Error("Gemini did not accept the connection. Rerun setup.");
+        const tools = await checkMcp(configured);
+        p.log.success(`Gemini: MCP handshake and ${tools} read-only tools verified.`);
+        const reopen = windows ? "Start a new Antigravity CLI session" : "Reopen Gemini or start a new Antigravity CLI session";
+        outcomes.push({ app: "Gemini", ready: false, connected: true, next: `set up. ${reopen}, then ask: am I cooked?` });
+      } catch (error) {
+        outcomes.push({ app: "Gemini", ready: false, connected: false, failed: true, next: error instanceof Error ? error.message : String(error) });
       }
-      const configured = geminiEntry();
-      if (!configured) throw new Error(`Am I Cooked is disabled in ${geminiConfigPath()}. Enable it in Gemini, then rerun setup.`);
-      const tools = await checkMcp(configured);
-      p.log.success(`Gemini: MCP handshake and ${tools} read-only tools verified. Config: ${geminiConfigPath()}`);
-      const restart = windows ? "Start a new Antigravity CLI session" : "Quit/reopen Gemini or start a new Antigravity CLI session";
-      outcomes.push({ app: "Gemini", ready: false, connected: true,
-        next: `local connection tested. ${restart}, then ask: am I cooked? Approve normal connection prompts. Host login is separate from this protocol check.` });
     }
   }
 
@@ -297,9 +304,11 @@ function codexHas(launch: ReturnType<typeof selfCommand>): boolean {
 /** The end of setup: every app's next step, then one line saying whether they're done. */
 export function finishMessage(outcomes: Outcome[]): { steps: string | null; outro: string } {
   if (!outcomes.length) {
+    const gemini = process.platform === "darwin" ? `, or Gemini (${GEMINI_DOWNLOAD})`
+      : process.platform === "win32" ? `, or Antigravity CLI (${ANTIGRAVITY_CLI_INSTALL})` : "";
     return {
       steps: null,
-      outro: `Nothing was set up. Get Claude Desktop (${APPS.claude.download}) or the ChatGPT app (${APPS.chatgpt.download}), or Gemini (${GEMINI_DOWNLOAD}), then run \`amicooked setup\` again.`,
+      outro: `Nothing was set up. Get Claude Desktop (${APPS.claude.download}) or the ChatGPT app (${APPS.chatgpt.download})${gemini}, then run \`amicooked setup\` again.`,
     };
   }
   const steps = outcomes.map((o) => `${o.app}: ${o.next}`).join("\n");
@@ -364,7 +373,7 @@ export async function setup(options: SetupOptions): Promise<number> {
     if (steps) p.note(steps, "Next");
     p.outro(outro);
     await reported;
-    return outcomes.some((o) => o.app.startsWith("Gemini") && !o.connected) ? 1 : 0;
+    return outcomes.some((o) => o.failed) ? 1 : 0;
   } catch (error) {
     const code = error instanceof SetupStop ? error.code : 1;
     p.cancel(error instanceof Error ? error.message : String(error));

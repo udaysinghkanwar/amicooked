@@ -22,7 +22,7 @@ Usage: amicooked <command>
 
   setup        Pick your school, sign in, and connect your AI apps
                --school <id|url>       e.g. mcmaster, or the URL you log in through
-               --clients <list>        desktop,code,chatgpt-desktop,gemini-desktop
+               --clients <list>        desktop,code,chatgpt-desktop,gemini
                --yes                   accept the detected apps without asking
                --skill-dir <folder>    install full skill for another local AI client
                --clients none          skip automatic client configuration

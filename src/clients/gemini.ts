@@ -58,6 +58,10 @@ function read(home: string) {
   }
 }
 
+export function assertGeminiEnabled(home = os.homedir()): void {
+  if (read(home).entry?.disabled) throw new Error("Enable Am I Cooked in Gemini, then rerun setup.");
+}
+
 function write(file: string, config: Record<string, unknown>): void {
   const backup = `${file}.amicooked.bak`;
   if (fs.existsSync(file) && !fs.existsSync(backup)) writePrivateFile(backup, fs.readFileSync(file, "utf8"));

@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import { hasActiveSession, login } from "../auth.js";
-import { claudeDesktopDir, SERVER_NAME, uninstallClaudeDesktop } from "../clients/claudeDesktop.js";
+import { claudeDesktopDir, InvalidConfigError, SERVER_NAME, uninstallClaudeDesktop } from "../clients/claudeDesktop.js";
 import { hasClaudeCode, skillPath, uninstallClaudeCode, uninstallSkill } from "../clients/claudeCode.js";
 import { chatgptSteps, chatgptUrl, uninstallChatGPT } from "../clients/chatgpt.js";
 import { codexConfigured, hasCodex, uninstallCodex, uninstallCodexSkill } from "../clients/codex.js";
@@ -49,7 +49,7 @@ function desktopConfigured(): boolean {
 
 function geminiStatus(): string {
   try {
-    if (geminiEntry()) return "configured (run doctor to test; Gemini may need reloading)";
+    if (geminiEntry()) return "set up";
     return hasGeminiClient() ? "installed, not set up or disabled" : "not installed";
   } catch {
     return `invalid config: ${geminiConfigPath()}`;
@@ -103,8 +103,15 @@ export async function uninstallCommand(purge: boolean): Promise<number> {
   const codexSkill = uninstallCodexSkill();
   if (codex !== "absent" || codexSkill !== "absent") console.log(`ChatGPT desktop app: ${codex} (skill ${codexSkill})`);
   if (uninstallChatGPT()) console.log("ChatGPT: background service stopped and disconnected");
-  const gemini = uninstallGemini();
-  if (gemini !== "absent") console.log(`Gemini: ${gemini}`);
+  let geminiRemoved = true;
+  try {
+    const gemini = uninstallGemini();
+    if (gemini !== "absent") console.log(`Gemini: ${gemini}`);
+  } catch (error) {
+    if (!(error instanceof InvalidConfigError)) throw error;
+    console.error(`Gemini: ${error.message}`);
+    geminiRemoved = false;
+  }
   if (process.platform === "darwin" && uninstallGeminiLocal()) console.log("Gemini desktop: local service stopped");
   removeExtraSkills();
   if (purge) {
@@ -113,5 +120,5 @@ export async function uninstallCommand(purge: boolean): Promise<number> {
   } else {
     console.log(`Kept your login and settings in ${paths().home}. Use --purge to delete them.`);
   }
-  return 0;
+  return geminiRemoved ? 0 : 1;
 }

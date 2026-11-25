@@ -55,13 +55,19 @@ export async function installGeminiLocal(launch: LaunchCommand): Promise<HttpCon
   const uid = String(os.userInfo().uid);
   const file = localPlistPath();
   const previous = readLocalState();
+  const logs = path.join(homeDir(), "logs");
+  const serviceLaunch = { ...launch, env: { ...launch.env, AMICOOKED_HOME: homeDir() } };
+  const plist = launchAgentPlist(serviceLaunch, path.join(logs, "gemini-local.log"), GEMINI_SERVICE_LABEL);
+  if (previous && fs.existsSync(file) && fs.readFileSync(file, "utf8") === plist) {
+    const connection = localConnection(previous);
+    try { await checkMcp(connection, false, 1000); return connection; }
+    catch { /* Reinstall below if the registered service is not responding. */ }
+  }
   launchctl(["bootout", `gui/${uid}`, file], false);
   const state: LocalState = { version: 1, port: await availableLocalPort(previous?.port), token: previous?.token ?? randomBytes(32).toString("base64url") };
   writePrivateFile(localStatePath(), JSON.stringify(state, null, 2) + "\n");
-  const logs = path.join(homeDir(), "logs");
   fs.mkdirSync(logs, { recursive: true, mode: 0o700 });
-  const serviceLaunch = { ...launch, env: { ...launch.env, AMICOOKED_HOME: homeDir() } };
-  writePrivateFile(file, launchAgentPlist(serviceLaunch, path.join(logs, "gemini-local.log"), GEMINI_SERVICE_LABEL));
+  writePrivateFile(file, plist);
   launchctl(["bootstrap", `gui/${uid}`, file]);
   const connection = localConnection(state);
   for (let attempt = 0; attempt < 30; attempt++) {

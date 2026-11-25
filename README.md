@@ -20,9 +20,9 @@ irm https://amicooked-mcp.vercel.app/install.ps1 | iex
 
 With Node.js 22+: `npx -y amicooked@0 setup`
 
-Setup asks for your school and which AI apps to connect, then opens a browser window for school sign-in. After setup, ask **am I cooked?**
+Run the installer and pick your school and AI app when setup asks. Sign in on your school's page, then follow setup's next step and ask **am I cooked?**
 
-For Gemini, choose it during regular setup. It works with the Mac app and its bundled CLI, or with [Antigravity CLI](https://antigravity.google/docs/cli-getting-started) on Windows. See the [setup guide](skill/references/setup.md) for troubleshooting.
+Gemini works with the Mac app and its bundled CLI, or with [Antigravity CLI](https://antigravity.google/docs/cli-getting-started) on Windows. All supported apps use the same installer. See the [setup guide](skill/references/setup.md) for commands and troubleshooting.
 
 ## What you can ask
 

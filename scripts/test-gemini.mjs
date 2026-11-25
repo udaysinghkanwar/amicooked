@@ -52,8 +52,19 @@ try {
   const file = geminiConfigPath(home);
   writeFileSync(file, "{broken");
   run(["doctor"], 1);
+  const helper = process.platform === "darwin"
+    ? path.join(home, "Applications", "Gemini.app", "Contents", "Helpers", "agy")
+    : path.join(env.LOCALAPPDATA, "agy", "bin", "agy.exe");
+  mkdirSync(path.dirname(helper), { recursive: true });
+  writeFileSync(helper, "");
+  const skill = path.join(home, "other-client", "skills", "amicooked");
+  const setup = run(["setup", "--school", "mcmaster", "--clients", "gemini", "--no-login", "--yes", "--skill-dir", skill], 1);
+  if (process.platform === "darwin" || process.platform === "win32") assert.match(setup, /isn't a valid Gemini config/);
+  assert.equal(existsSync(path.join(skill, "SKILL.md")), true);
+  assert.match(run(["uninstall"], 1), /isn't a valid Gemini config/);
+  assert.equal(existsSync(path.join(skill, "SKILL.md")), false);
   assert.equal(readFileSync(file, "utf8"), "{broken");
-  console.log("Gemini HTTP service, registration/repeat setup, doctor, uninstall and malformed-config acceptance passed.");
+  console.log("Gemini HTTP service, registration, doctor, and setup/uninstall isolation passed.");
 } finally {
   if (service && service.exitCode === null) { service.kill("SIGTERM"); await once(service, "exit"); }
   rmSync(home, { recursive: true, force: true });

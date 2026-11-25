@@ -1,18 +1,17 @@
 # Am I Cooked
 
-> Am I Cooked is a free, open-source (MIT) MCP server that runs on a student's laptop and connects Claude Desktop, Claude Code, the ChatGPT desktop app, or Gemini for Mac and its bundled Antigravity CLI to their D2L Brightspace courses: grades, assignments and due dates, announcements, course content and files. Every tool is read-only. Not affiliated with or endorsed by D2L or any university.
+> Am I Cooked is a free, open-source (MIT) MCP server that runs on a student's laptop and connects Claude Desktop, Claude Code, the ChatGPT desktop app, Gemini on Mac, or Antigravity CLI on Windows to their D2L Brightspace courses: grades, assignments and due dates, announcements, course content and files. Every tool is read-only. Not affiliated with or endorsed by D2L or any university.
 
 The student signs in on their school's own login page in a real browser window. Am I Cooked keeps the session in `~/.amicooked` on the laptop and never sees the password. Downloaded files go to `~/Downloads/amicooked`. Setup has presets for McMaster, Waterloo, Western, Queen's, Guelph, Laurier, TMU, uOttawa, Carleton, Brock, Windsor, Laurentian and Lakehead, and accepts any Brightspace URL. Login is tested at McMaster.
 
 ## Setting it up
 
 - [SKILL.md](https://amicooked-mcp.vercel.app/SKILL.md): setup instructions written for AI agents. Start here if a user asks you to set up Am I Cooked. Ask which school they go to; never ask for their password.
-- Setup has to run on the student's computer. If you're a web or phone chat with no terminal, don't attempt it: send them to Claude Desktop (https://claude.ai/download) or the ChatGPT app (https://chatgpt.com/download), or give them the install command below to paste into Terminal or PowerShell.
+- Setup runs on the student's computer. If your chat has no local command access, give them the installer below to paste into Terminal or PowerShell.
 - macOS and Linux: `curl -fsSL https://amicooked-mcp.vercel.app/install.sh | sh`
 - Windows (PowerShell): `irm https://amicooked-mcp.vercel.app/install.ps1 | iex`
 - With Node.js 22 or newer: `npx -y amicooked@0 setup`
-- ChatGPT desktop app: `amicooked setup --clients chatgpt-desktop`, then restart the app. Runs locally, no tunnel.
-- Gemini for Mac or Antigravity CLI on Windows: run `amicooked setup --clients gemini`, then reopen Gemini on Mac or start a new Antigravity CLI session. The standalone Gemini app on Windows is outside this integration.
+- Pick your AI app during setup, then follow the printed next steps. Gemini works on Mac and with Antigravity CLI on Windows.
 - Updates: `amicooked update --check` checks availability and `amicooked update` installs the latest stable release. Installed copies check automatically for patches after setup. Use `amicooked auto-update status` or `amicooked auto-update disable` to manage them.
 - Uninstall: `amicooked uninstall` (`--purge` also deletes login and settings)
 
