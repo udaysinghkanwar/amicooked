@@ -10,6 +10,7 @@ import { hasClaudeCode, installClaudeCode, installSkill } from "../clients/claud
 import { chatgptSteps, installChatGPT } from "../clients/chatgpt.js";
 import { codexEntryIs, codexSkillPath, hasCodex, installCodex, installCodexSkill } from "../clients/codex.js";
 import { skillBundleIs } from "../clients/skillFiles.js";
+import { refreshSkills } from "../skills.js";
 import { selfCommand } from "../clients/self.js";
 import { client } from "../client.js";
 import { getConfig, writeConfig, type School } from "../config.js";
@@ -32,6 +33,7 @@ export interface SetupOptions {
   clients?: string;
   yes?: boolean;
   login?: boolean;
+  skillDir?: string;
 }
 
 /** Exit code for "the agent needs to ask the student something first". */
@@ -92,6 +94,7 @@ async function chooseSchool(flag: string | undefined): Promise<School> {
 
 async function chooseClients(flag: string | undefined, detected: Record<ClientId, boolean>, yes: boolean): Promise<ClientId[]> {
   if (flag) {
+    if (flag === "none") return [];
     const ids = flag.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean).map((id) => ALIASES[id] ?? id);
     const unknown = ids.filter((id) => !CLIENT_IDS.includes(id as ClientId));
     if (unknown.length) throw new SetupStop(`Unknown app: ${unknown.join(", ")}. Use ${PUBLIC_IDS.join(", ")}.`);
@@ -310,7 +313,16 @@ export async function setup(options: SetupOptions): Promise<number> {
     }
 
     const detected = { desktop: Boolean(claudeDesktopDir()), code: hasClaudeCode(), "chatgpt-desktop": hasCodex(), chatgpt: false };
-    const outcomes = await configureClients(await chooseClients(options.clients, detected, Boolean(options.yes)));
+    const clients = await chooseClients(options.clients, detected, Boolean(options.yes));
+    if (getConfig().uninstalled) writeConfig({ uninstalled: undefined });
+    const outcomes = await configureClients(clients);
+    if (options.skillDir) {
+      const dir = path.resolve(options.skillDir);
+      writeConfig({ skillDirs: [...new Set([...(getConfig().skillDirs ?? []), dir])] });
+      outcomes.push({ app: "Other AI client", next: `skill folder: ${dir}. Configure its MCP server with ${JSON.stringify(selfCommand(["mcp"]))}, then start a new session.`, ready: false, connected: false });
+    }
+    refreshSkills();
+
     // Count the setup only if an app was connected. Started now so it runs alongside the first report
     const reported = outcomes.some((o) => o.connected) ? reportSetup(school.id) : undefined;
 

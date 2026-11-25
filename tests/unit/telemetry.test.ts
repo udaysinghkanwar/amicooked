@@ -3,7 +3,7 @@ import * as os from "os";
 import * as path from "path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PRESETS } from "../../src/schools.js";
-import { REPORT_URL, reportSetup, telemetryOff } from "../../src/telemetry.js";
+import { REPORT_URL, reportSetup, reportUpgrade, telemetryOff } from "../../src/telemetry.js";
 // @ts-expect-error plain JS Vercel function
 import { commandsFor, handle, PLATFORMS, SCHOOLS, TABS } from "../../site/api/e.js";
 
@@ -47,6 +47,22 @@ describe("reportSetup", () => {
     expect(telemetryOff({ DO_NOT_TRACK: "0" })).toBe(false);
   });
 
+  it("sends only upgrade versions, mode, channel and platform without touching the setup marker", async () => {
+    const fetchImpl = ok();
+    const event = { from: "0.1.7", to: "0.1.8", mode: "automatic" as const, channel: "native" as const };
+    expect(await reportUpgrade(event, { env: {}, fetchImpl, platform: "darwin-arm64" })).toBe(true);
+    const [url, init] = fetchImpl.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe(REPORT_URL);
+    expect(JSON.parse(String(init.body))).toEqual({ e: "upgrade", ...event, platform: "darwin-arm64" });
+    expect(fs.existsSync(path.join(home, "setup-reported"))).toBe(false);
+    for (const env of [{ AMICOOKED_NO_TELEMETRY: "1" }, { DO_NOT_TRACK: "1" }]) {
+      expect(await reportUpgrade(event, { env, fetchImpl })).toBe(false);
+    }
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    expect(await reportUpgrade(event, { env: {}, fetchImpl: async () => { throw new Error("offline"); } })).toBe(false);
+    expect(await reportUpgrade(event, { env: {}, fetchImpl: async () => new Response(null, { status: 503 }) })).toBe(false);
+  });
+
   it("stays quiet and retries next time when the request fails", async () => {
     const failing = vi.fn(async () => { throw new Error("offline"); }) as unknown as typeof fetch;
     expect(await reportSetup("mcmaster", { env: {}, fetchImpl: failing })).toBe(false);
@@ -67,6 +83,18 @@ describe("site/api/e.js", () => {
       ["HINCRBY", "setup:platforms", "win32-x64", "1"],
     ]);
     expect(PLATFORMS).toContain("darwin-arm64");
+  });
+
+  it("counts upgrades separately without changing existing setup keys", () => {
+    const event = { e: "upgrade", from: "0.1.7", to: "0.1.8", mode: "automatic", channel: "native", platform: "darwin-arm64" };
+    expect(commandsFor(event, new Date("2026-11-25T12:00:00Z"))).toEqual([
+      ["INCR", "upgrade:total"], ["HINCRBY", "upgrade:days", "2026-11-25", "1"],
+      ["HINCRBY", "upgrade:modes", "automatic", "1"], ["HINCRBY", "upgrade:channels", "native", "1"],
+      ["HINCRBY", "upgrade:platforms", "darwin-arm64", "1"], ["HINCRBY", "upgrade:versions", "0.1.7->0.1.8", "1"],
+    ]);
+    for (const patch of [{ from: "private.example.edu" }, { to: "0.1.7" }, { mode: "check" }, { channel: "other" }, { from: 123 }]) {
+      expect(commandsFor({ ...event, ...patch })).toBeNull();
+    }
   });
 
   it("counts copies per install tab, and opens of the full prompt", () => {
@@ -93,7 +121,7 @@ describe("site/api/e.js", () => {
     expect(commands[3][2]).toBe("other");
   });
 
-  it("rejects anything that isn't a setup event", async () => {
+  it("rejects unsupported events and malformed/oversized requests", async () => {
     expect(commandsFor({ e: "grades" })).toBeNull();
     const env = { KV_REST_API_URL: "https://redis.test", KV_REST_API_TOKEN: "t" };
     const fetchImpl = ok();

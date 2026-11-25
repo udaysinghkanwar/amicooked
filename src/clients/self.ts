@@ -1,3 +1,4 @@
+import { realpathSync } from "fs";
 import * as path from "path";
 
 export interface LaunchCommand {
@@ -6,18 +7,26 @@ export interface LaunchCommand {
   env?: Record<string, string>;
 }
 
-interface Runtime {
+export interface Runtime {
   execPath: string;
   argv: string[];
   platform: NodeJS.Platform;
   isCompiled: boolean;
 }
 
-function currentRuntime(): Runtime {
+export function currentRuntime(): Runtime {
   // Bun-compiled binaries run their bundled script from a virtual /$bunfs (B:/~BUN on Windows) path
   const script = process.argv[1] ?? "";
   const isCompiled = script.includes("$bunfs") || script.includes("~BUN");
   return { execPath: process.execPath, argv: process.argv, platform: process.platform, isCompiled };
+}
+
+/** Source checkouts are managed by Git, not the release updater. */
+export function installationChannel(rt: Runtime = currentRuntime()): "native" | "npm" | null {
+  if (rt.isCompiled) return "native";
+  let script = rt.argv[1] ?? "";
+  try { script = realpathSync(script); } catch { /* Fall back to the supplied path if unavailable. */ }
+  return /[\\/]node_modules[\\/]amicooked[\\/]dist[\\/]cli\.js$/.test(script) ? "npm" : null;
 }
 
 /**

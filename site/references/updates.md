@@ -1,0 +1,16 @@
+# Updates and features
+
+- Run `amicooked features` to list shipped features and their requirements; `amicooked features <id>` reads a guide. These commands do not install optional dependencies or connect accounts.
+- Run `amicooked update --check` to check the latest stable release without changing anything. Run `amicooked update` to install it and refresh installed skills, then summarize its release notes. `--json` is available for both commands. Updating does not repeat school login or setup.
+- App and skill references ship together. Use the release package, not loose files from GitHub main. Existing changed skill files are saved under each skill folder's `.backups/`; keep personal instructions in a separate file. Restart/reload the AI app after updates.
+- Native binaries update from GitHub releases; npm installations use npm. A source checkout uses `git pull --ff-only`, `npm ci` and `npm run build`; the update command explains this rather than modifying a developer's checkout.
+
+## Automatic patch updates
+
+Automatic patch updates are enabled after setup for installed copies. View `amicooked auto-update status --json`, turn them off with `amicooked auto-update disable`, or turn them back on with `amicooked auto-update enable`. Uninstall suspends checks until setup runs again. Setup and reinstall preserve an explicit opt-out.
+
+When an installed MCP server starts, it launches a detached update check at most once per 24 hours, with output redirected to an owner-only local log. It applies stable patch releases within the installed major/minor (for example 0.1.7 to 0.1.8), verifies native checksums and retains the previous executable. New minor/major releases require `amicooked update`. Manual and automatic installers share a lock; failures retry on the next eligible startup. Offline use and course requests remain available. No polling daemon or host scheduling feature is required, and no job runs while the app is unused. Source checkouts remain under Git control.
+
+The skill explains the commands; it does not poll for releases. A weekly host-owned task is unnecessary for this startup check and is not created during setup.
+
+The already running MCP process keeps its loaded version. Restart/reload the AI app to load an installed update. Status reports the last attempt and local log location; the log records release notes, failures and restart instructions. A successful background install is not proof the current session reloaded. Optional feature dependencies and external accounts remain separately enabled.

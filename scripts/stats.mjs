@@ -1,4 +1,4 @@
-// Prints Am I Cooked's numbers: installs, npm downloads, finished setups and repo traffic.
+// Prints Am I Cooked's numbers: installs, npm downloads, finished setups, upgrades and repo traffic.
 //   npm run stats               print a table
 //   npm run stats -- --csv F    also append one line to CSV file F (used by the weekly workflow)
 // Redis credentials come from the environment or .env.local (`vercel env pull .env.local`).
@@ -41,8 +41,8 @@ async function releases() {
   let installs = 0;
   let binaries = 0;
   for (const asset of list.flatMap((r) => r.assets)) {
-    // Both installers fetch SHA256SUMS before the binary, so it counts installer runs. Binaries alone also
-    // count bots that grab every release asset.
+    // Native installers and updaters fetch SHA256SUMS; this is activity, not unique installs.
+    // Binary downloads also include bots that grab every release asset.
     if (asset.name === "SHA256SUMS") installs += asset.download_count;
     else binaries += asset.download_count;
   }
@@ -81,15 +81,19 @@ async function setups() {
       body: JSON.stringify([
         ["GET", "setup:total"], ["HGETALL", "setup:schools"], ["HGETALL", "setup:platforms"],
         ["HGETALL", "copy:tabs"], ["GET", "prompt:opens"],
+        ["GET", "upgrade:total"], ["HGETALL", "upgrade:modes"], ["HGETALL", "upgrade:channels"],
+        ["HGETALL", "upgrade:platforms"], ["HGETALL", "upgrade:versions"],
       ]),
       signal: AbortSignal.timeout(15000),
     });
     if (!res.ok) return null;
-    const [total, schools, platforms, tabs, prompt] = (await res.json()).map((r) => r.result);
+    const [total, schools, platforms, tabs, prompt, upgrades, modes, channels, upgradePlatforms, versions] = (await res.json()).map((r) => r.result);
     const pairs = (flat) =>
       Object.fromEntries((flat ?? []).flatMap((v, i, a) => (i % 2 ? [] : [[v, Number(a[i + 1])]])));
     const copies = pairs(tabs);
     return {
+      upgrades: Number(upgrades ?? 0), upgradeModes: pairs(modes), upgradeChannels: pairs(channels),
+      upgradePlatforms: pairs(upgradePlatforms), upgradeVersions: pairs(versions),
       total: Number(total ?? 0), schools: pairs(schools), platforms: pairs(platforms),
       copies, copyTotal: Object.values(copies).reduce((a, b) => a + b, 0), promptOpens: Number(prompt ?? 0),
     };
@@ -116,7 +120,7 @@ const namedSchools = setup ? Object.keys(setup.schools).filter((s) => s !== "cus
 
 const row = (label, value, note = "") => console.log(`  ${label.padEnd(22)}${show(value).padStart(6)}${note ? `   ${note}` : ""}`);
 console.log(`\nAm I Cooked stats (${today})\n\nInstalls`);
-row("Installer runs", rel?.installs, "SHA256SUMS downloads, from install.sh / install.ps1");
+row("Installer/update runs", rel?.installs, "SHA256SUMS downloads; includes native upgrades, not unique installs");
 row("Binary downloads", rel?.binaries, "includes bots");
 row("npm downloads", npm, "since first publish");
 console.log("\nSite");
@@ -126,6 +130,14 @@ console.log("\nSetups");
 row("Finished setups", setup?.total, "first setup per computer");
 row("Schools", namedSchools, setup && Object.keys(setup.schools).length ? top(setup.schools) : "");
 if (setup && Object.keys(setup.platforms).length) row("Platforms", "", top(setup.platforms));
+console.log("\nUpgrades (anonymous successful version changes)");
+row("Finished upgrades", setup?.upgrades);
+row("Manual / automatic", setup ? `${setup.upgradeModes.manual ?? 0} / ${setup.upgradeModes.automatic ?? 0}` : null);
+if (setup?.upgrades) {
+  row("Channels", "", top(setup.upgradeChannels));
+  row("Platforms", "", top(setup.upgradePlatforms));
+  row("Versions", "", top(setup.upgradeVersions));
+}
 console.log("\nGitHub repo (last 14 days)");
 row("Views", views?.count, views ? `${views.uniques} unique` : "needs a token with push access");
 row("Clones", clones?.count, clones ? `${clones.uniques} unique` : "");
@@ -134,8 +146,8 @@ console.log("\nSite visitors: Vercel dashboard → Analytics\n");
 const csvAt = process.argv.indexOf("--csv");
 if (csvAt !== -1) {
   const file = process.argv[csvAt + 1];
-  const header = "date,installer_runs,binary_downloads,npm_downloads,setups,schools,repo_views_14d,repo_uniques_14d,repo_clones_14d,copies,prompt_opens";
-  const values = [today, rel?.installs, rel?.binaries, npm, setup?.total, namedSchools, views?.count, views?.uniques, clones?.count, setup?.copyTotal, setup?.promptOpens];
+  const header = "date,installer_runs,binary_downloads,npm_downloads,setups,schools,repo_views_14d,repo_uniques_14d,repo_clones_14d,copies,prompt_opens,upgrades,upgrades_manual,upgrades_automatic";
+  const values = [today, rel?.installs, rel?.binaries, npm, setup?.total, namedSchools, views?.count, views?.uniques, clones?.count, setup?.copyTotal, setup?.promptOpens, setup?.upgrades, setup ? setup.upgradeModes.manual ?? 0 : null, setup ? setup.upgradeModes.automatic ?? 0 : null];
   if (!existsSync(file)) appendFileSync(file, `${header}\n`);
   else {
     // New columns go on the end, so older rows just leave them empty
