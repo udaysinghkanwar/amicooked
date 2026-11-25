@@ -5,7 +5,8 @@ import { getConfig, reloadConfig, paths, writeConfig, writePrivateFile } from ".
 import { currentRuntime, installationChannel, type Runtime } from "../clients/self.js";
 import { acquireUpdateLock, updateCommand } from "./update.js";
 
-const DAY = 24 * 60 * 60 * 1000;
+const CHECK_INTERVAL_DAYS = 3;
+const CHECK_INTERVAL_MS = CHECK_INTERVAL_DAYS * 24 * 60 * 60 * 1000;
 const stateFile = () => path.join(paths().home, "automatic-update.json");
 function lastAttempt(): number | undefined {
   try {
@@ -18,7 +19,7 @@ function automaticUpdatesEnabled(config = getConfig(), runtime?: Runtime): boole
 }
 
 export function automaticUpdateStatus() {
-  return { enabled: automaticUpdatesEnabled(), policy: "patch releases within the current major/minor", trigger: "on startup or use, at most once per 24 hours", lastAttempt: lastAttempt(), log: path.join(paths().logs, "automatic-update.log") };
+  return { enabled: automaticUpdatesEnabled(), policy: "patch releases within the current major/minor", trigger: `on startup or use, at most once every ${CHECK_INTERVAL_DAYS} days`, lastAttempt: lastAttempt(), log: path.join(paths().logs, "automatic-update.log") };
 }
 
 /** Best effort only: never delay an MCP handshake or put updater output on protocol stdout. */
@@ -27,7 +28,7 @@ export function maybeStartAutomaticUpdate(deps: { now?: number; runtime?: Runtim
     if (installationChannel(deps.runtime) === null) return false;
     const due = (now: number) => {
       const last = lastAttempt();
-      return last === undefined || now < last || now - last >= DAY;
+      return last === undefined || now < last || now - last >= CHECK_INTERVAL_MS;
     };
     if (!due(deps.now ?? Date.now()) || !automaticUpdatesEnabled(reloadConfig(), deps.runtime)) return false;
     const releaseLock = acquireUpdateLock();
@@ -61,7 +62,7 @@ export async function automaticUpdateCommand(action = "status", json = false): P
   if (action === "enable") {
     if (installationChannel() === null) throw new Error("Automatic updates require an installed npm package or standalone binary. Source checkouts stay under Git control.");
     writeConfig({ automaticUpdates: true });
-    if (!json) console.log("Automatic patch updates enabled. Am I Cooked checks when it starts or is used, at most once daily. See auto-update status for the last check and local log.");
+    if (!json) console.log(`Automatic patch updates enabled. Am I Cooked checks when it starts or is used, at most once every ${CHECK_INTERVAL_DAYS} days. See auto-update status for the last check and local log.`);
   } else if (action === "disable") {
     writeConfig({ automaticUpdates: false });
     if (!json) console.log("Automatic updates disabled. An update already installing may finish.");

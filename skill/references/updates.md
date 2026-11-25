@@ -10,7 +10,7 @@
 
 Automatic patch updates are enabled after setup for installed copies. View `amicooked auto-update status --json`, turn them off with `amicooked auto-update disable`, or turn them back on with `amicooked auto-update enable`. Uninstall suspends checks until setup runs again. Setup and reinstall preserve an explicit opt-out.
 
-An installed app can check in the background on MCP startup or when an Am I Cooked tool is used, at most once per 24 hours across both paths. For a workflow using only local files, the skill can ask the installed CLI to run `amicooked auto-update check-if-due` (use the `npx -y amicooked@0` prefix if setup used npx). The CLI honors the same preference and interval, so the skill does not need to track dates.
+An installed app can check in the background on MCP startup or when an Am I Cooked tool is used, at most once per 72 hours across both paths. For a workflow using only local files, the skill can ask the installed CLI to run `amicooked auto-update check-if-due` (use the `npx -y amicooked@0` prefix if setup used npx). The CLI honors the same preference and interval, so the skill does not need to track dates.
 
 The updater applies stable patches within the installed major/minor (for example 0.1.7 to 0.1.8), verifies native checksums and retains the previous executable. Use `amicooked update` for a manual upgrade. Checks are detached, log locally, and need no scheduler. Offline use remains available. Source checkouts stay under Git control.
 

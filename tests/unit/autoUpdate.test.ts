@@ -16,18 +16,24 @@ beforeEach(() => {
 afterEach(()=>{vi.restoreAllMocks();vi.unstubAllEnvs();reloadConfig();fs.rmSync(root,{recursive:true,force:true});});
 const school = { id: "mcmaster", name: "McMaster", lmsName: "Avenue", host: "avenue.cllmcmaster.ca" };
 
-it("starts detached by default after setup, at most once daily",()=>{
- const launch=vi.fn();
- expect(maybeStartAutomaticUpdate({runtime,launch,now:1})).toBe(false);
- expect(fs.readdirSync(root)).toEqual([]);
- writeConfig({school});
- expect(maybeStartAutomaticUpdate({runtime,launch,now:100})).toBe(true);
- expect(launch.mock.calls[0].slice(0,2)).toEqual([runtime.execPath,["auto-update","run"]]);
- expect(maybeStartAutomaticUpdate({runtime,launch,now:101})).toBe(false);
- expect(maybeStartAutomaticUpdate({runtime,launch,now:100+86400000})).toBe(true);
- expect(console.log).not.toHaveBeenCalled();
- writeConfig({automaticUpdates:false});
- expect(maybeStartAutomaticUpdate({runtime,launch,now:200000000})).toBe(false);
+it("starts detached by default after setup, at most once every three days", () => {
+  const launch = vi.fn();
+  const firstAttempt = 100;
+  const threeDays = 72 * 60 * 60 * 1000;
+  const requestCheck = (now: number) => maybeStartAutomaticUpdate({ runtime, launch, now });
+
+  expect(requestCheck(1)).toBe(false);
+  expect(fs.readdirSync(root)).toEqual([]);
+  writeConfig({ school });
+  expect(requestCheck(firstAttempt)).toBe(true);
+  expect(launch.mock.calls[0].slice(0, 2)).toEqual([runtime.execPath, ["auto-update", "run"]]);
+  expect(requestCheck(firstAttempt + threeDays - 1)).toBe(false);
+  expect(requestCheck(firstAttempt + threeDays)).toBe(true);
+  expect(launch).toHaveBeenCalledTimes(2);
+  expect(console.log).not.toHaveBeenCalled();
+
+  writeConfig({ automaticUpdates: false });
+  expect(requestCheck(firstAttempt + 2 * threeDays)).toBe(false);
 });
 
 it("suspends checks after uninstall", () => {
