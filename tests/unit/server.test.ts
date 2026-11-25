@@ -1,10 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { readFileSync } from "fs";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { createServer } from "../../src/server.js";
 import { VERSION } from "../../src/version.js";
 import { serverInstructions } from "../../src/instructions.js";
+import * as updater from "../../src/cli/autoUpdate.js";
 
 async function connect() {
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
@@ -32,6 +33,20 @@ describe("server", () => {
     expect(guide.isError).not.toBe(true);
     expect(JSON.stringify(guide.content)).toContain("Automatic patch updates");
     await client.close();
+  });
+
+  it("requests a background update check on an existing connection without delaying a tool result", async () => {
+    const check = vi.spyOn(updater, "maybeStartAutomaticUpdate").mockReturnValue(false);
+    const client = await connect();
+    try {
+      expect(check).not.toHaveBeenCalled();
+      const result = await client.callTool({ name: "get_feature_guide", arguments: {} });
+      expect(result.isError).not.toBe(true);
+      expect(check).toHaveBeenCalledOnce();
+    } finally {
+      check.mockRestore();
+      await client.close();
+    }
   });
 
   it("returns tool errors as results the AI can relay", async () => {

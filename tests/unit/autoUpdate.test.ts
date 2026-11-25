@@ -36,6 +36,13 @@ it("suspends checks after uninstall", () => {
  expect(maybeStartAutomaticUpdate({runtime, launch})).toBe(false);
  expect(launch).not.toHaveBeenCalled();
 });
+
+it("lets skill-only callers ask for a check without updating a source checkout", async () => {
+  writeConfig({ school });
+  expect(await automaticUpdateCommand("check-if-due", true)).toBe(0);
+  expect(console.log).toHaveBeenCalledWith('{"started":false}');
+  expect(automaticUpdateStatus().lastAttempt).toBeUndefined();
+});
 it("does not repeatedly retry a failed launch or break an MCP session",()=>{
  writeConfig({school});const launch=vi.fn(()=>{throw Error("offline");});
  expect(maybeStartAutomaticUpdate({runtime,launch,now:10})).toBe(false);

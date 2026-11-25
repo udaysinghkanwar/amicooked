@@ -8,6 +8,7 @@ import { downloadFileTool, readFileTool } from "./tools/files.js";
 import type { Tool } from "./tools/types.js";
 import { VERSION } from "./version.js";
 import { getFeatureGuide } from "./features.js";
+import { maybeStartAutomaticUpdate } from "./cli/autoUpdate.js";
 
 export const TOOLS: Tool[] = [
   amICookedTool,
@@ -30,6 +31,7 @@ export function createServer(options: { instructions?: string } = {}): McpServer
       tool.name,
       { description: tool.description, inputSchema: tool.schema, annotations: { readOnlyHint: true, openWorldHint: false } },
       async (args: unknown) => {
+        maybeStartAutomaticUpdate();
         const started = Date.now();
         try {
           const text = await tool.handler(args ?? {});

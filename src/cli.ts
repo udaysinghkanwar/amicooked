@@ -27,7 +27,7 @@ Usage: amicooked <command>
   login        Sign in to your school again
   status       Show what's set up (--json for machines)
   update       Update the app and installed skills (--check to only check; --json)
-  auto-update  Manage automatic patch updates: enable|disable|status
+  auto-update  Manage automatic patch updates: enable|disable|status|check-if-due
   features     List available features; features <id> reads a guide (--json)
   uninstall    Disconnect your AI apps (--purge also deletes your login and settings)
   mcp          Run the MCP server over stdio (AI apps run this for you)
