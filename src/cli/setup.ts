@@ -375,7 +375,7 @@ export async function setup(options: SetupOptions): Promise<number> {
     if (steps) p.note(steps, "Next");
     p.outro(outro);
     await reported;
-    if (!outcomes.some(outcome => outcome.failed)) await prepareVideoIfEnabled();
+    await prepareVideoIfEnabled();
     return outcomes.some((o) => o.failed) ? 1 : 0;
   } catch (error) {
     const code = error instanceof SetupStop ? error.code : 1;

@@ -24,7 +24,7 @@ Check the local tools with `amicooked video status`. If setup was run through np
 Create a fresh project in the student's chosen directory, preferably `<course>/Study Videos/<topic>/`, and read the renderer's composition rules:
 
 ```sh
-amicooked video run hyperframes -- init "lesson" --non-interactive
+amicooked video run hyperframes -- init "lesson" --non-interactive --skip-skills
 cd "lesson"
 amicooked video run hyperframes -- docs compositions
 ```

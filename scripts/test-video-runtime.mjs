@@ -56,11 +56,10 @@ try {
     if (channel === "native") {
       command = path.join(data, "bin", windows ? "amicooked.exe" : "amicooked");
       const installEnv = { ...env, AMICOOKED_DOWNLOAD_BASE: `http://127.0.0.1:${port}`, AMICOOKED_NO_SETUP: "1", AMICOOKED_NO_PATH: "1" };
-      const installer = windows ? "pwsh" : "sh";
-      const installerArgs = windows
-        ? ["-NoProfile", "-NonInteractive", "-File", path.resolve("install/install.ps1")]
-        : [path.resolve("install/install.sh")];
-      execFileSync(installer, installerArgs, { env: installEnv, stdio: "inherit" });
+      const [installer, ...args] = windows
+        ? ["pwsh", "-NoProfile", "-NonInteractive", "-File", path.resolve("install/install.ps1")]
+        : ["sh", path.resolve("install/install.sh")];
+      execFileSync(installer, args, { env: installEnv, stdio: "inherit" });
       prefix = [];
     } else {
       assert(npmScript, "Run this workflow through npm so the isolated package can be installed");
@@ -98,6 +97,8 @@ try {
       });
       assert.equal(readFileSync(marker, "utf8"), first);
     }
+    cli("video", "run", "hyperframes", "--", "init", "scaffold", "--non-interactive", "--skip-skills");
+    assert(existsSync(path.join(project, "scaffold", "index.html")));
     writeFileSync(path.join(project, "narration.txt"), "A place in a Petri net can hold a token.");
     cli("video", "run", "voice", "--", "narration.txt", "voice.wav");
     const duration = Number(cli("video", "run", "ffprobe", "--", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", "voice.wav"));
