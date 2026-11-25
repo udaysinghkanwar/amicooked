@@ -2,6 +2,7 @@
 
 - Run `amicooked features` to list shipped features and their requirements; `amicooked features <id>` reads a guide. These commands do not install optional dependencies or connect accounts.
 - Run `amicooked update --check` to check the latest stable release without changing anything. Run `amicooked update` to install it and refresh installed skills, then summarize its release notes. `--json` is available for both commands. Updating does not repeat school login or setup.
+- If you set up Am I Cooked with `npx`, use `npx -y amicooked@0 update` instead. Use `amicooked update` for the regular installer or a global npm install.
 - App and skill references ship together. Use the release package, not loose files from GitHub main. Existing changed skill files are saved under each skill folder's `.backups/`; keep personal instructions in a separate file. Restart/reload the AI app after updates.
 - Native binaries update from GitHub releases; npm installations use npm. A source checkout uses `git pull --ff-only`, `npm ci` and `npm run build`; the update command explains this rather than modifying a developer's checkout.
 
