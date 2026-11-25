@@ -1,3 +1,4 @@
+import { chooseVideoPreparation, prepareVideoSafely } from "../video/command.js";
 import * as p from "@clack/prompts";
 import * as fs from "fs";
 import * as path from "path";
@@ -37,6 +38,7 @@ export interface SetupOptions {
   yes?: boolean;
   login?: boolean;
   skillDir?: string;
+  withVideo?: boolean;
 }
 
 /** Exit code for "the agent needs to ask the student something first". */
@@ -374,6 +376,7 @@ export async function setup(options: SetupOptions): Promise<number> {
     if (steps) p.note(steps, "Next");
     p.outro(outro);
     await reported;
+    if (await chooseVideoPreparation({ requested: options.withVideo, prompt: !options.yes })) await prepareVideoSafely();
     return outcomes.some((o) => o.failed) ? 1 : 0;
   } catch (error) {
     const code = error instanceof SetupStop ? error.code : 1;

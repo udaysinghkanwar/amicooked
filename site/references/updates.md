@@ -6,6 +6,8 @@
 - App and skill references ship together. Use the release package, not loose files from GitHub main. Existing changed skill files are saved under each skill folder's `.backups/`; keep personal instructions in a separate file. Restart/reload the AI app after updates.
 - Native binaries update from GitHub releases; npm installations use npm. A source checkout uses `git pull --ff-only`, `npm ci` and `npm run build`; the update command explains this rather than modifying a developer's checkout.
 
+Interactive `amicooked update` offers to prepare the lecture-video tools when needed, even if the app is already current. If running an update non-interactively for the student, ask first and add `--with-video-deps` only if they opt in. Background updates refresh the app and its guides without downloading video tools. A later video request can prepare them on demand. Existing components are reused, and a previous compatible video runtime remains usable if preparation fails.
+
 ## Automatic patch updates
 
 Automatic patch updates are enabled after setup for installed copies. View `amicooked auto-update status --json`, turn them off with `amicooked auto-update disable`, or turn them back on with `amicooked auto-update enable`. Uninstall suspends checks until setup runs again. Setup and reinstall preserve an explicit opt-out.
@@ -14,4 +16,4 @@ An installed app can check in the background on MCP startup or when an Am I Cook
 
 The updater applies stable patches within the installed major/minor (for example 0.1.7 to 0.1.8), verifies native checksums and retains the previous executable. Use `amicooked update` for a manual upgrade. Checks are detached, log locally, and need no scheduler. Offline use remains available. Source checkouts stay under Git control.
 
-The already running MCP process keeps its loaded version. Restart the Am I Cooked server to load an installed update. For an AI app that launches its own server, this means reloading the app or starting a new session. Status reports the last attempt and local log location; the log records release notes, failures and restart instructions. A successful background install is not proof the current session reloaded. Optional feature dependencies and external accounts remain separately enabled.
+The already running MCP process keeps its loaded version. Restart the Am I Cooked server to load an installed update. For an AI app that launches its own server, this means reloading the app or starting a new session. Status reports the last attempt and local log location; the log records release notes, failures and restart instructions. A successful background install is not proof the current session reloaded. External accounts are connected separately.

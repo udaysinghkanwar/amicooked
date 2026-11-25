@@ -83,6 +83,10 @@ Your settings and login live in `~/.amicooked`; downloaded files go to `~/Downlo
 
 The first time setup finishes on a computer, it sends one anonymous count: your school's preset name (or "custom") and your OS. Successful manual/automatic version upgrades send an anonymous count with the old/new versions, update mode, native/npm channel and OS/architecture. Checks, unchanged versions and failures do not count. Nothing from Brightspace, no IP or installation ID is stored. Set `AMICOOKED_NO_TELEMETRY=1` or `DO_NOT_TRACK=1` to turn it off.
 
+## Lecture videos
+
+Setup and manual updates offer to install the local lecture-video tools. You can skip the download and ask your AI to make a lecture video later. It can prepare the tools when needed. The one-time setup needs internet access and roughly 1–2 GB of disk space. Run `amicooked video prepare` to install the tools directly. Use the `npx -y amicooked@0` prefix if you installed through npx.
+
 ## Updates
 
 Run `amicooked update` to install the latest stable release and refresh the full skill folder. Use `amicooked update --check` to check first. Both commands support `--json`. The updater uses GitHub release binaries or npm to match your installation, keeps your school login and settings, and reports release notes and any restart needed. Changed skill files are saved under that skill folder's `.backups/`; put personal instructions in a separate file so they stay in place.
