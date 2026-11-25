@@ -1,16 +1,19 @@
 import { spawnSync } from "node:child_process";
+import { styleText } from "node:util";
 import path from "node:path";
+import { log } from "@clack/prompts";
 import { getConfig } from "../config.js";
 import { getVideoTools, prepareVideo, videoEnvironment, videoStatus } from "./runtime.js";
 
-export async function prepareVideoSafely(force = false) {
+export async function prepareVideoSafely({ force = false, humanOutput = false } = {}) {
   const config = getConfig();
   if (!force && (!config.school || config.uninstalled || config.prepareVideo === false)) return;
   const { state } = videoStatus();
   if (state === "ready" || state === "unsupported") return;
   try {
-    await prepareVideo();
-    console.error("Lecture video tools are ready.");
+    await prepareVideo(humanOutput ? console.log : console.error);
+    if (humanOutput) log.success(styleText("green", "Lecture video tools are ready."));
+    else console.error("Lecture video tools are ready.");
   } catch (error) {
     console.error(`Lecture video setup could not finish: ${error instanceof Error ? error.message : String(error)}\nRun amicooked video prepare to retry.`);
   }

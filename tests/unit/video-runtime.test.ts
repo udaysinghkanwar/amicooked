@@ -13,6 +13,8 @@ let home: string;
 beforeEach(() => {
   home = fs.mkdtempSync(path.join(os.tmpdir(), "amicooked-video-"));
   vi.stubEnv("AMICOOKED_HOME", home);
+  vi.stubEnv("HOME", home);
+  vi.stubEnv("USERPROFILE", home);
   reloadConfig();
 });
 afterEach(() => {

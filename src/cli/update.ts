@@ -176,7 +176,7 @@ export async function updateCommand(options: { check?: boolean; json?: boolean; 
       runtime, arch: deps.arch ?? process.arch, fetch: fetcher, run: deps.run ?? execute, withVideo: options.withVideo,
     });
     const skills = !options.check && !available ? refreshSkills() : [];
-    if (!options.check && !available) await prepareVideoSafely(options.withVideo);
+    if (!options.check && !available) await prepareVideoSafely({ force: options.withVideo, humanOutput: !options.json });
     const skillsChanged = skills.some(result => !result.endsWith(": unchanged"));
     const result = {
       previousVersion,

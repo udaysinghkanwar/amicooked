@@ -95,7 +95,7 @@ async function main(argv: string[]): Promise<number> {
     case "refresh-skills": {
       // Run in the new release after an update so both the guides and managed tools use its versions.
       const skills = refreshSkills();
-      await prepareVideoSafely(values["with-video-deps"]);
+      await prepareVideoSafely({ force: values["with-video-deps"] });
       console.log(JSON.stringify(skills));
       return 0;
     }

@@ -82,10 +82,10 @@ try {
       cli("refresh-skills");
       assert.equal(existsSync(path.join(data, "video")), false);
       assert.match(cli("features", "lecture-videos"), /run `amicooked video prepare` yourself/);
-      cli(...setup, "--with-video-deps");
-    } else {
-      cli(...setup);
     }
+    const output = channel === "npm" ? cli(...setup, "--with-video-deps") : cli(...setup);
+    assert.match(output, /Testing a narrated video render/);
+    assert.match(output, /Lecture video tools are ready/);
     assert.equal(JSON.parse(cli("video", "status")).state, "ready");
     for (const tool of ["ffmpeg", "ffprobe"]) {
       assert.match(cli("video", "run", tool, "--", "-version"), new RegExp(`^${tool} version 9[.]1(?:\\D|$)`));
