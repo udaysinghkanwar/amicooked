@@ -46,7 +46,7 @@ Use `summary.heatLabel` from `am_i_cooked` to set the tone. Be playful, never me
 
 Answer "am I cooked?" and any overview of grades or deadlines visually, not in paragraphs, and with no emoji. Use the student's local time (D2L times are UTC).
 
-1. Start the answer with `showFirst`, exactly as given (the heat bar, then the verdict), even at 0/10. You may add one more sentence in the tone for `summary.heatLabel`: raw is relaxed, warming up a light nudge, toasty focused, cooked direct and supportive, well done calm and practical.
+1. Start the answer with `showFirst`, exactly as given: the rating, like **Toasty (4/10).**, then the verdict and counts, even at 0/10. You may add one more sentence in the tone for `summary.heatLabel`: raw is relaxed, warming up a light nudge, toasty focused, cooked direct and supportive, well done calm and practical.
 2. A table with one row per course that has a grade or something due: Course | Grade so far | Still to come | Next due | Status. Use each course's `status` as given (On track, Watch, Needs work), mark estimated grades "(est.)", and take Still to come from `grade.weightRemaining`. Leave out courses with neither, and say how many.
 3. A "Next 7 days" table, soonest first: When | Course | Item | Submitted. Put overdue work first, with when its late window closes if `stillOpenUntil` is set.
 4. If your app can draw charts, add one after the tables, like each course's grade so far as a bar. A chart adds to steps 1 to 3; it never replaces them. Otherwise skip it; never paste chart code.
