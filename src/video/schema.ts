@@ -118,7 +118,7 @@ export const lessonSchema = z
         language: text.default("en-us"),
       })
       .strict()
-      .default({}),
+      .default({ voice: "am_michael", speed: 1, language: "en-us" }),
     scenes: z
       .array(
         z
