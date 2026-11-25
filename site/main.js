@@ -70,7 +70,7 @@ updateToggle.addEventListener("click", event => {
   document.getElementById("command-title").textContent = showingUpdates ? "Update" : "Install";
   document.getElementById("update-question").hidden = showingUpdates;
   document.getElementById("update-help").hidden = !showingUpdates;
-  updateToggle.textContent = showingUpdates ? "View setup commands instead" : "View update commands instead";
+  updateToggle.textContent = showingUpdates ? "View setup commands" : "View update commands";
   live.textContent = showingUpdates ? "Update commands shown" : "Setup commands shown";
 });
 
