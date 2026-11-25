@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 import "./validationRuntime.js";
+import { serveGeminiLocal } from "./clients/geminiLocal.js";
 import { parseArgs } from "util";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { loginCommand, pairCommand, statusCommand, uninstallCommand } from "./cli/manage.js";
 import { finishAfterQuit } from "./cli/afterQuit.js";
 import { serveCommand } from "./cli/serve.js";
+import { doctorCommand } from "./cli/doctor.js";
 import { setup } from "./cli/setup.js";
 import { serverInstructions } from "./instructions.js";
 import { createServer } from "./server.js";
@@ -20,12 +22,13 @@ Usage: amicooked <command>
 
   setup        Pick your school, sign in, and connect your AI apps
                --school <id|url>       e.g. mcmaster, or the URL you log in through
-               --clients <list>        desktop,code,chatgpt-desktop
+               --clients <list>        desktop,code,chatgpt-desktop,gemini
                --yes                   accept the detected apps without asking
                --skill-dir <folder>    install full skill for another local AI client
                --clients none          skip automatic client configuration
   login        Sign in to your school again
   status       Show what's set up (--json for machines)
+  doctor       Test the Gemini connection (--live for school access)
   update       Update the app and installed skills (--check to only check; --json)
   auto-update  Manage automatic patch updates: enable|disable|status|check-if-due
   features     List available features; features <id> reads a guide (--json)
@@ -53,6 +56,7 @@ async function main(argv: string[]): Promise<number> {
       yes: { type: "boolean", short: "y" },
       "no-login": { type: "boolean" },
       json: { type: "boolean" },
+      live: { type: "boolean" },
       purge: { type: "boolean" },
       quick: { type: "boolean" },
       local: { type: "boolean" },
@@ -69,6 +73,8 @@ async function main(argv: string[]): Promise<number> {
   if (values.help || command === "help") return console.log(HELP), 0;
 
   switch (command) {
+    case "gemini-serve":
+      return serveGeminiLocal();
     case "mcp":
       return runMcp();
     case "setup":
@@ -90,6 +96,8 @@ async function main(argv: string[]): Promise<number> {
     case "serve":
       // --quick (a throwaway trycloudflare URL) and --local are for development
       return serveCommand({ quick: values.quick, local: values.local, port: values.port ? Number(values.port) : undefined });
+    case "doctor":
+      return doctorCommand(Boolean(values.live));
     case "status":
       return statusCommand(Boolean(values.json));
     case "finish-after-quit":

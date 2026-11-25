@@ -1,6 +1,6 @@
 # Am I Cooked
 
-Ask your AI if you're cooked. Am I Cooked connects Claude and ChatGPT to your D2L Brightspace courses (Avenue to Learn, LEARN, onQ, OWL Brightspace, CourseLink and others) so they can read your grades, deadlines, announcements and course files, and tell you straight.
+Ask your AI if you're cooked. Am I Cooked connects Claude, ChatGPT and Gemini to your D2L Brightspace courses (Avenue to Learn, LEARN, onQ, OWL Brightspace, CourseLink and others) so they can read your grades, deadlines, announcements and course files, and tell you straight.
 
 It runs on your own computer. You sign in to your school in a normal browser window; your password never touches anything else.
 
@@ -20,7 +20,9 @@ irm https://amicooked-mcp.vercel.app/install.ps1 | iex
 
 With Node.js 22+: `npx -y amicooked@0 setup`
 
-Setup asks for your school, opens a browser window to sign in, and connects the AI apps you use. Then ask: **am I cooked?**
+Run the installer and pick your school and AI app when setup asks. Sign in on your school's page, then follow setup's next step and ask **am I cooked?**
+
+Gemini works with the Mac app and its bundled CLI, or with [Antigravity CLI](https://antigravity.google/docs/cli-getting-started) on Windows. All supported apps use the same installer. See the [setup guide](skill/references/setup.md) for commands and troubleshooting.
 
 ## What you can ask
 
@@ -71,6 +73,7 @@ ChatGPT on the web and on phones can't start programs on your computer, so they 
 amicooked setup      pick your school, sign in, connect apps
 amicooked login      sign in again
 amicooked status     what's set up
+amicooked doctor     verify the Gemini connection (--live checks school access)
 amicooked update     update app and skills (--check to only check)
 amicooked features   list features; add an id to read a guide
 amicooked uninstall  disconnect apps (--purge deletes your login and settings)

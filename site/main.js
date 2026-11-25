@@ -5,6 +5,14 @@ document.querySelectorAll("[data-domain]").forEach((el) => { el.textContent = DO
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const live = document.getElementById("live");
 
+// Vercel endpoints are available when the page is served, not when opened from disk.
+const hosted = location.protocol === "https:" || location.protocol === "http:";
+if (hosted) {
+  const analytics = document.createElement("script");
+  analytics.src = "/_vercel/insights/script.js";
+  document.head.append(analytics);
+}
+
 // ---- OS tabs, auto-selected from the visitor's computer ----
 
 const osTabs = [...document.querySelectorAll('.segmented [role="tab"]')];
@@ -45,6 +53,7 @@ async function copy(text) {
 }
 // Anonymous click counts (see site/api/e.js): no cookies, nothing about the visitor
 function count(event) {
+  if (!hosted) return;
   try { navigator.sendBeacon?.("/api/e", JSON.stringify(event)); } catch {}
 }
 const COPY_TABS = { "cmd-mac": "mac", "cmd-win": "win", "cmd-npm": "npm", "agent-prompt": "agent" };
