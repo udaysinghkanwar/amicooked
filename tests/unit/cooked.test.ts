@@ -163,6 +163,12 @@ describe("presentation", () => {
     expect(heatBar(12, "well done")).toBe("Heat ██████████ 10/10 · well done");
   });
 
+  it("writes the opening the answer starts with", async () => {
+    const { opening } = await import("../../src/tools/cooked.js");
+    expect(opening(0, "raw", 0, 1, 7)).toBe("`Heat ░░░░░░░░░░ 0/10 · raw`\n\n**Not cooked.** Nothing overdue, 1 due in the next 7 days.");
+    expect(opening(7, "cooked", 2, 0, 7)).toBe("`Heat ███████░░░ 7/10 · cooked`\n\n**Cooked, but fixable.** 2 overdue, nothing due in the next 7 days.");
+  });
+
   it("gives each course one status word", async () => {
     const { courseStatus } = await import("../../src/tools/cooked.js");
     expect(courseStatus(["overdue_work"])).toBe("Needs work");
