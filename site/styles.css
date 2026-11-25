@@ -1,6 +1,6 @@
 @font-face {
   font-family: "Archivo";
-  src: url("/fonts/archivo-expanded-black-latin.woff2") format("woff2");
+  src: url("./fonts/archivo-expanded-black-latin.woff2") format("woff2");
   font-weight: 900;
   font-stretch: 125%;
   font-style: normal;
@@ -8,16 +8,16 @@
 }
 @font-face {
   font-family: "Bricolage Grotesque";
-  src: url("/fonts/bricolage-grotesque-latin-opsz.woff2") format("woff2-variations"),
-       url("/fonts/bricolage-grotesque-latin-opsz.woff2") format("woff2");
+  src: url("./fonts/bricolage-grotesque-latin-opsz.woff2") format("woff2-variations"),
+       url("./fonts/bricolage-grotesque-latin-opsz.woff2") format("woff2");
   font-weight: 200 800;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: "JetBrains Mono";
-  src: url("/fonts/jetbrains-mono-latin-wght.woff2") format("woff2-variations"),
-       url("/fonts/jetbrains-mono-latin-wght.woff2") format("woff2");
+  src: url("./fonts/jetbrains-mono-latin-wght.woff2") format("woff2-variations"),
+       url("./fonts/jetbrains-mono-latin-wght.woff2") format("woff2");
   font-weight: 100 800;
   font-style: normal;
   font-display: swap;
