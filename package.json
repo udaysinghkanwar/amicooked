@@ -16,14 +16,15 @@
   "scripts": {
     "sync:skill": "node scripts/sync-skill.mjs",
     "build": "node scripts/sync-skill.mjs && node scripts/build-video-assets.mjs && node scripts/clean-dist.mjs && tsc",
-    "test": "vitest run",
+    "test": "vitest run && npm run test:video:native",
     "test:watch": "vitest",
     "prepack": "npm run build",
     "build:bin": "node scripts/sync-skill.mjs && node scripts/build-video-assets.mjs && node scripts/build-binaries.mjs",
     "preversion": "npm test",
     "version": "node scripts/sync-version.mjs && git add src/version.ts",
     "pretest": "npm run build",
-    "stats": "node --env-file-if-exists=.env.local scripts/stats.mjs"
+    "stats": "node --env-file-if-exists=.env.local scripts/stats.mjs",
+    "test:video:native": "node scripts/test-video-runtime.mjs"
   },
   "keywords": [
     "mcp",
