@@ -1,6 +1,6 @@
 import * as fs from "node:fs";
 import path from "node:path";
-import { getConfig, paths, writePrivateFile } from "../config.js";
+import { paths, writePrivateFile } from "../config.js";
 import { acquireLock } from "../lock.js";
 import { download, fingerprint, installComponent, runTool, unpack } from "./install.js";
 import { platformDownloads, targets, voiceModel, type VideoTarget } from "./manifest.js";
@@ -53,7 +53,7 @@ export function videoStatus() {
   const record = loadReady();
   const state = !target ? "unsupported"
     : record ? (record.identity === identity ? "ready" : "previous")
-    : getConfig().prepareVideo === false ? "skipped" : "missing";
+    : "missing";
   return { state, target: targetName };
 }
 
@@ -158,17 +158,6 @@ export async function prepareVideo(log: (message: string) => void = console.erro
     return videoStatus();
   } finally {
     release();
-  }
-}
-
-export async function prepareVideoIfEnabled() {
-  const config = getConfig();
-  if (!config.school || config.uninstalled || config.prepareVideo === false || process.env.AMICOOKED_SKIP_VIDEO_DEPS === "1" || !target || videoStatus().state === "ready") return;
-  try {
-    await prepareVideo();
-    console.error("Lecture video tools are ready.");
-  } catch (error) {
-    console.error(`Lecture video setup could not finish: ${error instanceof Error ? error.message : String(error)}\nRun amicooked video prepare to retry.`);
   }
 }
 

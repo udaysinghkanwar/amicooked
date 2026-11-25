@@ -85,7 +85,7 @@ The first time setup finishes on a computer, it sends one anonymous count: your 
 
 ## Lecture videos
 
-Setup downloads and tests managed, local rendering and narration tools on supported Mac, Windows and Linux installs. The first setup needs internet access and roughly 1–2 GB of disk space. Run `amicooked video status` to check readiness, `amicooked video prepare` to retry, or use `amicooked setup --skip-video-deps` to opt out of automatic preparation. Use the `npx -y amicooked@0` prefix if you installed through npx.
+Setup and manual updates offer to install the local lecture-video tools. You can skip the download and ask your AI to make a lecture video later. It can prepare the tools when needed. The one-time setup needs internet access and roughly 1–2 GB of disk space. Run `amicooked video prepare` to install the tools directly. Use the `npx -y amicooked@0` prefix if you installed through npx.
 
 ## Updates
 

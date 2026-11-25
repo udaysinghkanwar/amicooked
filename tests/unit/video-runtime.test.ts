@@ -4,10 +4,10 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { updateCommand } from "../../src/cli/update.js";
-import { reloadConfig, writeConfig } from "../../src/config.js";
+import { reloadConfig } from "../../src/config.js";
 import { acquireLock } from "../../src/lock.js";
 import { download, installComponent } from "../../src/video/install.js";
-import { getVideoTools, prepareVideo, prepareVideoIfEnabled, videoStatus } from "../../src/video/runtime.js";
+import { getVideoTools, prepareVideo, videoStatus } from "../../src/video/runtime.js";
 
 let home: string;
 beforeEach(() => {
@@ -70,12 +70,7 @@ it("keeps the previously verified tools usable after a failed replacement", asyn
   expect(getVideoTools()).toEqual(tools);
 });
 
-it("respects opt-out and rejects concurrent preparation", async () => {
-  writeConfig({ prepareVideo: false, school: { id: "test", name: "Test", lmsName: "D2L", host: "test.invalid" } });
-  const fetcher = vi.fn();
-  vi.stubGlobal("fetch", fetcher);
-  await prepareVideoIfEnabled();
-  expect(fetcher).not.toHaveBeenCalled();
+it("rejects concurrent preparation", async () => {
   if (videoStatus().state === "unsupported") return;
   const release = acquireLock(path.join(home, "video", "prepare.lock"), "video setup");
   try {
@@ -83,18 +78,20 @@ it("respects opt-out and rejects concurrent preparation", async () => {
   } finally { release(); }
 });
 
-it("retries missing tools on a regular eligible update check", async () => {
+it("prepares video tools only for a manual update with consent", async () => {
   if (videoStatus().state === "unsupported") return;
-  writeConfig({ school: { id: "test", name: "Test", lmsName: "D2L", host: "test.invalid" } });
   const downloads = vi.fn().mockRejectedValue(new Error("offline"));
   vi.stubGlobal("fetch", downloads);
   const release = async () => new Response(JSON.stringify({ tag_name: "v1.0.0" }));
   const output = vi.spyOn(console, "log").mockImplementation(() => {});
   const errors = vi.spyOn(console, "error").mockImplementation(() => {});
   try {
-    expect(await updateCommand({ check: true, json: true }, { fetch: release, version: "1.0.0" })).toBe(0);
+    expect(await updateCommand({ check: true, json: true, withVideo: true }, { fetch: release, version: "1.0.0" })).toBe(0);
     expect(downloads).not.toHaveBeenCalled();
-    expect(await updateCommand({ compatibleOnly: true, json: true }, { fetch: release, version: "1.0.0" })).toBe(0);
+    expect(await updateCommand({ compatibleOnly: true, json: true, withVideo: true }, { fetch: release, version: "1.0.0" })).toBe(0);
+    expect(await updateCommand({ json: true }, { fetch: release, version: "1.0.0" })).toBe(0);
+    expect(downloads).not.toHaveBeenCalled();
+    expect(await updateCommand({ json: true, withVideo: true }, { fetch: release, version: "1.0.0" })).toBe(0);
     expect(downloads).toHaveBeenCalledOnce();
   } finally {
     output.mockRestore();

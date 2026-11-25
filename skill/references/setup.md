@@ -10,9 +10,9 @@ Setup runs on the student's computer. If the current chat cannot run local comma
 
 If you can run commands locally:
 
-1. Ask which school and AI app to connect if the student hasn't said. Any D2L Brightspace school works; use its login URL when there is no preset.
+1. Ask which school and AI app to connect if the student hasn't said. Ask whether they want to install the optional lecture-video tools now (roughly 1–2 GB) or wait until they request a video. Any D2L Brightspace school works; use its login URL when there is no preset.
 2. For an automated setup, install without opening the picker. On macOS or Linux, append `-s -- --no-setup` to the shell command above. On Windows, set `$env:AMICOOKED_NO_SETUP=1` before running the installer. With Node.js, use `npx -y amicooked@0` in place of `amicooked`.
-3. Run `amicooked setup --school mcmaster --clients <app>` with the real school and app, and allow at least five minutes for browser sign-in. Choose only the apps the student requested.
+3. Run `amicooked setup --school mcmaster --clients <app>` with the real school and app, and allow at least five minutes for browser sign-in. Choose only the apps the student requested. Add `--with-video-deps` when the student opted in.
 
    | App | Value for `--clients` |
    |---|---|
@@ -24,7 +24,7 @@ If you can run commands locally:
 4. Have the student sign in on their school's page. Never ask for their password.
 5. Relay the Next steps printed by setup. When the selected app is ready, start a chat or session there and ask “am I cooked?” If an app asks for connection approval, use its normal prompts.
 
-Setup prepares the local lecture-video tools after client setup. Use `amicooked setup --skip-video-deps` to skip preparation on this install and future app updates. Run `amicooked video status` to check readiness or `amicooked video prepare` to retry and enable future preparation.
+Interactive setup also offers the video tools when they need preparation. The lecture-video guide is installed either way. The student can rerun setup later or let their AI prepare the tools when they request a video.
 
 For troubleshooting, run `amicooked status`. For Gemini, `amicooked doctor --live` checks school access. If running inside a Gemini sandbox home such as `.gemini/users/…`, have the student run the regular installer from their Mac Terminal. Windows users need [Antigravity CLI](https://antigravity.google/docs/cli-getting-started). The standalone Windows Gemini app, legacy Gemini CLI, and web or phone chats are outside this setup flow.
 

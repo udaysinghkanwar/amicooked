@@ -13,7 +13,7 @@ const previous = path.resolve(process.argv[2]);
 const tarball = path.resolve(process.argv[3]);
 const candidate = path.resolve(`build/amicooked-${process.platform}-${process.arch}`);
 const root=fs.mkdtempSync(path.join(os.tmpdir(),"amicooked-release-lifecycle-"));
-const env={...process.env,HOME:root,USERPROFILE:root,CODEX_HOME:path.join(root,".codex"),GEMINI_CLI_HOME:path.join(root,".gemini"),AMICOOKED_HOME:path.join(root,".amicooked"),AMICOOKED_SKIP_VIDEO_DEPS: "1", AMICOOKED_NO_TELEMETRY:"1"};
+const env={...process.env,HOME:root,USERPROFILE:root,CODEX_HOME:path.join(root,".codex"),GEMINI_CLI_HOME:path.join(root,".gemini"),AMICOOKED_HOME:path.join(root,".amicooked"),AMICOOKED_NO_TELEMETRY:"1"};
 Object.assign(process.env,env);
 const run=(command,args)=>execFileSync(command,args,{env,encoding:"utf8",timeout:180000});
 const {reloadConfig}=await import("../dist/config.js");reloadConfig();

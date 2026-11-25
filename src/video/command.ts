@@ -1,7 +1,28 @@
 import { spawnSync } from "node:child_process";
 import path from "node:path";
-import { writeConfig } from "../config.js";
+import { confirm, isCancel } from "@clack/prompts";
 import { getVideoTools, prepareVideo, videoEnvironment, videoStatus } from "./runtime.js";
+
+export async function chooseVideoPreparation(options: { requested?: boolean; prompt?: boolean; upgrading?: boolean }) {
+  const { state } = videoStatus();
+  if (state === "unsupported" || (state === "ready" && !options.upgrading)) return false;
+  if (options.requested) return true;
+  if (!options.prompt || !process.stdin.isTTY || !process.stdout.isTTY) return false;
+  const choice = await confirm({
+    message: "Set up the lecture-video tools now? Downloads require internet and roughly 1–2 GB of disk space.",
+    initialValue: false,
+  });
+  return !isCancel(choice) && choice;
+}
+
+export async function prepareVideoSafely() {
+  try {
+    await prepareVideo();
+    console.error("Lecture video tools are ready.");
+  } catch (error) {
+    console.error(`Lecture video setup could not finish: ${error instanceof Error ? error.message : String(error)}\nRun amicooked video prepare to retry.`);
+  }
+}
 
 export async function videoCommand([action = "status", ...args]: string[]) {
   switch (action) {
@@ -11,7 +32,6 @@ export async function videoCommand([action = "status", ...args]: string[]) {
     case "prepare":
       if (args.length) throw new Error("Use amicooked video prepare.");
       console.log(JSON.stringify(await prepareVideo()));
-      writeConfig({ prepareVideo: true });
       return 0;
     case "run": {
       const [tool, separator, ...toolArgs] = args;

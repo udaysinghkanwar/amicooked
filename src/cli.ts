@@ -15,8 +15,8 @@ import { automaticUpdateCommand, maybeStartAutomaticUpdate } from "./cli/autoUpd
 import { updateCommand } from "./cli/update.js";
 import { featuresCommand } from "./features.js";
 import { refreshSkills } from "./skills.js";
-import { videoCommand } from "./video/command.js";
-import { acquireVideoLock, prepareVideoIfEnabled } from "./video/runtime.js";
+import { prepareVideoSafely, videoCommand } from "./video/command.js";
+import { acquireVideoLock } from "./video/runtime.js";
 
 const HELP = `Am I Cooked ${VERSION}: ask your AI about your D2L Brightspace courses.
 
@@ -28,11 +28,11 @@ Usage: amicooked <command>
                --yes                   accept the detected apps without asking
                --skill-dir <folder>    install full skill for another local AI client
                --clients none          skip automatic client configuration
-               --skip-video-deps       skip automatic lecture-video tool downloads
   login        Sign in to your school again
   status       Show what's set up (--json for machines)
   doctor       Test the Gemini connection (--live for school access)
   update       Update the app and installed skills (--check to only check; --json)
+               setup and update accept --with-video-deps to prepare lecture-video tools
   auto-update  Manage automatic patch updates: enable|disable|status|check-if-due
   video        Manage local lecture-video tools: status|prepare|run
   features     List available features; features <id> reads a guide (--json)
@@ -69,7 +69,7 @@ async function main(argv: string[]): Promise<number> {
       help: { type: "boolean", short: "h" },
       version: { type: "boolean", short: "v" },
       check: { type: "boolean" },
-      "skip-video-deps": { type: "boolean" },
+      "with-video-deps": { type: "boolean" },
       "skill-dir": { type: "string" },
     },
   });
@@ -84,17 +84,17 @@ async function main(argv: string[]): Promise<number> {
     case "mcp":
       return runMcp();
     case "setup":
-      return setup({ school: values.school, clients: values.clients, yes: values.yes, login: !values["no-login"], skillDir: values["skill-dir"], skipVideo: values["skip-video-deps"] });
+      return setup({ school: values.school, clients: values.clients, yes: values.yes, login: !values["no-login"], skillDir: values["skill-dir"], withVideo: values["with-video-deps"] });
     case "auto-update":
       return automaticUpdateCommand(positionals[1], values.json);
     case "update":
-      return updateCommand({ check: values.check, json: values.json });
+      return updateCommand({ check: values.check, json: values.json, withVideo: values["with-video-deps"] });
     case "features":
       return featuresCommand(positionals[1], values.json);
     case "refresh-skills": {
       // Used by the new release after an update. No login, client config changes or app restarts.
       const skills = refreshSkills();
-      await prepareVideoIfEnabled();
+      if (values["with-video-deps"]) await prepareVideoSafely();
       console.log(JSON.stringify(skills));
       return 0;
     }

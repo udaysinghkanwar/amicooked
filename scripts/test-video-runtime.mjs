@@ -45,7 +45,6 @@ try {
     const env = { ...process.env, HOME: home, USERPROFILE: home, CODEX_HOME: path.join(home, ".codex"),
       APPDATA: path.join(home, "AppData/Roaming"), LOCALAPPDATA: path.join(home, "AppData/Local"),
       AMICOOKED_HOME: data, AMICOOKED_NO_TELEMETRY: "1", D2L_HOST: "", D2L_LOGIN_URL: "" };
-    delete env.AMICOOKED_SKIP_VIDEO_DEPS;
     delete env.AMICOOKED_VERSION;
     delete env.AMICOOKED_NO_SETUP;
     mkdirSync(project, { recursive: true });
@@ -78,6 +77,10 @@ try {
     }).trim();
     assert.equal(JSON.parse(cli("video", "status")).state, "missing");
     cli(...setup);
+    assert.equal(existsSync(path.join(data, "video")), false);
+    assert.match(cli("features", "lecture-videos"), /run `amicooked video prepare` yourself/);
+    if (channel === "native") cli("video", "prepare");
+    else cli(...setup, "--with-video-deps");
     assert.equal(JSON.parse(cli("video", "status")).state, "ready");
     for (const tool of ["ffmpeg", "ffprobe"]) {
       assert.match(cli("video", "run", tool, "--", "-version"), new RegExp(`^${tool} version 9[.]1(?:\\D|$)`));
@@ -91,6 +94,8 @@ try {
       olderRecipe();
       assert.equal(JSON.parse(cli("video", "status")).state, "previous");
       cli("refresh-skills");
+      assert.equal(readFileSync(marker, "utf8"), first);
+      cli("refresh-skills", "--with-video-deps");
       assert.equal(JSON.parse(cli("video", "status")).state, "ready");
       first = readFileSync(marker, "utf8");
       const tools = JSON.parse(first).tools;
@@ -125,7 +130,7 @@ try {
       cli("uninstall", "--purge");
       assert.equal(existsSync(data), false);
     }
-    console.log(`${process.platform}-${process.arch} ${channel}: cold setup, repeat setup, narration, full MP4 decode and reinstall passed.`);
+    console.log(`${process.platform}-${process.arch} ${channel}: setup without downloads, optional preparation, narration, full MP4 decode and reinstall passed.`);
   }
 } finally {
   server.kill();

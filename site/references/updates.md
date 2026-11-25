@@ -6,7 +6,7 @@
 - App and skill references ship together. Use the release package, not loose files from GitHub main. Existing changed skill files are saved under each skill folder's `.backups/`; keep personal instructions in a separate file. Restart/reload the AI app after updates.
 - Native binaries update from GitHub releases; npm installations use npm. A source checkout uses `git pull --ff-only`, `npm ci` and `npm run build`; the update command explains this rather than modifying a developer's checkout.
 
-App upgrades also prepare the matching lecture-video tools unless setup opted out. Existing components are reused. If a download or test fails, course tools remain available and a previous compatible video runtime can still be used. An enabled background updater retries incomplete preparation on its next eligible check. Run `amicooked video status` to check or `amicooked video prepare` to retry now.
+Interactive `amicooked update` offers to prepare the lecture-video tools when needed, even if the app is already current. If running an update non-interactively for the student, ask first and add `--with-video-deps` only if they opt in. Background updates refresh the app and its guides without downloading video tools. A later video request can prepare them on demand. Existing components are reused, and a previous compatible video runtime remains usable if preparation fails.
 
 ## Automatic patch updates
 

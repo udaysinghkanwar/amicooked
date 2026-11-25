@@ -16,7 +16,7 @@ const server=spawn(process.execPath,["-e",`const http=require('node:http'),fs=re
 let client;
 try {
  const port=await new Promise((resolve,reject)=>{server.once("message",resolve);server.once("error",reject);server.once("exit",()=>reject(Error("fixture server stopped")));});
- const env={...process.env,HOME:root,USERPROFILE:root,CODEX_HOME:path.join(root,".codex"),AMICOOKED_HOME:path.join(root,".amicooked"),AMICOOKED_DOWNLOAD_BASE:`http://127.0.0.1:${port}`,AMICOOKED_SKIP_VIDEO_DEPS: "1", AMICOOKED_NO_TELEMETRY:"1",AMICOOKED_NO_SETUP:"1",AMICOOKED_NO_PATH:"1",GEMINI_CLI_HOME:path.join(root,".gemini"),APPDATA:path.join(root,"AppData/Roaming"),LOCALAPPDATA:path.join(root,"AppData/Local")};
+ const env={...process.env,HOME:root,USERPROFILE:root,CODEX_HOME:path.join(root,".codex"),AMICOOKED_HOME:path.join(root,".amicooked"),AMICOOKED_DOWNLOAD_BASE:`http://127.0.0.1:${port}`,AMICOOKED_NO_TELEMETRY:"1",AMICOOKED_NO_SETUP:"1",AMICOOKED_NO_PATH:"1",GEMINI_CLI_HOME:path.join(root,".gemini"),APPDATA:path.join(root,"AppData/Roaming"),LOCALAPPDATA:path.join(root,"AppData/Local")};
  const run=(command,args)=>execFileSync(command,args,{env,encoding:"utf8",timeout:30000});
  const install=()=>windows ? run("pwsh",["-NoProfile","-NonInteractive","-File",path.resolve("install/install.ps1")]) : run("sh",[path.resolve("install/install.sh"),"--no-setup"]);
  install();const installed=path.join(env.AMICOOKED_HOME,windows ? "bin/amicooked.exe" : "bin/amicooked");assert(fs.existsSync(installed));

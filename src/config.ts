@@ -23,8 +23,6 @@ export interface Config {
   chatgpt?: { subdomain: string };
   /** User preference for automatic patch updates. Defaults to enabled after setup. */
   automaticUpdates?: boolean;
-  /** Skip automatic preparation of the managed lecture-video tools. */
-  prepareVideo?: boolean;
   /** Disconnect suspends updates until setup runs again. */
   uninstalled?: true;
   /** Explicit skill destinations for other local AI clients. */

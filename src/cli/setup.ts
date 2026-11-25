@@ -1,4 +1,4 @@
-import { prepareVideoIfEnabled } from "../video/runtime.js";
+import { chooseVideoPreparation, prepareVideoSafely } from "../video/command.js";
 import * as p from "@clack/prompts";
 import * as fs from "fs";
 import * as path from "path";
@@ -38,7 +38,7 @@ export interface SetupOptions {
   yes?: boolean;
   login?: boolean;
   skillDir?: string;
-  skipVideo?: boolean;
+  withVideo?: boolean;
 }
 
 /** Exit code for "the agent needs to ask the student something first". */
@@ -346,7 +346,7 @@ export async function setup(options: SetupOptions): Promise<number> {
       throw new SetupStop("Am I Cooked logs in through Google Chrome or Microsoft Edge. Install one of them, then run setup again.");
     }
     const schoolChanged = getConfig().school?.host !== school.host;
-    writeConfig({ school, browser, ...(options.skipVideo ? { prepareVideo: false } : {}) });
+    writeConfig({ school, browser });
 
     if (options.login !== false && (schoolChanged || !hasActiveSession())) {
       p.log.step("A browser window is opening. Sign in to your school there; this window waits for you.");
@@ -376,7 +376,7 @@ export async function setup(options: SetupOptions): Promise<number> {
     if (steps) p.note(steps, "Next");
     p.outro(outro);
     await reported;
-    await prepareVideoIfEnabled();
+    if (await chooseVideoPreparation({ requested: options.withVideo, prompt: !options.yes })) await prepareVideoSafely();
     return outcomes.some((o) => o.failed) ? 1 : 0;
   } catch (error) {
     const code = error instanceof SetupStop ? error.code : 1;

@@ -1,6 +1,6 @@
 # Lecture videos
 
-Use this workflow only for a requested lecture/study video. Am I Cooked supplies course material and teaching guidance; the host agent creates the lesson using an external renderer. Setup prepares the local rendering and narration tools by default. Use the installed CLI to run them. A lecture request still needs an AI client that can work with local files and commands.
+Use this workflow only for a requested lecture/study video. Am I Cooked supplies course material and teaching guidance; the host agent creates the lesson using an external renderer. Setup or a manual update can prepare the local tools in advance. Prepare them when the student requests a video if they were skipped. A lecture request still needs an AI client that can work with local files and commands.
 
 ## Choose the lesson
 
@@ -19,7 +19,7 @@ These are starting points, not quotas. Narrow the topic or split it when the exp
 
 The host needs local command execution, file access and permission to open a browser. MCP access alone, a chat subscription, or installing this skill does not provide those capabilities. If missing, offer source-linked notes/storyboard and explain which capability is needed for an MP4. Never claim an export was produced when only a script exists.
 
-Check the local tools with `amicooked video status`. If setup was run through npx, use `npx -y amicooked@0` in place of `amicooked`. A `ready` result means Am I Cooked already rendered and decoded a test clip. `previous` means a previous compatible set is available. Run `amicooked video prepare` once in the local terminal when preparation is missing or incomplete, then check status. If the host lacks permission to run commands or download the tools, give the student that command to run locally. Never install system packages to satisfy the renderer.
+Run `amicooked video status`. If setup used npx, replace `amicooked` with `npx -y amicooked@0` throughout this guide. If the result is `missing` or `previous`, tell the student you're preparing the video tools and run `amicooked video prepare` yourself as part of their video request. Allow several minutes and roughly 1–2 GB of disk space on the first run. Check status again after preparation. If an update fails and status remains `previous`, use the verified previous tools. If the host cannot run commands or download the tools, give the student the prepare command to run locally. Never install system packages to satisfy the renderer.
 
 Create a fresh project in the student's chosen directory, preferably `<course>/Study Videos/<topic>/`, and read the renderer's composition rules:
 

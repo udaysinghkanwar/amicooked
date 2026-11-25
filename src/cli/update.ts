@@ -6,7 +6,7 @@ import * as path from "path";
 import { currentRuntime, installationChannel, type Runtime } from "../clients/self.js";
 import { installedSkillVersion, refreshSkills } from "../skills.js";
 import { paths } from "../config.js";
-import { prepareVideoIfEnabled } from "../video/runtime.js";
+import { chooseVideoPreparation, prepareVideoSafely } from "../video/command.js";
 import { reportUpgrade } from "../telemetry.js";
 import { VERSION } from "../version.js";
 
@@ -76,16 +76,17 @@ export function npmCommand(rt: Runtime): { command: string; args: string[] } {
 }
 
 export async function installRelease(release: Release, options: {
-  runtime: Runtime; arch: string; fetch: typeof fetch; run: Run;
+  runtime: Runtime; arch: string; fetch: typeof fetch; run: Run; withVideo?: boolean;
 }): Promise<void> {
   const { runtime: rt, run } = options;
+  const refresh = options.withVideo ? ["refresh-skills", "--with-video-deps"] : ["refresh-skills"];
   const version = release.tag_name.replace(/^v/, "");
   if (!rt.isCompiled) {
     const npm = npmCommand(rt);
     const runNpm = (args: string[]) => run(npm.command, [...npm.args, ...args]);
     const script = fs.realpathSync(rt.argv[1]);
     if (/[\\/]_npx[\\/]/.test(script)) {
-      runNpm(["exec", "--yes", `--package=amicooked@${version}`, "--", "amicooked", "refresh-skills"]);
+      runNpm(["exec", "--yes", `--package=amicooked@${version}`, "--", "amicooked", ...refresh]);
       return;
     }
     const root = path.resolve(path.dirname(script), "..");
@@ -99,7 +100,7 @@ export async function installRelease(release: Release, options: {
     } else {
       runNpm(["install", "--prefix", path.dirname(path.dirname(root)), `amicooked@${version}`]);
     }
-    run(rt.execPath, [script, "refresh-skills"]);
+    run(rt.execPath, [script, ...refresh]);
     return;
   }
 
@@ -128,7 +129,7 @@ export async function installRelease(release: Release, options: {
       throw new Error(`Couldn't replace the executable. Close AI apps using Am I Cooked, then retry. ${error instanceof Error ? error.message : error}`);
     }
     try {
-      run(rt.execPath, ["refresh-skills"]);
+      run(rt.execPath, refresh);
     } catch (error) {
       throw new Error(`The app was updated, but skill refresh failed. Run \`amicooked update\` again to repair it. ${error instanceof Error ? error.message : error}`);
     }
@@ -148,7 +149,7 @@ async function request(url: string, fetcher: typeof fetch): Promise<Response> {
 
 export const acquireUpdateLock = () => acquireLock(path.join(paths().home, "update.lock"), "update");
 
-export async function updateCommand(options: { check?: boolean; json?: boolean; compatibleOnly?: boolean } = {}, deps: {
+export async function updateCommand(options: { check?: boolean; json?: boolean; compatibleOnly?: boolean; withVideo?: boolean } = {}, deps: {
   fetch?: typeof fetch; runtime?: Runtime; run?: Run; version?: string; arch?: string; allowed?: () => boolean; report?: typeof reportUpgrade;
 } = {}): Promise<number> {
   let releaseLock: (() => void) | undefined;
@@ -171,11 +172,14 @@ export async function updateCommand(options: { check?: boolean; json?: boolean; 
       releaseLock = acquireUpdateLock();
       if (compareVersions(previousVersion, version) > 0 && !available) throw new Error("Installed skills are newer than this runtime. Reload your AI app or run the newer installation; older instructions were not written.");
     }
+    const withVideo = !options.check && !options.compatibleOnly && await chooseVideoPreparation({
+      requested: options.withVideo, prompt: !options.json, upgrading: available,
+    });
     if (!options.check && available) await installRelease(release, {
-      runtime, arch: deps.arch ?? process.arch, fetch: fetcher, run: deps.run ?? execute,
+      runtime, arch: deps.arch ?? process.arch, fetch: fetcher, run: deps.run ?? execute, withVideo,
     });
     const skills = !options.check && !available ? refreshSkills() : [];
-    if (!options.check && !available) await prepareVideoIfEnabled();
+    if (withVideo && !available) await prepareVideoSafely();
     const skillsChanged = skills.some(result => !result.endsWith(": unchanged"));
     const result = {
       previousVersion,
