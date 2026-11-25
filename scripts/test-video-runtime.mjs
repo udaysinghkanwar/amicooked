@@ -79,6 +79,9 @@ try {
     assert.equal(JSON.parse(cli("video", "status")).state, "missing");
     cli(...setup);
     assert.equal(JSON.parse(cli("video", "status")).state, "ready");
+    for (const tool of ["ffmpeg", "ffprobe"]) {
+      assert.match(cli("video", "run", tool, "--", "-version"), new RegExp(`^${tool} version 9[.]1(?:\\D|$)`));
+    }
     const marker = path.join(data, "video", "ready.json");
     let first = readFileSync(marker, "utf8");
     cli(...setup);

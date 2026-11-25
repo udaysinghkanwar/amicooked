@@ -123,26 +123,23 @@ export async function prepareVideo(log: (message: string) => void = console.erro
       log("Downloading the video browser…");
       await unpack(assets.chrome, directory);
     });
-    const packageFiles = {
-      ffmpeg: path.join("node_modules", "@ffmpeg-installer", target, exe("ffmpeg")),
-      ffprobe: path.join("node_modules", "@ffprobe-installer", target, exe("ffprobe")),
-      hyperframes: "node_modules/hyperframes/bin/hyperframes.mjs",
-    };
+    const mediaFiles = ["ffmpeg", "ffprobe"].map(tool => path.join(assets.media.binDir, exe(tool)));
+    const media = await installComponent(store, fingerprint(assets.media), mediaFiles, async directory => {
+      log("Downloading FFmpeg and FFprobe…");
+      for (const archive of assets.media.archives) await unpack(archive, directory);
+      if (!windows) for (const file of mediaFiles) fs.chmodSync(path.join(directory, file), 0o700);
+    });
+    const [ffmpeg, ffprobe] = mediaFiles.map(file => path.join(media, file));
+    const renderer = "node_modules/hyperframes/bin/hyperframes.mjs";
     const node = path.join(nodeRoot, nodeRelative);
-    const packages = await installComponent(store, fingerprint([target, assets.node.sha256, npmLock]), Object.values(packageFiles), async directory => {
-      log("Installing the locked renderer, FFmpeg, and narration packages…");
+    const packages = await installComponent(store, fingerprint([target, assets.node.sha256, npmLock]), [renderer], async directory => {
+      log("Installing the locked renderer and narration packages…");
       fs.writeFileSync(path.join(directory, "package.json"), JSON.stringify(manifest));
       fs.writeFileSync(path.join(directory, "package-lock.json"), JSON.stringify(npmLock));
       runTool(node, [path.join(nodeRoot, npmRelative), "ci", "--ignore-scripts", "--no-audit", "--no-fund", "--include=optional",
         "--cache", path.join(root(), "npm-cache"), "--userconfig", path.join(directory, ".npmrc")],
       { ...Object.fromEntries(Object.entries(process.env).filter(([key]) => !/^(npm_config_|node_options$)/i.test(key))), PATH: `${path.dirname(node)}${path.delimiter}${process.env.PATH ?? ""}` }, directory);
     });
-    // These two packages normally chmod their binaries in postinstall. Keep npm
-    // lifecycle scripts disabled and set the executable bits ourselves.
-    if (!windows) {
-      fs.chmodSync(path.join(packages, packageFiles.ffmpeg), 0o700);
-      fs.chmodSync(path.join(packages, packageFiles.ffprobe), 0o700);
-    }
     const model = await installComponent(store, fingerprint(voiceModel), Object.keys(voiceModel), async directory => {
       log("Downloading the local narration model…");
       for (const [file, asset] of Object.entries(voiceModel)) await download(asset, path.join(directory, file));
@@ -151,9 +148,8 @@ export async function prepareVideo(log: (message: string) => void = console.erro
     if (!fs.existsSync(voice)) writePrivateFile(voice, voiceScript);
     const tools = {
       node, browser: path.join(browserRoot, browserRelative), model,
-      ffmpeg: path.join(packages, packageFiles.ffmpeg),
-      ffprobe: path.join(packages, packageFiles.ffprobe),
-      hyperframes: path.join(packages, packageFiles.hyperframes),
+      ffmpeg, ffprobe,
+      hyperframes: path.join(packages, renderer),
       voice,
     };
     log("Testing a narrated video render…");

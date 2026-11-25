@@ -33,6 +33,35 @@ export interface Download {
   sha256: string;
 }
 
+// Release archives and SHA-256 checksums from the builders linked by FFmpeg
+// (Windows) or the Martin Riedl static build server (macOS and Linux).
+const mediaVersion = "9.1";
+const unixMedia = {
+  "darwin-arm64": ["macos/arm64/1795207104_9.1", "1f66e9a690a7f1c9e60b012379f8869c11818d1797f45b21dbb2f2564ba61ae1", "6ef2df5f575042923a28537ab37adf936f28bf3e7b85de23a1447ed447ec1dbd"],
+  "darwin-x64": ["macos/amd64/1795212433_9.1", "35b3d82cccc2c1d644d49d15f5e57eb913a08ef68f798042c90eecec62c51f1e", "41ca7b7cba7992e33f1da3f1bf54db8ec103a4d387b1bfac3162062e8b1074ad"],
+  "linux-x64": ["linux/amd64/1795205506_9.1", "707d4fa675932cc310e39e1506ac9224049786119689e345fed1c453a8a0896e", "5e4c53c9c86d6371027efa83d62c2cea00e02ded0234d8cc952d06c9259e4b33"],
+} as const;
+
+function mediaDownloads(target: VideoTarget): { binDir: string; archives: Download[] } {
+  if (target === "win32-x64") {
+    const release = `ffmpeg-${mediaVersion}-essentials_build`;
+    return {
+      binDir: `${release}/bin`,
+      archives: [{
+        url: `https://github.com/GyanD/codexffmpeg/releases/download/${mediaVersion}/${release}.zip`,
+        sha256: "b9bbbb3acece000cbeec994f856649354e52c773807841e78908374b24d658fd",
+      }],
+    };
+  }
+  const [build, ffmpeg, ffprobe] = unixMedia[target];
+  return {
+    binDir: ".",
+    archives: Object.entries({ ffmpeg, ffprobe }).map(([tool, sha256]) => ({
+      url: `https://ffmpeg.martin-riedl.de/download/${build}/${tool}.zip`, sha256,
+    })),
+  };
+}
+
 export function platformDownloads(target: VideoTarget) {
   const assets = targets[target];
   const nodeDirectory = `node-v${nodeVersion}-${target.replace("win32", "win")}`;
@@ -41,6 +70,7 @@ export function platformDownloads(target: VideoTarget) {
   return {
     nodeDirectory,
     chromeDirectory,
+    media: mediaDownloads(target),
     node: { url: `https://nodejs.org/dist/v${nodeVersion}/${nodeArchive}`, sha256: assets.node },
     chrome: {
       url: `https://storage.googleapis.com/chrome-for-testing-public/${chromeVersion}/${assets.chromePlatform}/${chromeDirectory}.zip`,
