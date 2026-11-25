@@ -35,17 +35,27 @@ describe("server", () => {
     await client.close();
   });
 
-  it("requests a background update check on an existing connection without delaying a tool result", async () => {
+  it("limits local update probes across connections without blocking tools", async () => {
     const check = vi.spyOn(updater, "maybeStartAutomaticUpdate").mockReturnValue(false);
+    const clock = vi.spyOn(Date, "now").mockReturnValue(1000);
     const client = await connect();
+    const secondClient = await connect();
     try {
       expect(check).not.toHaveBeenCalled();
-      const result = await client.callTool({ name: "get_feature_guide", arguments: {} });
-      expect(result.isError).not.toBe(true);
+      const request = { name: "get_feature_guide", arguments: {} };
+      expect((await client.callTool(request)).isError).not.toBe(true);
       expect(check).toHaveBeenCalledOnce();
+      clock.mockReturnValue(60_999);
+      expect((await secondClient.callTool(request)).isError).not.toBe(true);
+      expect(check).toHaveBeenCalledOnce();
+      clock.mockReturnValue(61_000);
+      expect((await client.callTool(request)).isError).not.toBe(true);
+      expect(check).toHaveBeenCalledTimes(2);
     } finally {
       check.mockRestore();
+      clock.mockRestore();
       await client.close();
+      await secondClient.close();
     }
   });
 
