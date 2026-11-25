@@ -1,4 +1,4 @@
-# Setting it up (for agents)
+## Setting it up (for agents)
 
 **First, check that you can run commands on the student's computer.** Setup installs a program there, so it only works from an agent with a terminal, like Claude Code, Codex or the ChatGPT desktop app. If you're on a website (chatgpt.com, claude.ai, gemini.google.com), in a phone app, or in a chat with no command tool, don't try. Tell the student instead:
 
@@ -7,7 +7,7 @@
 
 If you can run commands:
 
-1. Ask the student which school they go to. Presets: mcmaster, waterloo, western, queens, guelph, laurier, tmu, uottawa, carleton, brock, windsor, laurentian, lakehead. Any other Brightspace school works with the URL they log in through.
+1. Ask the student which school they go to. Reuse answers already given. Presets: mcmaster, waterloo, western, queens, guelph, laurier, tmu, uottawa, carleton, brock, windsor, laurentian, lakehead. Any other Brightspace school works with the URL they log in through.
 2. Install it:
    - macOS / Linux: `curl -fsSL https://amicooked-mcp.vercel.app/install.sh | sh -s -- --no-setup`
    - Windows (PowerShell): `$env:AMICOOKED_NO_SETUP=1; irm https://amicooked-mcp.vercel.app/install.ps1 | iex`
@@ -18,3 +18,11 @@ If you can run commands:
 4. Tell the student to sign in to their school in the browser window. Never ask for their password; you never need it.
 5. Setup ends with a "Next" list: one line per app saying it's open and ready, needs a restart, needs opening, or needs installing (with a link). Tell the student each line as written. If you're running inside Claude Desktop, they need to quit it; Am I Cooked then reopens it with everything set up.
 6. If something fails, run `amicooked status` and read what it says.
+
+
+## Other local AI clients
+
+Any compatible local MCP client can launch `amicooked mcp` over stdio. For a client with a skill folder, use `amicooked setup --clients none --skill-dir "/path/to/client/skills/amicooked" --school <school>`. This installs all references and remembers the destination for updates; configure the MCP launch command printed by setup in that client. MCP-only clients can retrieve the same bundled guides with `get_feature_guide`. Do not claim automatic client configuration or scheduling support where it has not been provided.
+
+
+Automatic patch updates are on after setup for installed copies. See [updates.md](updates.md) for status and how to turn them off.

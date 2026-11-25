@@ -48,6 +48,32 @@ function count(event) {
   try { navigator.sendBeacon?.("/api/e", JSON.stringify(event)); } catch {}
 }
 const COPY_TABS = { "cmd-mac": "mac", "cmd-win": "win", "cmd-npm": "npm", "agent-prompt": "agent" };
+const commandBoxes = [...document.querySelectorAll("[data-copy]")].map(button => ({
+  button,
+  setup: document.getElementById(button.dataset.copy),
+  update: document.getElementById(`${button.dataset.copy}-update`),
+  setupLabel: button.getAttribute("aria-label"),
+}));
+let showingUpdates = false;
+const updateToggle = document.getElementById("update-toggle");
+updateToggle.addEventListener("click", event => {
+  if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+  event.preventDefault();
+  showingUpdates = !showingUpdates;
+  for (const { button, setup, update, setupLabel } of commandBoxes) {
+    setup.hidden = showingUpdates;
+    update.hidden = !showingUpdates;
+    button.classList.remove("is-done");
+    const updateLabel = setup.id === "agent-prompt" ? "Copy the update prompt" : "Copy the update command";
+    button.setAttribute("aria-label", showingUpdates ? updateLabel : setupLabel);
+  }
+  document.getElementById("command-title").textContent = showingUpdates ? "Update" : "Install";
+  document.getElementById("update-question").hidden = showingUpdates;
+  document.getElementById("update-help").hidden = !showingUpdates;
+  updateToggle.textContent = showingUpdates ? "View setup commands" : "View update commands";
+  live.textContent = showingUpdates ? "Update commands shown" : "Setup commands shown";
+});
+
 // ---- The agent prompt: one line until asked for in full ----
 
 const promptToggle = document.getElementById("prompt-toggle");
@@ -55,14 +81,14 @@ promptToggle?.addEventListener("click", () => {
   const open = document.querySelector(".cmd-prompt").classList.toggle("is-open");
   promptToggle.setAttribute("aria-expanded", open);
   promptToggle.textContent = open ? "Show less" : "Show full prompt";
-  if (open) count({ e: "prompt" });
+  if (open && !showingUpdates) count({ e: "prompt" });
 });
 
-document.querySelectorAll("[data-copy]").forEach((btn) => {
+for (const { button: btn, setup, update } of commandBoxes) {
   let timer;
   btn.addEventListener("click", async () => {
-    const src = document.getElementById(btn.dataset.copy);
-    count({ e: "copy", tab: COPY_TABS[btn.dataset.copy] });
+    const src = showingUpdates ? update : setup;
+    if (!showingUpdates) count({ e: "copy", tab: COPY_TABS[setup.id] });
     const ok = await copy(src.textContent.trim());
     if (!ok) getSelection().selectAllChildren(src);
     btn.classList.toggle("is-done", ok);
@@ -70,7 +96,7 @@ document.querySelectorAll("[data-copy]").forEach((btn) => {
     clearTimeout(timer);
     timer = setTimeout(() => btn.classList.remove("is-done"), 1600);
   });
-});
+}
 
 // ---- The conversation replay ----
 // Replies are written the way an AI actually answers in chat: plain text, bold, lists. No coloured

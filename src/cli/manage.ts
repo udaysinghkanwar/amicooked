@@ -6,8 +6,10 @@ import { chatgptSteps, chatgptUrl, uninstallChatGPT } from "../clients/chatgpt.j
 import { codexConfigured, hasCodex, uninstallCodex, uninstallCodexSkill } from "../clients/codex.js";
 import { OAuthStore } from "../remote/oauth.js";
 import { client } from "../client.js";
-import { getConfig, paths } from "../config.js";
+import { getConfig, paths, writeConfig } from "../config.js";
 import { VERSION } from "../version.js";
+import { removeExtraSkills } from "../skills.js";
+import { automaticUpdateStatus } from "./autoUpdate.js";
 
 export async function loginCommand(): Promise<number> {
   if (!getConfig().school) {
@@ -56,6 +58,7 @@ export async function statusCommand(json: boolean): Promise<number> {
     chatgpt: chatgptUrl() ?? "not set up",
     dataFolder: paths().home,
     filesFolder: config.filesDir,
+    automaticUpdates: automaticUpdateStatus().enabled,
   };
   if (json) {
     console.log(JSON.stringify(status, null, 2));
@@ -72,19 +75,22 @@ export async function statusCommand(json: boolean): Promise<number> {
   if (chatgptUrl()) console.log(`  ChatGPT web:    ${status.chatgpt}`);
   console.log(`  Data:           ${status.dataFolder}`);
   console.log(`  Files:          ${status.filesFolder}`);
+  console.log(`  Auto updates:   ${status.automaticUpdates ? "on (patches at next startup)" : "off"}`);
   return 0;
 }
 
 export async function uninstallCommand(purge: boolean): Promise<number> {
+  if (getConfig().school) writeConfig({ uninstalled: true });
   const dir = claudeDesktopDir();
   if (dir) console.log(`Claude Desktop: ${uninstallClaudeDesktop(dir)}`);
-  if (hasClaudeCode()) {
-    uninstallClaudeCode();
-    console.log(`Claude Code: removed (skill ${uninstallSkill()})`);
-  }
+  if (hasClaudeCode()) uninstallClaudeCode();
+  const codeSkill = uninstallSkill();
+  if (codeSkill !== "absent") console.log(`Claude Code skill: ${codeSkill}`);
   const codex = uninstallCodex();
-  if (codex !== "absent") console.log(`ChatGPT desktop app: ${codex} (skill ${uninstallCodexSkill()})`);
+  const codexSkill = uninstallCodexSkill();
+  if (codex !== "absent" || codexSkill !== "absent") console.log(`ChatGPT desktop app: ${codex} (skill ${codexSkill})`);
   if (uninstallChatGPT()) console.log("ChatGPT: background service stopped and disconnected");
+  removeExtraSkills();
   if (purge) {
     fs.rmSync(paths().home, { recursive: true, force: true });
     console.log(`Deleted ${paths().home} (login, settings and file index). Downloaded files in ${getConfig().filesDir} were kept.`);

@@ -21,6 +21,12 @@ export interface Config {
   browser?: BrowserChannel;
   filesDir: string;
   chatgpt?: { subdomain: string };
+  /** User preference for automatic patch updates. Defaults to enabled after setup. */
+  automaticUpdates?: boolean;
+  /** Disconnect suspends updates until setup runs again. */
+  uninstalled?: true;
+  /** Explicit skill destinations for other local AI clients. */
+  skillDirs?: string[];
 }
 
 export function homeDir(): string {

@@ -30,6 +30,10 @@ gh run watch                    # follow the workflow
 npm view amicooked version      # should show the new version
 ```
 
+The app and the full `skill/` folder ship as one version. Before releasing, run `npm test` (build, unit tests and Node/native CLI smoke tests); check `node dist/cli.js features` and an upgrade from the previous release. Add a feature's reference to `skill/references/` and its catalogue entry to `src/features.ts`. Keep release notes clear about what users can do, optional requirements and any breaking changes: `amicooked update` uses the GitHub release notes to explain updates. There is no separate skill-content release channel.
+
+Updates download the latest stable GitHub release (or the matching npm version), refresh installed skills and leave login/client configuration alone. npm publication follows the binary release; an npm update during that short gap may fail and should be retried after publication completes. On Windows, if another process prevents replacing the executable, close the AI apps using it and retry. The native updater retains the old executable as `.previous`.
+
 ## Which number to bump
 
 While the version starts with `0.`:
@@ -57,3 +61,5 @@ Until this is set up, the `npm` job fails. The GitHub release still goes out; pu
 - **The tests or build fail:** nothing was published. Fix it on `main`, delete the tag (`git tag -d vX.Y.Z && git push origin :vX.Y.Z`), and release again.
 - **The GitHub release worked but npm failed:** fix the cause, then re-run the failed job from the Actions tab.
 - **A bad version is out:** don't reuse its number (npm never allows it). Release a fixed patch on top.
+
+The site telemetry endpoint must be deployed before a CLI release that adds event types. Upgrade counts use the existing Redis integration; no new credentials or migration are required. Existing setup/site keys remain unchanged.

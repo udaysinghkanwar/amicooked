@@ -4,7 +4,7 @@ const courseGuide = SKILL_FILES["references/courses.md"];
 
 // MCP clients receive the course guidance even when they have no local skill folder.
 export function serverInstructions(): string {
-  return courseGuide.trim();
+  return courseGuide.trim() + '\n\nUse `get_feature_guide` to discover optional features or retrieve a guide when local references are unavailable. For a requested lecture or study video, pass `feature: "lecture-videos"`. Rendering requires local command and file access.';
 }
 
 /**

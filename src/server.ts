@@ -7,6 +7,12 @@ import { getAssignments, getUpcomingDueDates } from "./tools/deadlines.js";
 import { downloadFileTool, readFileTool } from "./tools/files.js";
 import type { Tool } from "./tools/types.js";
 import { VERSION } from "./version.js";
+import { getFeatureGuide } from "./features.js";
+import { maybeStartAutomaticUpdate } from "./cli/autoUpdate.js";
+
+const UPDATE_PROBE_INTERVAL_MS = 60_000;
+// HTTP transports can create multiple MCP servers in the same process.
+let lastUpdateProbe: number | undefined;
 
 export const TOOLS: Tool[] = [
   amICookedTool,
@@ -18,6 +24,7 @@ export const TOOLS: Tool[] = [
   getCourseContent,
   downloadFileTool,
   readFileTool,
+  getFeatureGuide,
 ];
 
 export function createServer(options: { instructions?: string } = {}): McpServer {
@@ -29,6 +36,10 @@ export function createServer(options: { instructions?: string } = {}): McpServer
       { description: tool.description, inputSchema: tool.schema, annotations: { readOnlyHint: true, openWorldHint: false } },
       async (args: unknown) => {
         const started = Date.now();
+        if (lastUpdateProbe === undefined || started < lastUpdateProbe || started - lastUpdateProbe >= UPDATE_PROBE_INTERVAL_MS) {
+          lastUpdateProbe = started;
+          maybeStartAutomaticUpdate();
+        }
         try {
           const text = await tool.handler(args ?? {});
           console.error(`[tool] ${tool.name} ok (${Date.now() - started}ms)`);

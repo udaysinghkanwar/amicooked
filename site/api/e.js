@@ -1,4 +1,4 @@
-// Counts finished setups and install-command copies. Stores counters only: no IPs, no install IDs, nothing from Brightspace.
+// Counts finished setups, successful upgrades and install-command copies. Stores counters only: no IPs, no install IDs, nothing from Brightspace.
 // Redis comes from the Upstash integration on Vercel (KV_REST_API_* or UPSTASH_REDIS_REST_* env vars).
 
 // Must match the preset ids in src/schools.ts; a unit test checks this.
@@ -23,6 +23,20 @@ export function commandsFor(event, now = new Date()) {
     ];
   }
   if (event.e === "prompt") return [["INCR", "prompt:opens"]];
+  if (event.e === "upgrade") {
+    const version = /^\d{1,6}\.\d{1,6}\.\d{1,6}$/;
+    if (!["manual", "automatic"].includes(event.mode) || !["native", "npm"].includes(event.channel) ||
+        typeof event.from !== "string" || typeof event.to !== "string" ||
+        !version.test(event.from) || !version.test(event.to) || event.from === event.to) return null;
+    return [
+      ["INCR", "upgrade:total"],
+      ["HINCRBY", "upgrade:days", day, "1"],
+      ["HINCRBY", "upgrade:modes", event.mode, "1"],
+      ["HINCRBY", "upgrade:channels", event.channel, "1"],
+      ["HINCRBY", "upgrade:platforms", PLATFORMS.includes(event.platform) ? event.platform : "other", "1"],
+      ["HINCRBY", "upgrade:versions", `${event.from}->${event.to}`, "1"],
+    ];
+  }
   if (event.e !== "setup") return null;
   const school = SCHOOLS.includes(event.school) ? event.school : "custom";
   const platform = PLATFORMS.includes(event.platform) ? event.platform : "other";

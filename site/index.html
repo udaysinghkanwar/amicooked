@@ -29,7 +29,7 @@
   <link rel="stylesheet" href="/styles.css?v=18">
   <link rel="alternate" type="text/markdown" href="/SKILL.md" title="Setup instructions for AI agents">
   <script>document.documentElement.classList.replace("no-js", "js");</script>
-  <script src="/main.js?v=17" defer></script>
+  <script src="/main.js?v=20" defer></script>
   <script src="/_vercel/insights/script.js" defer></script>
 </head>
 <body>
@@ -44,8 +44,8 @@
 
       <!-- One box, three ways in: the command for your computer, or a prompt for your AI agent -->
       <div class="get enter enter-3">
-        <h2 class="sr-only">Install</h2>
-        <div class="segmented" role="tablist" aria-label="How to install">
+        <h2 class="sr-only" id="command-title">Install</h2>
+        <div class="segmented" role="tablist" aria-labelledby="command-title">
           <button type="button" role="tab" id="os-agent" aria-controls="os-agent-panel" aria-selected="false" tabindex="-1">AI agent</button>
           <button type="button" role="tab" id="os-mac" aria-controls="os-mac-panel" aria-selected="true">macOS &amp; Linux</button>
           <button type="button" role="tab" id="os-win" aria-controls="os-win-panel" aria-selected="false" tabindex="-1">Windows</button>
@@ -53,12 +53,14 @@
         </div>
         <div class="cmd" role="tabpanel" id="os-mac-panel" aria-labelledby="os-mac">
           <code id="cmd-mac">curl -fsSL https://<span data-domain>amicooked-mcp.vercel.app</span>/install.sh | sh</code>
+          <code id="cmd-mac-update" hidden>amicooked update</code>
           <button class="icon-button" type="button" data-copy="cmd-mac" aria-label="Copy the macOS and Linux install command">
             <svg class="i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i-check" aria-hidden="true"><use href="#i-check"/></svg>
           </button>
         </div>
         <div class="cmd" role="tabpanel" id="os-win-panel" aria-labelledby="os-win" hidden>
           <code id="cmd-win">irm https://<span data-domain>amicooked-mcp.vercel.app</span>/install.ps1 | iex</code>
+          <code id="cmd-win-update" hidden>amicooked update</code>
           <button class="icon-button" type="button" data-copy="cmd-win" aria-label="Copy the Windows install command">
             <svg class="i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i-check" aria-hidden="true"><use href="#i-check"/></svg>
           </button>
@@ -66,6 +68,7 @@
         <div class="tab-panel" role="tabpanel" id="os-npm-panel" aria-labelledby="os-npm" hidden>
           <div class="cmd">
             <code id="cmd-npm">npx -y amicooked@0 setup</code>
+            <code id="cmd-npm-update" hidden>npx -y amicooked@0 update</code>
             <button class="icon-button" type="button" data-copy="cmd-npm" aria-label="Copy the npm setup command">
               <svg class="i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i-check" aria-hidden="true"><use href="#i-check"/></svg>
             </button>
@@ -75,13 +78,18 @@
         <div class="tab-panel" role="tabpanel" id="os-agent-panel" aria-labelledby="os-agent" hidden>
           <div class="cmd cmd-prompt">
             <code id="agent-prompt">Set up Am I Cooked from https://<span data-domain>amicooked-mcp.vercel.app</span>/SKILL.md. Ask me which school I go to. Never ask for my password. If you can't run commands on my computer, tell me how to install it myself.</code>
+            <code id="agent-prompt-update" hidden>Update Am I Cooked using https://<span data-domain>amicooked-mcp.vercel.app</span>/references/updates.md. Use the command that matches how I installed it. If you can't run commands on my computer, give me that command.</code>
             <button class="icon-button" type="button" data-copy="agent-prompt" aria-label="Copy the setup prompt for your AI agent">
               <svg class="i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i-check" aria-hidden="true"><use href="#i-check"/></svg>
             </button>
           </div>
-          <p class="panel-hint">Paste it into Claude Code or the ChatGPT desktop app, not their websites. <button type="button" class="text-button js-only" id="prompt-toggle" aria-controls="agent-prompt" aria-expanded="false">Show full prompt</button></p>
+          <p class="panel-hint">Paste it into Claude Code or the ChatGPT desktop app, not their websites. <button type="button" class="text-button js-only" id="prompt-toggle" aria-controls="agent-prompt agent-prompt-update" aria-expanded="false">Show full prompt</button></p>
         </div>
         <p class="trust">Free <span aria-hidden="true">·</span> open source <span aria-hidden="true">·</span> your login stays on your laptop <span aria-hidden="true">·</span> <a href="https://github.com/udaysinghkanwar/amicooked/blob/main/install/install.sh">view install script</a></p>
+        <p class="panel-hint">
+          <span id="update-question">Already have Am I Cooked?</span> <a id="update-toggle" href="./references/updates.md">View update commands</a>
+          <span id="update-help" hidden><span aria-hidden="true">·</span> Reload your AI app after updating. <a href="./references/updates.md">update guide</a></span>
+        </p>
       </div>
     </section>
 
