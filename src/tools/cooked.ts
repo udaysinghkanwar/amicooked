@@ -353,35 +353,32 @@ async function fetchCourseData(course: Course, w: Window): Promise<CourseData> {
 
 // ---- presentation ----
 // Claude Desktop doesn't pass a local server's instructions to the model, so the result itself carries
-// everything needed to present it well: a ready-made heat bar, a status per course, and the layout
+// everything needed to present it well: a ready-made rating, a status per course, and the layout
 // (from SKILL.md's "Show it, don't just say it" section).
 
 export type CourseStatus = "On track" | "Watch" | "Needs work";
 
-/** Ten blocks filled to the score, e.g. "Heat ██░░░░░░░░ 2/10 · warming up". */
-export function heatBar(heat: number, label: string): string {
-  const filled = Math.max(0, Math.min(10, Math.round(heat)));
-  return `Heat ${"█".repeat(filled)}${"░".repeat(10 - filled)} ${filled}/10 · ${label}`;
+/** The rating, e.g. "Toasty (4/10)". */
+export function rating(heat: number, label: string): string {
+  const score = Math.max(0, Math.min(10, Math.round(heat)));
+  return `${label.charAt(0).toUpperCase()}${label.slice(1)} (${score}/10)`;
 }
 
 const VERDICT: Record<string, string> = {
   raw: "Not cooked.",
-  "warming up": "Warming up, not cooked.",
-  toasty: "Toasty, not cooked yet.",
-  cooked: "Cooked, but fixable.",
-  "well done": "Well done. Time for damage control.",
+  "warming up": "Not cooked.",
+  toasty: "Not cooked yet.",
+  cooked: "Still fixable.",
+  "well done": "Time for damage control.",
 };
 
-/**
- * The first two lines of the answer, already written: the heat bar (in code formatting so it stays aligned)
- * and a factual verdict. Models reshuffle steps they're asked to follow, but reliably show a finished block.
- */
+/** The first line of the answer, already written: the rating, a plain verdict, and the counts behind it. */
 export function opening(heat: number, label: string, overdue: number, dueSoon: number, daysAhead: number): string {
   const facts = [
     overdue ? `${overdue} overdue` : "Nothing overdue",
     `${dueSoon === 0 ? "nothing" : dueSoon} due in the next ${daysAhead} day${daysAhead === 1 ? "" : "s"}`,
   ];
-  return `\`${heatBar(heat, label)}\`\n\n**${VERDICT[label] ?? "Here's where you stand."}** ${facts.join(", ")}.`;
+  return `**${rating(heat, label)}. ${VERDICT[label] ?? "Here's where you stand."}** ${facts.join(", ")}.`;
 }
 
 /** One word for a course's table row, from the same signals the heat score uses. */
@@ -425,7 +422,7 @@ export async function amICooked(args: { daysAhead?: number; overdueDaysBack?: nu
     summary: {
       heat,
       heatLabel,
-      heatBar: heatBar(heat, heatLabel),
+      rating: rating(heat, heatLabel),
       reasons,
       courses: courses.length,
       dueSoon,
@@ -448,7 +445,7 @@ export async function amICooked(args: { daysAhead?: number; overdueDaysBack?: nu
 export const amICookedTool: Tool = {
   name: "am_i_cooked",
   description:
-    'One-call overview across all current courses: grade so far, what is due soon, overdue unsubmitted work, and new announcements, plus a heat score (0-10: raw, warming up, toasty, cooked, well done). Start here for "am I cooked?", "what should I work on?", "how am I doing?" or "what\'s due this week?". The result includes howToPresent: follow it (heat bar, a table per course, the next 7 days, top 3 actions).',
+    'One-call overview across all current courses: grade so far, what is due soon, overdue unsubmitted work, and new announcements, plus a heat score (0-10: raw, warming up, toasty, cooked, well done). Start here for "am I cooked?", "what should I work on?", "how am I doing?" or "what\'s due this week?". The result includes howToPresent: follow it (rating, a table per course, the next 7 days, top 3 actions).',
   schema: {
     daysAhead: z.coerce.number().min(1).max(60).optional().describe("How far ahead to look for due dates (default 7)"),
     overdueDaysBack: z.coerce.number().min(0).max(60).optional().describe("How far back to look for missed work (default 14)"),

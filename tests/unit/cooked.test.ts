@@ -156,17 +156,17 @@ describe("heatScore", () => {
 });
 
 describe("presentation", () => {
-  it("draws the heat bar to the score", async () => {
-    const { heatBar } = await import("../../src/tools/cooked.js");
-    expect(heatBar(0, "raw")).toBe("Heat ░░░░░░░░░░ 0/10 · raw");
-    expect(heatBar(7, "cooked")).toBe("Heat ███████░░░ 7/10 · cooked");
-    expect(heatBar(12, "well done")).toBe("Heat ██████████ 10/10 · well done");
+  it("writes the rating", async () => {
+    const { rating } = await import("../../src/tools/cooked.js");
+    expect(rating(0, "raw")).toBe("Raw (0/10)");
+    expect(rating(2, "warming up")).toBe("Warming up (2/10)");
+    expect(rating(12, "well done")).toBe("Well done (10/10)");
   });
 
   it("writes the opening the answer starts with", async () => {
     const { opening } = await import("../../src/tools/cooked.js");
-    expect(opening(0, "raw", 0, 1, 7)).toBe("`Heat ░░░░░░░░░░ 0/10 · raw`\n\n**Not cooked.** Nothing overdue, 1 due in the next 7 days.");
-    expect(opening(7, "cooked", 2, 0, 7)).toBe("`Heat ███████░░░ 7/10 · cooked`\n\n**Cooked, but fixable.** 2 overdue, nothing due in the next 7 days.");
+    expect(opening(0, "raw", 0, 1, 7)).toBe("**Raw (0/10). Not cooked.** Nothing overdue, 1 due in the next 7 days.");
+    expect(opening(7, "cooked", 2, 0, 7)).toBe("**Cooked (7/10). Still fixable.** 2 overdue, nothing due in the next 7 days.");
   });
 
   it("gives each course one status word", async () => {
