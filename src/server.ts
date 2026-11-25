@@ -5,7 +5,6 @@ import { getAnnouncements, getMyCourses, getMyGrades } from "./tools/courses.js"
 import { getCourseContent } from "./tools/content.js";
 import { getAssignments, getUpcomingDueDates } from "./tools/deadlines.js";
 import { downloadFileTool, readFileTool } from "./tools/files.js";
-import { getLectureVideoGuide } from "./tools/guides.js";
 import type { Tool } from "./tools/types.js";
 import { VERSION } from "./version.js";
 
@@ -19,7 +18,6 @@ export const TOOLS: Tool[] = [
   getCourseContent,
   downloadFileTool,
   readFileTool,
-  getLectureVideoGuide,
 ];
 
 export function createServer(options: { instructions?: string } = {}): McpServer {

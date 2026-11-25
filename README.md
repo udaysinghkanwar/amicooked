@@ -30,13 +30,6 @@ Setup asks for your school, opens a browser window to sign in, and connects the 
 - "Summarize the week 7 slides."
 - "Anything new from my profs?"
 - "What's on the midterm?"
-- "Make a chill study video on this lecture. I know the basics and have 10 minutes."
-
-## Lecture videos
-
-The Am I Cooked skill can guide a capable local agent through making a narrated, animated lesson from selected course material. It first asks about your goal, prior knowledge, time budget and mode: **cramming**, **fully cooked** (from the foundations), **chill**, or **bird's-eye**. Shorter modes reduce scope rather than skip necessary reasoning.
-
-Video creation is optional and requires local command/file access, a renderer and narration tools in addition to the Brightspace connection. The main skill loads [the detailed workflow](skill/references/lecture-videos.md) only for video requests. Setup installs that reference alongside the skill; MCP-only clients can retrieve the same guide with `get_lecture_video_guide`. The optional `amicooked video` CLI builds provider-independent JSON lessons into locally narrated videos, captions, chapter notes and a study player; it needs local media tools. Try `amicooked video example break-even` to get a complete spec. See [setup, usage and quality checks](docs/lecture-videos.md).
 
 ## Tools
 
@@ -51,7 +44,6 @@ Video creation is optional and requires local command/file access, a renderer an
 | `get_course_content` | Modules, lectures and files |
 | `download_file` | Save a course file and read its text (PDF, Word, PowerPoint) |
 | `read_file` | Read a file you already downloaded |
-| `get_lecture_video_guide` | Load the optional lecture-video workflow and study modes |
 
 Every tool is read-only. Course tools take a code like `"3BB4"`.
 
@@ -89,7 +81,7 @@ node dist/cli.js setup
 npm run stats        # installs, npm downloads, setups, repo traffic
 ```
 
-`skill/SKILL.md` is the skill entry point; `skill/references/lecture-videos.md` holds the optional video workflow. `npm run sync:skill` embeds them separately in `src/skill.ts` and copies them (and `install/`) into `site/`. The npm package includes `skill/`, and standalone binaries carry both files for setup and on-demand guide retrieval.
+`skill/SKILL.md` is the single source for the agent skill; `npm run sync:skill` copies it (and `install/`) into `src/skill.ts` and `site/`.
 
 ## Not affiliated
 

@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-import "./validationRuntime.js";
 import { parseArgs } from "util";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { loginCommand, pairCommand, statusCommand, uninstallCommand } from "./cli/manage.js";
@@ -22,7 +21,6 @@ Usage: amicooked <command>
   status       Show what's set up (--json for machines)
   uninstall    Disconnect your AI apps (--purge also deletes your login and settings)
   mcp          Run the MCP server over stdio (AI apps run this for you)
-  video        Build, check, render or serve local study videos (video --help)
 `;
 
 async function runMcp(): Promise<number> {
@@ -35,10 +33,6 @@ async function runMcp(): Promise<number> {
 }
 
 async function main(argv: string[]): Promise<number> {
-  if (argv[0] === "video") {
-    const { videoCommand } = await import("./video/command.js");
-    return videoCommand(argv.slice(1));
-  }
   const { values, positionals } = parseArgs({
     args: argv,
     allowPositionals: true,

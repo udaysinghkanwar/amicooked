@@ -15,16 +15,14 @@
   },
   "scripts": {
     "sync:skill": "node scripts/sync-skill.mjs",
-    "build": "node scripts/sync-skill.mjs && node scripts/build-video-assets.mjs && node scripts/clean-dist.mjs && tsc",
-    "test": "vitest run && npm run test:video:native",
+    "build": "node scripts/sync-skill.mjs && tsc",
+    "test": "vitest run",
     "test:watch": "vitest",
     "prepack": "npm run build",
-    "build:bin": "node scripts/sync-skill.mjs && node scripts/build-video-assets.mjs && node scripts/build-binaries.mjs",
+    "build:bin": "node scripts/sync-skill.mjs && node scripts/build-binaries.mjs",
     "preversion": "npm test",
     "version": "node scripts/sync-version.mjs && git add src/version.ts",
-    "pretest": "npm run build",
-    "stats": "node --env-file-if-exists=.env.local scripts/stats.mjs",
-    "test:video:native": "node scripts/test-video-runtime.mjs"
+    "stats": "node --env-file-if-exists=.env.local scripts/stats.mjs"
   },
   "keywords": [
     "mcp",
@@ -48,17 +46,13 @@
   "dependencies": {
     "@clack/prompts": "^1.8.1",
     "@modelcontextprotocol/sdk": "1.32.2",
-    "cross-spawn": "^7.0.6",
     "jszip": "^3.10.1",
     "mammoth": "^1.11.0",
     "unpdf": "^1.9.1",
-    "zod": "^4.6.7"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@types/cross-spawn": "^6.0.6",
     "@types/node": "^22.20.5",
-    "gsap": "^3.15.0",
-    "katex": "^0.19.1",
     "typescript": "^5.9.3",
     "vitest": "^5.1.0"
   }

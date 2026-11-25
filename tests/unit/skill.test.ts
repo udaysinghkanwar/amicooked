@@ -1,12 +1,11 @@
-import { afterEach, describe, expect, it } from "vitest";
-import { existsSync, readFileSync, mkdtempSync, mkdirSync, writeFileSync, rmSync, readdirSync } from "fs";
-import * as os from "os";
-import * as path from "path";
+import os from "node:os";
+import path from "node:path";
+import { installSkill, skillPath } from "../../src/clients/claudeCode.js";
+import { installCodexSkill, codexSkillPath } from "../../src/clients/codex.js";
+import { describe, expect, it } from "vitest";
+import { existsSync, readFileSync, mkdtempSync, rmSync } from "fs";
 import { serverInstructions } from "../../src/instructions.js";
-import { LECTURE_VIDEO_GUIDE_MD, SKILL_MD } from "../../src/skill.js";
-import { skillIsCurrent } from "../../src/clients/skill.js";
-import { installSkill, skillPath, uninstallSkill } from "../../src/clients/claudeCode.js";
-import { installCodexSkill, codexSkillPath, uninstallCodexSkill } from "../../src/clients/codex.js";
+import { SKILL_MD } from "../../src/skill.js";
 
 const source = readFileSync("skill/SKILL.md", "utf8");
 
@@ -14,11 +13,6 @@ describe("skill", () => {
   it("is in sync everywhere it ships (run `npm run sync:skill`)", () => {
     expect(SKILL_MD).toBe(source);
     if (existsSync("site/SKILL.md")) expect(readFileSync("site/SKILL.md", "utf8")).toBe(source);
-    const guide = readFileSync("skill/references/lecture-videos.md", "utf8");
-    expect(LECTURE_VIDEO_GUIDE_MD).toBe(guide);
-    expect(readFileSync("site/references/lecture-videos.md", "utf8")).toBe(guide);
-    expect(SKILL_MD).not.toContain(guide);
-    expect(serverInstructions()).not.toContain(guide);
   });
 
   it("serves the same install scripts the repo ships", () => {
@@ -34,63 +28,19 @@ describe("skill", () => {
   });
 });
 
-const homes: string[] = [];
-afterEach(() => {
-  for (const home of homes.splice(0)) rmSync(home, { recursive: true, force: true });
-});
-
-describe.each([
-  { name: "Claude Code", install: installSkill, file: skillPath, uninstall: uninstallSkill },
-  { name: "Codex", install: installCodexSkill, file: codexSkillPath, uninstall: uninstallCodexSkill },
-])("$name skill reference", ({ install, file, uninstall }) => {
-  function fixture() {
-    const home = mkdtempSync(path.join(os.tmpdir(), "amicooked-skill-"));
-    homes.push(home);
-    const entry = file(home);
-    return { home, entry, guide: path.join(path.dirname(entry), "references", "lecture-videos.md") };
-  }
-
-  it("installs both files, is idempotent, and removes the reference on uninstall", () => {
-    const { home, entry, guide } = fixture();
-    expect(install(home)).toBe("added");
-    expect(readFileSync(entry, "utf8")).toBe(SKILL_MD);
-    expect(readFileSync(guide, "utf8")).toBe(LECTURE_VIDEO_GUIDE_MD);
-    expect(skillIsCurrent(entry)).toBe(true);
-    expect(install(home)).toBe("unchanged");
-    expect(uninstall(home)).toBe("removed");
-    expect(existsSync(guide)).toBe(false);
-  });
-
-  it("repairs a missing reference even when the main skill is current", () => {
-    const { home, entry, guide } = fixture();
-    mkdirSync(path.dirname(entry), { recursive: true });
-    writeFileSync(entry, SKILL_MD);
-    const note = path.join(path.dirname(entry), "student-notes.md");
-    writeFileSync(note, "Keep this note.");
-    expect(skillIsCurrent(entry)).toBe(false);
-    expect(install(home)).toBe("updated");
-    expect(readFileSync(guide, "utf8")).toBe(LECTURE_VIDEO_GUIDE_MD);
-    expect(readFileSync(note, "utf8")).toBe("Keep this note.");
-    expect(install(home)).toBe("unchanged");
-  });
-
-  it("updates an outdated reference independently of the main skill", () => {
-    const { home, entry, guide } = fixture();
-    install(home);
-    writeFileSync(guide, "An older workflow.");
-    expect(skillIsCurrent(entry)).toBe(false);
-    expect(install(home)).toBe("updated");
-    expect(readFileSync(guide, "utf8")).toBe(LECTURE_VIDEO_GUIDE_MD);
-    expect(skillIsCurrent(entry)).toBe(true);
-    const backups = path.join(path.dirname(entry), ".backups");
-    expect(readdirSync(backups).some(name => {
-      const saved = path.join(backups, name, "references/lecture-videos.md");
-      return existsSync(saved) && readFileSync(saved, "utf8") === "An older workflow.";
-    })).toBe(true);
-    const custom = path.join(path.dirname(entry), "my-notes.md");
-    writeFileSync(custom, "Keep my notes");
-    uninstall(home);
-    expect(readFileSync(custom, "utf8")).toBe("Keep my notes");
-    expect(existsSync(backups)).toBe(true);
-  });
+// A fresh install receives the complete workflow using the existing single-file installers.
+it("ships first-use video guidance to both local skill clients without adding MCP startup context", () => {
+  const home = mkdtempSync(path.join(os.tmpdir(), "amicooked-skill-only-"));
+  try {
+    installSkill(home);
+    installCodexSkill(home);
+    for (const file of [skillPath(home), codexSkillPath(home)]) {
+      const installed = readFileSync(file, "utf8");
+      expect(installed).toBe(source);
+      expect(installed).toContain("voice_test.py");
+      expect(installed).toContain("browser ensure");
+      expect(installed).toContain("model-files-v1.1");
+    }
+    expect(serverInstructions()).not.toContain("voice_test.py");
+  } finally { rmSync(home, { recursive: true, force: true }); }
 });

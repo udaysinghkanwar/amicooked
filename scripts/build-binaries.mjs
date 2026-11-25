@@ -21,8 +21,7 @@ for (const name of targets) {
   if (!bunTarget) throw new Error(`Unknown target ${name}. Use one of: ${Object.keys(TARGETS).join(", ")}`);
   const file = `amicooked-${name}${name.startsWith("windows") ? ".exe" : ""}`;
   console.log(`Building ${file}`);
-  const args = ["-y", "bun@1.4.4", "build", "src/cli.ts", "--compile", "--minify", `--target=${bunTarget}`, `--outfile=build/${file}`];
-  execFileSync(process.platform === "win32" ? "cmd.exe" : "npx", process.platform === "win32" ? ["/d", "/c", "npx", ...args] : args, {
+  execFileSync("npx", ["-y", "bun@1.4.4", "build", "src/cli.ts", "--compile", "--minify", `--target=${bunTarget}`, `--outfile=build/${file}`], {
     stdio: "inherit",
   });
   sums.push(`${createHash("sha256").update(readFileSync(`build/${file}`)).digest("hex")}  ${file}`);
