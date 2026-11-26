@@ -1,7 +1,7 @@
 // External downloads are intentional here. A fresh home exercises the real user setup path.
 import assert from "node:assert/strict";
-import { execFileSync, spawn } from "node:child_process";
-import { mkdtempSync, mkdirSync, existsSync, readFileSync, rmSync, writeFileSync, copyFileSync } from "node:fs";
+import { execFileSync, spawn, spawnSync } from "node:child_process";
+import { chmodSync, mkdtempSync, mkdirSync, existsSync, readdirSync, readFileSync, rmSync, writeFileSync, copyFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import os from "node:os";
 import path from "node:path";
@@ -43,7 +43,7 @@ try {
   for (const channel of ["native", "npm"]) {
     const home = path.join(root, channel);
     const data = path.join(home, ".amicooked");
-    const project = path.join(home, "lesson with spaces");
+    const project = path.join(home, "lecture workspace Ω", "a lesson project with a space and a longer directory name");
     const env = { ...process.env, HOME: home, USERPROFILE: home, CODEX_HOME: path.join(home, ".codex"),
       APPDATA: path.join(home, "AppData/Roaming"), LOCALAPPDATA: path.join(home, "AppData/Local"),
       AMICOOKED_HOME: data, AMICOOKED_NO_TELEMETRY: "1", D2L_HOST: "", D2L_LOGIN_URL: "" };
@@ -84,7 +84,7 @@ try {
       cli(...setup);
       cli("refresh-skills");
       assert.equal(existsSync(path.join(data, "video")), false);
-      assert.match(cli("features", "lecture-videos"), /run `amicooked video prepare` yourself/);
+      assert.match(cli("features", "lecture-videos"), /run `amicooked video prepare` in an authorized local shell/);
     }
     // Keep every actual download except Hugging Face. Require all four files from the public backup.
     const blockHuggingFace = `data:text/javascript,${encodeURIComponent(`
@@ -150,6 +150,13 @@ try {
       const workflow = JSON.parse(result.content[0].text);
       assert.equal(workflow.videoTools.state, "ready");
       assert.match(workflow.nextStep, /managed HyperFrames renderer, Kokoro narration and FFmpeg/);
+      assert(path.isAbsolute(workflow.launcher.command));
+      assert.equal(workflow.launcher.args.at(-1), "video");
+      // Use the reported launcher without requiring amicooked on the caller's PATH.
+      const check = execFileSync(workflow.launcher.command, [...workflow.launcher.args, "status"], {
+        env: { ...env, ...workflow.launcher.env }, cwd: root, encoding: "utf8",
+      });
+      assert.equal(JSON.parse(check).state, "ready");
     } finally {
       await client.close();
     }
@@ -162,7 +169,39 @@ try {
     writeFileSync(path.join(project, "index.html"), `<!doctype html><html><head><meta charset="utf-8"><title>Petri net</title></head>
 <body style="margin:0;background:#15222c;color:white"><main data-no-timeline data-composition-id="main" data-width="640" data-height="360" data-duration="${duration + 0.3}">
 <h1>One place, one token</h1><audio id="voice" class="clip" data-start="0" data-duration="${duration}" data-track-index="1" src="voice.wav"></audio></main></body></html>`);
-    cli("video", "run", "hyperframes", "--", "render", "--workers", "1", "--quality", "draft", "--no-best-effort", "--output", "lesson.mp4");
+    const scratch = path.join(home, "approved scratch");
+    mkdirSync(scratch);
+    const legacyCache = path.join(data, "video", "hyperframes-cache");
+    mkdirSync(legacyCache, { recursive: true });
+    const account = windows && execFileSync("whoami.exe", [], { encoding: "utf8" }).trim();
+    if (windows) execFileSync("icacls.exe", [legacyCache, "/deny", `${account}:(OI)(CI)(W)`]);
+    else chmodSync(legacyCache, 0o500);
+    try {
+      assert.throws(() => writeFileSync(path.join(legacyCache, "write-test"), "denied"));
+      const context = ["--project", project, "--scratch", scratch];
+      const fromOutside = (...args) => execFileSync(command, [...prefix, ...args], {
+        env, cwd: home, encoding: "utf8", timeout: 90_000, stdio: ["ignore", "pipe", "pipe"],
+      });
+      const denied = spawnSync(command, [...prefix, "video", "probe", "--project", project, "--scratch", legacyCache], {
+        env, cwd: home, encoding: "utf8", timeout: 15_000,
+      });
+      assert.equal(denied.status, 1);
+      assert.equal(JSON.parse(denied.stdout).stage, "scratch");
+      const probe = JSON.parse(fromOutside("video", "probe", ...context));
+      assert.equal(probe.ok, true, JSON.stringify(probe));
+      assert(probe.steps.includes("browser-check"));
+      const check = JSON.parse(fromOutside("video", "run", "hyperframes", ...context, "--", "check", "--json"));
+      assert.equal(check.ok, true, JSON.stringify(check.runtime));
+      assert.equal(check.browserSkipped, false);
+      const snapshots = path.join(project, "snapshots");
+      fromOutside("video", "run", "hyperframes", ...context, "--", "snapshot", "--review", "--output", snapshots);
+      assert(readdirSync(snapshots).some(file => /\.(png|jpg)$/.test(file)));
+      fromOutside("video", "run", "hyperframes", ...context, "--", "render", "--workers", "1", "--quality", "draft", "--no-best-effort", "--output", "lesson.mp4");
+      console.log(`${process.platform}-${process.arch} ${channel}: read-only managed cache, explicit project from another directory, browser check, snapshots and render passed.`);
+    } finally {
+      if (windows) execFileSync("icacls.exe", [legacyCache, "/remove:d", account]);
+      else chmodSync(legacyCache, 0o700);
+    }
     const streams = JSON.parse(cli("video", "run", "ffprobe", "--", "-v", "error", "-show_entries", "stream=codec_type", "-of", "json", "lesson.mp4")).streams;
     assert.deepEqual(streams.map(stream => stream.codec_type).sort(), ["audio", "video"]);
     cli("video", "run", "ffmpeg", "--", "-v", "error", "-xerror", "-i", "lesson.mp4", "-f", "null", "-");

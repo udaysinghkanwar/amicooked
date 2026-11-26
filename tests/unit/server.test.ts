@@ -42,7 +42,7 @@ describe("server", () => {
   });
 
   it.each([
-    ["ready", "Use the managed HyperFrames"],
+    ["ready", "Run video probe"],
     ["previous", "Run amicooked video prepare"],
     ["missing", "Run amicooked video prepare"],
     ["unsupported", "Offer source-linked notes"],
@@ -57,6 +57,8 @@ describe("server", () => {
       expect(result.isError).not.toBe(true);
       const data = JSON.parse((result.content as { text: string }[])[0].text);
       expect(data.videoTools).toEqual({ state, target: "fixture" });
+      expect(data.launcher.command).toBe(process.execPath);
+      expect(data.launcher.args.at(-1)).toBe("video");
       expect(data.instructions).toBe(readFileSync("skill/references/lecture-videos.md", "utf8"));
       expect(data.nextStep).toContain(nextStep);
       expect(data.execution).toContain("computer running Am I Cooked");

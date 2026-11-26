@@ -19,9 +19,19 @@ These are starting points, not quotas. Narrow the topic or split it when the exp
 
 The host needs local command execution, file access and permission to open a browser. MCP access alone, a chat subscription, or installing this skill does not provide those capabilities. If missing, offer source-linked notes/storyboard and explain which capability is needed for an MP4. Never claim an export was produced when only a script exists.
 
-Start with `get_lecture_video_workflow` when Am I Cooked tools are available. It checks the runtime on the Am I Cooked computer. You can also run `amicooked video status` locally. Use the managed renderer and narration when the tools are ready. If setup used npx, replace `amicooked` with `npx -y amicooked@0` throughout this guide. If the result is `missing` or `previous`, tell the student you're preparing the video tools and run `amicooked video prepare` yourself as part of their video request. Allow several minutes on the first run. Check status again after preparation. If an update fails and status remains `previous`, use the verified previous tools. If the host cannot run commands or download the tools, give the student the prepare command to run locally. Never install system packages to satisfy the renderer.
+Start with `get_lecture_video_workflow` when available. Its status describes the installation, and its `launcher` gives the executable, base arguments and Am I Cooked home on that computer. If the local shell cannot find `amicooked`, use that command with its arguments and environment instead of reinstalling. In PowerShell, invoke a quoted executable path with `&`. If setup used npx, `npx -y amicooked@0` is also an option.
 
-Create a fresh project in the student's chosen directory, preferably `<course>/Study Videos/<topic>/`. If your session cannot write there, render in a writable working folder and give the student the MP4. Ask them to connect the course folder if they want you to save it directly there. Then read the renderer's composition rules:
+If installation is `missing` or `previous`, run `amicooked video prepare` in an authorized local shell. If an update fails and status remains `previous`, the last verified tools can still be used. Never install system packages to satisfy the renderer.
+
+Create a project inside a folder this AI session is allowed to read and write. If the preferred course folder is unavailable, ask the student to connect it or use an accessible working folder. From the same shell the AI will use for the lesson, run:
+
+```sh
+amicooked video probe --project "<absolute project folder>"
+```
+
+The probe synthesizes a short local recording, runs the browser check, renders a tiny MP4 and decodes it. Proceed only when it returns `ok: true`. If the session cannot write to its temporary directory, create an authorized scratch folder outside the project and pass `--scratch "<absolute scratch folder>"` to the probe and every subsequent `video run` command, before the `--` separator. Do not reinstall because a ready installation failed this probe. Use its failing stage and path to request the missing capability, and preserve existing lesson files. A session without authorized local command, browser or file access can offer a source-linked lesson plan and help the student switch to a suitable local client.
+
+Then read the renderer's composition rules:
 
 ```sh
 amicooked video run hyperframes -- init "lesson" --non-interactive --skip-skills
@@ -63,11 +73,10 @@ One starter example is sufficient: for **2x + 3 = 11**, reveal **2x = 8** while 
 The host writes ordinary, editable project HTML/CSS and timed scenes, following the renderer's documented format. Use local runtime/assets; export must not fetch remote fonts/scripts. If the scaffold includes a GSAP CDN URL, download that exact script once into `assets/gsap.min.js` and change the script tag to that local path. Keep the scaffold's GSAP version; copy fonts locally when needed. For HyperFrames, every timed element has a stable id, `class="clip"`, `data-start` and `data-duration`; each composition registers a paused GSAP timeline in `window.__timelines`. Keep audio tags separate, with stable ids. Do not use timers or audio `play()` calls as the render clock. Scene sub-compositions use `<template>` and their own matching host/timeline ids. Keep all key text comfortably inside the frame, captions readable, and backgrounds high contrast.
 
 ```sh
-amicooked video run hyperframes -- check --json
-amicooked video run hyperframes -- snapshot --review
-amicooked video run hyperframes -- preview --background
-# After fixing findings and inspecting the preview:
-amicooked video run hyperframes -- render --quality delivery --output lesson.mp4
+amicooked video run hyperframes --project "<absolute project folder>" -- check --json
+amicooked video run hyperframes --project "<absolute project folder>" -- snapshot --review
+# After fixing findings and inspecting the snapshots:
+amicooked video run hyperframes --project "<absolute project folder>" -- render --quality delivery --output lesson.mp4
 amicooked video run ffprobe -- -v error -show_streams -show_format -of json lesson.mp4
 amicooked video run ffmpeg -- -v error -i lesson.mp4 -f null -
 ```
