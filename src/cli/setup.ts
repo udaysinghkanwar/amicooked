@@ -2,7 +2,7 @@ import { prepareVideoSafely } from "../video/command.js";
 import * as p from "@clack/prompts";
 import * as fs from "fs";
 import * as path from "path";
-import { stripVTControlCharacters } from "node:util";
+import { stripVTControlCharacters, styleText } from "node:util";
 import { clearTokenCache, hasActiveSession, login } from "../auth.js";
 import { detectChannel } from "../browser.js";
 import { APPS, CLAUDE_CODE_DOWNLOAD, desktopAppsSupported, isRunning, isRunningInside, open, openUrl, quit, type DesktopApp } from "../clients/apps.js";
@@ -183,13 +183,12 @@ async function missingApp(app: string, name: string, url: string): Promise<Outco
  * `write` adds our server to the app's config; `current` says whether it's already there.
  */
 async function connectDesktopApp(app: DesktopApp, label: string, write: () => void, current: () => boolean): Promise<Outcome> {
-  const ask = "Ask it: am I cooked?";
   if (current()) {
     // Already set up. Make sure it's open; no restart needed
-    if (isRunning(app)) return { app: label, next: `already set up. ${ask}`, ready: true, connected: true };
+    if (isRunning(app)) return { app: label, next: "already set up.", ready: true, connected: true };
     return open(app)
-      ? { app: label, next: `already set up, and opening now. ${ask}`, ready: true, connected: true }
-      : { app: label, next: `already set up. Open ${app.name} and ask: am I cooked?`, ready: false, connected: true };
+      ? { app: label, next: "already set up, and opening now.", ready: true, connected: true }
+      : { app: label, next: `already set up. Open ${app.name}.`, ready: false, connected: true };
   }
 
   let running = isRunning(app);
@@ -206,13 +205,13 @@ async function connectDesktopApp(app: DesktopApp, label: string, write: () => vo
     // Quitting it would save its old config over ours, so a background helper waits for the quit, writes
     // the config again and reopens the app
     return scheduleAfterQuit()
-      ? { app: label, next: `quit ${app.name} ${quitHow()}. Am I Cooked finishes setting it up and reopens it. Then ask it: am I cooked?`, ready: false, connected: true }
+      ? { app: label, next: `quit ${app.name} ${quitHow()}. Am I Cooked finishes setting it up and reopens it.`, ready: false, connected: true }
       : { app: label, next: `quit ${app.name} ${quitHow()}, then run \`amicooked setup\` again.`, ready: false, connected: false };
   }
-  if (running) return { app: label, next: `quit ${app.name} ${quitHow()} and open it again. Then ask it: am I cooked?`, ready: false, connected: true };
+  if (running) return { app: label, next: `quit ${app.name} ${quitHow()} and open it again.`, ready: false, connected: true };
   return open(app)
-    ? { app: label, next: `set up, and opening now. ${ask}`, ready: true, connected: true }
-    : { app: label, next: `set up. Open ${app.name} and ask: am I cooked?`, ready: false, connected: true };
+    ? { app: label, next: "set up, and opening now.", ready: true, connected: true }
+    : { app: label, next: `set up. Open ${app.name}.`, ready: false, connected: true };
 }
 
 async function configureClients(clients: ClientId[]): Promise<Outcome[]> {
@@ -246,7 +245,7 @@ async function configureClients(clients: ClientId[]): Promise<Outcome[]> {
       installClaudeCode(launch);
       installSkill();
       // Claude Code loads servers when a session starts, so an agent already running needs a new one
-      outcomes.push({ app: "Claude Code", next: "set up. Start a new Claude Code session and ask: am I cooked?", ready: true, connected: true });
+      outcomes.push({ app: "Claude Code", next: "set up. Start a new Claude Code session.", ready: true, connected: true });
     }
   }
 
@@ -294,7 +293,7 @@ async function configureClients(clients: ClientId[]): Promise<Outcome[]> {
         installGeminiSkill();
         p.log.success(`Gemini: MCP handshake and ${tools} tools verified.`);
         const reopen = windows ? "Start a new Antigravity CLI session" : "Reopen Gemini or start a new Antigravity CLI session";
-        outcomes.push({ app: "Gemini", ready: false, connected: true, next: `set up. ${reopen}, then ask: am I cooked?` });
+        outcomes.push({ app: "Gemini", ready: false, connected: true, next: `set up. ${reopen}.` });
       } catch (error) {
         outcomes.push({ app: "Gemini", ready: false, connected: false, failed: true, next: error instanceof Error ? error.message : String(error) });
       }
@@ -310,7 +309,7 @@ async function configureClients(clients: ClientId[]): Promise<Outcome[]> {
       const { url, pairingCode } = await installChatGPT();
       spin.stop("ChatGPT: running in the background");
       p.note(chatgptSteps(url, pairingCode), "Connect ChatGPT");
-      outcomes.push({ app: "ChatGPT on the web", next: "finish connecting with the steps above, then ask: am I cooked?", ready: false, connected: true });
+      outcomes.push({ app: "ChatGPT on the web", next: "finish connecting with the steps above.", ready: false, connected: true });
     } catch (error) {
       spin.stop(`ChatGPT: ${error instanceof Error ? error.message : error}`);
     }
@@ -348,6 +347,26 @@ export function finishMessage(outcomes: Outcome[]): { steps: string | null; outr
   return { steps, outro: outcomes.some((o) => o.ready) ? "You're set." : "Almost there. Do the step above." };
 }
 
+function setupText(color: "green" | "blue" | "bold", text: string): string {
+  return process.stdout.isTTY && process.env.NO_COLOR === undefined && process.env.TERM !== "dumb"
+    ? styleText(color, text) : text;
+}
+
+export function setupPromptNotes(connected: boolean, signedIn: boolean, videoReady: boolean): { title: string; text: string }[] {
+  if (!connected) return [];
+  const notes = [{ title: "Try asking your AI", text: [
+    "Am I cooked?",
+    "Help me get started on the assignment that's due soonest.",
+    "Which of my classes am I doing best in?",
+    "Help me review for my next exam with a 10-question quiz on the main topics.",
+  ].join("\n") }];
+  if (signedIn && videoReady) notes.push({ title: "Try asking for a lecture video", text: [
+    "Create lecture videos for the three most recent lectures in one of my courses.",
+    "Create a review video for my next exam with lots of practice questions.",
+  ].join("\n") });
+  return notes;
+}
+
 async function firstRoast(): Promise<void> {
   const spin = p.spinner();
   spin.start("Checking whether you're cooked");
@@ -383,10 +402,13 @@ export async function setup(options: SetupOptions): Promise<number> {
       p.log.step("Sign in in the browser that opens. Setup continues after it verifies access to Brightspace.");
       await login();
     }
+    let schoolConnection: string | undefined;
     if (options.login !== false) {
       const me = (await client.whoami()) as { FirstName?: string };
       const courses = await listCourses();
-      p.log.success(`Signed in${me.FirstName ? ` as ${me.FirstName}` : ""}. Found ${courses.length} course${courses.length === 1 ? "" : "s"}.`);
+      const signedIn = me.FirstName ? `Signed in as ${me.FirstName}.` : "Signed in.";
+      const found = `Found ${courses.length} course${courses.length === 1 ? "" : "s"}.`;
+      schoolConnection = `${school.lmsName} is connected. ${signedIn} ${found}`;
     }
 
     if (getConfig().uninstalled) writeConfig({ uninstalled: undefined });
@@ -399,15 +421,25 @@ export async function setup(options: SetupOptions): Promise<number> {
     refreshSkills();
 
     // Count the setup only if an app was connected. Started now so it runs alongside the first report
-    const reported = outcomes.some((o) => o.connected) ? reportSetup(school.id) : undefined;
+    const connected = outcomes.some((o) => o.connected);
+    const reported = connected ? reportSetup(school.id) : undefined;
+    if (schoolConnection) p.log.success(setupText("green", schoolConnection));
+    const [starterNote] = setupPromptNotes(connected, options.login !== false, false);
+    if (starterNote) p.box(starterNote.text.replace("Am I cooked?", setupText("bold", "Am I cooked?")), setupText("blue", starterNote.title), {
+      width: "auto", rounded: true, formatBorder: (border) => setupText("blue", border),
+    });
 
     if (options.login !== false) await firstRoast();
 
     const { steps, outro } = finishMessage(outcomes);
     if (steps) p.note(steps, "Next");
-    p.outro(outro);
     await reported;
-    await prepareVideoSafely({ humanOutput: true });
+    const videoReady = await prepareVideoSafely({ humanOutput: true });
+    const [, videoNote] = setupPromptNotes(connected, options.login !== false, videoReady);
+    if (videoNote) p.box(videoNote.text, setupText("blue", videoNote.title), {
+      width: "auto", rounded: true, formatBorder: (border) => setupText("blue", border),
+    });
+    p.outro(outro);
     // Optional, last, and only when a person is at the keyboard: agents and --yes never sign anyone up
     if (interactive() && !options.yes && outcomes.some((o) => o.connected) && !outcomes.some((o) => o.failed)) {
       await askForEmail(school, {

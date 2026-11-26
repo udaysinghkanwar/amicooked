@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { finishMessage } from "../../src/cli/setup.js";
+import { finishMessage, setupPromptNotes } from "../../src/cli/setup.js";
 
 describe("finishMessage", () => {
   it("lists every app's next step and says done when one is ready", () => {
     const m = finishMessage([
-      { app: "Claude Desktop", next: "set up, and opening now. Ask it: am I cooked?", ready: true },
+      { app: "Claude Desktop", next: "set up, and opening now.", ready: true },
       { app: "ChatGPT app", next: "install the ChatGPT app from https://chatgpt.com/download, then run `amicooked setup` again.", ready: false },
     ]);
     expect(m.steps).toBe(
-      "Claude Desktop: set up, and opening now. Ask it: am I cooked?\nChatGPT app: install the ChatGPT app from https://chatgpt.com/download, then run `amicooked setup` again."
+      "Claude Desktop: set up, and opening now.\nChatGPT app: install the ChatGPT app from https://chatgpt.com/download, then run `amicooked setup` again."
     );
     expect(m.outro).toBe("You're set.");
   });
@@ -22,6 +22,30 @@ describe("finishMessage", () => {
     expect(m.steps).toBeNull();
     expect(m.outro).toContain("https://claude.ai/download");
     expect(m.outro).toContain("https://chatgpt.com/download");
+  });
+});
+
+describe("setupPromptNotes", () => {
+  it.each([false, true])("hides all suggestions without a connected app (video ready: %s)", (ready) => {
+    expect(setupPromptNotes(false, true, ready)).toEqual([]);
+    expect(setupPromptNotes(false, false, ready)).toEqual([]);
+  });
+
+  it("keeps starter prompts when login was skipped, without advertising video access", () => {
+    const notes = setupPromptNotes(true, false, true);
+    expect(notes.map((n) => n.title)).toEqual(["Try asking your AI"]);
+    expect(notes[0].text).toContain("Am I cooked?");
+  });
+
+  it("keeps course suggestions if video preparation was skipped or failed", () => {
+    expect(setupPromptNotes(true, true, false).map((n) => n.title)).toEqual(["Try asking your AI"]);
+  });
+
+  it("offers video prompts only with an app, verified login and ready tools", () => {
+    const notes = setupPromptNotes(true, true, true);
+    expect(notes.map((n) => n.title)).toEqual(["Try asking your AI", "Try asking for a lecture video"]);
+    expect(notes[1].text).toContain("in one of my courses");
+    expect(notes[1].text).not.toContain("[course]");
   });
 });
 

@@ -81,8 +81,8 @@ try {
     const cli = (...args) => run(...prefix, ...args);
     assert.equal(JSON.parse(cli("video", "status")).state, "missing");
     if (channel === "npm") {
-      cli(...setup, "--skip-video-deps");
-      cli(...setup);
+      assert.doesNotMatch(cli(...setup, "--skip-video-deps"), /Try asking for a lecture video/);
+      assert.doesNotMatch(cli(...setup), /Try asking for a lecture video/);
       cli("refresh-skills");
       assert.equal(existsSync(path.join(data, "video")), false);
       assert.match(cli("features", "lecture-videos"), /run `amicooked video prepare` in an authorized local shell/);
@@ -108,6 +108,7 @@ try {
     const output = channel === "npm" ? run("--import", blockHuggingFace, ...prefix, ...setup, "--with-video-deps") : cli(...setup);
     assert.match(output, /Testing a narrated video render/);
     assert.match(output, /Lecture video tools are ready/);
+    assert.doesNotMatch(output, /Try asking (?:your AI|for a lecture video)/);
     if (channel === "npm") console.log(output.split("\n").at(-1));
     assert.equal(JSON.parse(cli("video", "status")).state, "ready");
     for (const tool of ["ffmpeg", "ffprobe"]) {
