@@ -190,7 +190,7 @@ const EXCHANGES = [
     tools: ["get_course_content", "start_video_render"], note: "Week7-Graphs.pdf",
     file: "Week7-Graphs-Lecture.mp4",
     lead: "4-minute narrated recap.", text: "BFS, Dijkstra and the shortest-path example from your slides, with the path traced step by step.",
-    without: "i can’t see your lectures 💔 best i can do is a video of you cramming the night before",
+    without: "can’t see your course 💔 the only video i can make is you panicking in 4k",
   },
   {
     q: "what’s on the midterm?",
