@@ -6,13 +6,17 @@ Use this workflow only for a requested lecture/study video. Am I Cooked supplies
 
 Do this first, before choosing the lesson, asking questions or requesting folders.
 
-**Same computer?** `get_lecture_video_workflow` reports `host` (the platform of the computer running Am I Cooked, like `darwin-arm64`) and `supportedTargets`. In the shell you would use for the lesson, run `node -p "process.platform+'-'+process.arch"` (or `uname -sm`) and check that the launcher's `command` path exists there. If the platform differs, or the launcher isn't visible, your shell is a different machine (for example a chat app's Linux VM or cloud container) and cannot render this student's video. Stop and use the fallback below; do not install anything.
+**Where will you render?** `get_lecture_video_workflow` reports `host` (the platform of the computer running Am I Cooked, like `darwin-arm64`), `supportedTargets` and a `launcher`. In the shell you would use for the lesson, run `node -p "process.platform+'-'+process.arch"` (or `uname -sm`).
+
+- **Same computer:** the platform matches `host` and the launcher's `command` exists in your shell. Use the launcher.
+- **A different machine on a supported platform** (for example a chat app's cloud workspace on `linux-x64`): you can render there. Run `npx -y amicooked@0 video prepare`, then the probe below. Before starting, tell the student in one sentence that the video will be made in your workspace, not on their computer, so the lecture material is processed there. Deliver the files to them and offer to save them into their course folder.
+- **An unsupported platform** (for example a `linux-arm64` VM), or prepare or the probe fails: don't install anything else. Use the fallback below.
 
 **Fallback when you can't render:** say so in one sentence, then offer (a) source-linked notes and a scene-by-scene storyboard of the lesson now, and (b) the way to get the MP4: open Claude Code, Codex or the ChatGPT desktop app on the Am I Cooked computer and ask it to "make a lecture video" for the same lecture.
 
 The host needs local command execution, file access and permission to open a browser. MCP access alone, a chat subscription, or installing this skill does not provide those capabilities. If missing, offer source-linked notes/storyboard and explain which capability is needed for an MP4. Never claim an export was produced when only a script exists.
 
-Start with `get_lecture_video_workflow` when available. Its status describes the installation, and its `launcher` gives the executable, base arguments and Am I Cooked home on that computer. If the local shell cannot find `amicooked`, use that command with its arguments and environment instead of reinstalling. In PowerShell, invoke a quoted executable path with `&`. If setup used npx, `npx -y amicooked@0` is also an option.
+Start with `get_lecture_video_workflow` when available. Its status describes the installation, and its `launcher` gives the executable, base arguments and Am I Cooked home on that computer. On the same computer, if the shell cannot find `amicooked`, use that command with its arguments and environment instead of reinstalling. In PowerShell, invoke a quoted executable path with `&`. If setup used npx, `npx -y amicooked@0` is also an option.
 
 If installation is `missing` or `previous`, run `amicooked video prepare` in an authorized local shell. If an update fails and status remains `previous`, the last verified tools can still be used. Never install system packages to satisfy the renderer.
 
