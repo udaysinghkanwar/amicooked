@@ -1,4 +1,4 @@
-import { clearTokenCache, getToken } from "./auth.js";
+import { clearTokenCache, getApiHeaders, WHOAMI_PATH } from "./auth.js";
 import { getSchool } from "./config.js";
 import { API_VERSIONS } from "./schools.js";
 
@@ -42,23 +42,43 @@ export class D2LClient {
       // A 401 means the token was rejected (e.g. expired or revoked early):
       // drop it, log in again, and retry once
       for (let attempt = 1; attempt <= 2; attempt++) {
-        const token = await getToken();
+        const headers = await getApiHeaders();
         response = await fetch(url, {
           method,
-          headers: { Authorization: `Bearer ${token}` },
+          headers,
+          redirect: "manual",
           signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
         });
-        if (response.status !== 401 || attempt === 2) break;
+        if (attempt === 2) break;
+        const cookieRejected = "Cookie" in headers && response.status === 403 &&
+          (path === WHOAMI_PATH || await this.cookieSessionRejected(url, headers));
+        if (response.status !== 401 && !cookieRejected) break;
+        await response.body?.cancel();
         clearTokenCache();
       }
       if (!response.ok) {
-        const text = (await response.text()).slice(0, 300);
+        await response.body?.cancel();
         // Expected misses (a final grade that isn't released yet) are normal, so this only logs when asked
         if (process.env.AMICOOKED_DEBUG) console.error(`[api] ${method} ${path} -> ${response.status}`);
-        throw new D2LApiError(response.status, `D2L API error ${response.status}: ${text}`);
+        throw new D2LApiError(response.status, `D2L API error ${response.status}`);
       }
       return (await response.json()) as T;
     });
+  }
+
+  private async cookieSessionRejected(url: string, headers: { Cookie: string }): Promise<boolean> {
+    // An unreleased grade can also return 403. Reauthenticate only if whoami is denied.
+    try {
+      const response = await fetch(new URL(WHOAMI_PATH, url), {
+        headers,
+        redirect: "manual",
+        signal: AbortSignal.timeout(5000),
+      });
+      await response.body?.cancel();
+      return response.status === 401 || response.status === 403;
+    } catch {
+      return false;
+    }
   }
 
   get<T>(path: string): Promise<T> {
@@ -97,7 +117,7 @@ export class D2LClient {
 
   // User and course info
   whoami() {
-    return this.get(`/d2l/api/lp/${LP}/users/whoami`);
+    return this.get(WHOAMI_PATH);
   }
 
   getCourse(orgUnitId: number) {

@@ -351,7 +351,7 @@ export async function setup(options: SetupOptions): Promise<number> {
     writeConfig({ school, browser, ...(options.prepareVideo === undefined ? {} : { prepareVideo: options.prepareVideo }) });
 
     if (options.login !== false && (schoolChanged || !hasActiveSession())) {
-      p.log.step("A browser window is opening. Sign in to your school there; this window waits for you.");
+      p.log.step("Sign in in the browser that opens. Setup continues after it verifies access to Brightspace.");
       await login();
     }
     if (options.login !== false) {

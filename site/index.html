@@ -75,12 +75,16 @@
         <div class="tab-panel" role="tabpanel" id="os-agent-panel" aria-labelledby="os-agent" hidden>
           <div class="cmd cmd-prompt">
             <code id="agent-prompt">Set up Am I Cooked for me. Ask which school I go to, and never ask for my password.
+
 If you can run commands on my computer, run the installer for my system:
 • Windows (PowerShell): irm https://<span data-domain>amicooked-mcp.vercel.app</span>/install.ps1 | iex
 • macOS or Linux: curl -fsSL https://<span data-domain>amicooked-mcp.vercel.app</span>/install.sh | sh
-• Or, with Node 22+: npx -y amicooked@0 setup
-Full instructions: https://<span data-domain>amicooked-mcp.vercel.app</span>/SKILL.md (copy on GitHub: github.com/udaysinghkanwar/amicooked/blob/main/skill/SKILL.md)
-If you can't run commands here, tell me to paste the command for my system into PowerShell or Terminal myself.</code>
+• With Node.js 22+: npx -y amicooked@0 setup
+
+Setup guide: https://<span data-domain>amicooked-mcp.vercel.app</span>/references/setup.md
+GitHub copy: https://github.com/udaysinghkanwar/amicooked/blob/main/skill/references/setup.md
+
+If you can't run commands on my computer, give me the matching command to paste into Terminal or PowerShell.</code>
             <code id="agent-prompt-update" hidden>Update Am I Cooked using https://<span data-domain>amicooked-mcp.vercel.app</span>/references/updates.md. Use the command that matches how I installed it. If you can't run commands on my computer, give me that command.</code>
             <button class="icon-button" type="button" data-copy="agent-prompt" aria-label="Copy the setup prompt for your AI agent">
               <svg class="i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i-check" aria-hidden="true"><use href="#i-check"/></svg>
