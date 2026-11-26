@@ -23,7 +23,7 @@ const HELP = `Am I Cooked ${VERSION}: ask your AI about your D2L Brightspace cou
 Usage: amicooked <command>
 
   setup        Pick your school, sign in, and connect your AI apps
-               --school <id|url>       e.g. mcmaster, or the URL you log in through
+               --school <name|id|url>  e.g. "Dalhousie University", mcmaster, or a portal URL
                --clients <list>        desktop,code,chatgpt-desktop,gemini
                --yes                   accept the detected apps without asking
                --skill-dir <folder>    install full skill for another local AI client

@@ -1,0 +1,61 @@
+import type { School } from "./config.js";
+
+/** Ontario Brightspace institutions. API checks are not proof of a successful student login.
+ * Board portal sources and verification: docs/research/ontario-school-board-portals-2026-11-26.md.
+ */
+export const PRESETS: Array<School & { aliases?: string[] }> = [
+  { id: "mcmaster", name: "McMaster University", lmsName: "Avenue to Learn", host: "avenue.cllmcmaster.ca", loginUrl: "https://avenue.mcmaster.ca/login.php" },
+  { id: "waterloo", name: "University of Waterloo", lmsName: "LEARN", host: "learn.uwaterloo.ca" },
+  { id: "western", name: "Western University", lmsName: "OWL Brightspace", host: "westernu.brightspace.com" },
+  { id: "queens", name: "Queen's University", lmsName: "onQ", host: "onq.queensu.ca" },
+  { id: "guelph", name: "University of Guelph", lmsName: "CourseLink", host: "courselink.uoguelph.ca" },
+  { id: "laurier", name: "Wilfrid Laurier University", lmsName: "MyLearningSpace", host: "mylearningspace.wlu.ca" },
+  { id: "tmu", name: "Toronto Metropolitan University", lmsName: "D2L Brightspace", host: "courses.torontomu.ca" },
+  { id: "uottawa", name: "University of Ottawa", lmsName: "Brightspace", host: "uottawa.brightspace.com" },
+  { id: "carleton", name: "Carleton University", lmsName: "Brightspace", host: "brightspace.carleton.ca" },
+  { id: "brock", name: "Brock University", lmsName: "Brightspace", host: "brightspace.brocku.ca" },
+  { id: "windsor", name: "University of Windsor", lmsName: "Brightspace", host: "brightspace.uwindsor.ca" },
+  { id: "laurentian", name: "Laurentian University", lmsName: "D2L", host: "d2l.laurentian.ca" },
+  { id: "lakehead", name: "Lakehead University", lmsName: "myCourseLink", host: "mycourselink.lakeheadu.ca" },
+
+  // Greater Toronto Area: English public/Catholic boards and the two French-language boards.
+  { id: "tdsb", name: "Toronto District School Board", aliases: ["Toronto DSB"], lmsName: "Brightspace", host: "tdsb.elearningontario.ca", loginUrl: "https://tdsb.elearningontario.ca/d2l/login" },
+  { id: "tcdsb", name: "Toronto Catholic District School Board", aliases: ["Toronto CDSB"], lmsName: "Brightspace", host: "tcdsb.elearningontario.ca", loginUrl: "https://tcdsb.elearningontario.ca/d2l/login" },
+  { id: "pdsb", name: "Peel District School Board", aliases: ["Peel DSB"], lmsName: "Brightspace", host: "pdsb.elearningontario.ca", loginUrl: "https://pdsb.elearningontario.ca/d2l/login" },
+  { id: "dpcdsb", name: "Dufferin-Peel Catholic District School Board", aliases: ["Dufferin-Peel CDSB", "Dufferin Peel Catholic District School Board"], lmsName: "Brightspace", host: "dpcdsb.elearningontario.ca", loginUrl: "https://dpcdsb.elearningontario.ca/d2l/login" },
+  { id: "yrdsb", name: "York Region District School Board", aliases: ["York Region DSB"], lmsName: "Brightspace", host: "yrdsb.elearningontario.ca", loginUrl: "https://yrdsb.elearningontario.ca/d2l/login" },
+  { id: "ycdsb", name: "York Catholic District School Board", aliases: ["York CDSB"], lmsName: "Brightspace", host: "ycdsb.elearningontario.ca", loginUrl: "https://ycdsb.elearningontario.ca/d2l/login" },
+  { id: "ddsb", name: "Durham District School Board", aliases: ["Durham DSB"], lmsName: "Brightspace", host: "durham.elearningontario.ca", loginUrl: "https://durham.elearningontario.ca/d2l/login" },
+  { id: "dcdsb", name: "Durham Catholic District School Board", aliases: ["Durham CDSB"], lmsName: "Brightspace", host: "durhamrc.elearningontario.ca", loginUrl: "https://durhamrc.elearningontario.ca/d2l/login" },
+  { id: "hdsb", name: "Halton District School Board", aliases: ["Halton DSB"], lmsName: "Brightspace", host: "hdsb.elearningontario.ca", loginUrl: "https://hdsb.elearningontario.ca/d2l/login" },
+  { id: "hcdsb", name: "Halton Catholic District School Board", lmsName: "Brightspace", host: "hcdsb.elearningontario.ca", loginUrl: "https://hcdsb.elearningontario.ca/d2l/login" },
+  { id: "viamonde", name: "Conseil scolaire Viamonde", aliases: ["CSViamonde"], lmsName: "EAV / Brightspace", host: "csv.apprentissageelectroniqueontario.ca", loginUrl: "https://csv.apprentissageelectroniqueontario.ca/d2l/login" },
+  { id: "monavenir", name: "Conseil scolaire catholique MonAvenir", aliases: ["CSC MonAvenir"], lmsName: "EAV / Brightspace", host: "cscmonavenir.apprentissageelectroniqueontario.ca", loginUrl: "https://cscmonavenir.apprentissageelectroniqueontario.ca/d2l/login" },
+
+  // Other major Ontario centres: Hamilton, Ottawa, Waterloo, London, Windsor, Niagara,
+  // Barrie/Simcoe, Kingston, Guelph/Wellington, Thunder Bay and Sudbury.
+  { id: "hwdsb", name: "Hamilton-Wentworth District School Board", lmsName: "The Hub / Brightspace", host: "hwdsb.elearningontario.ca", loginUrl: "https://hwdsb.elearningontario.ca/d2l/login" },
+  { id: "hwcdsb", name: "Hamilton-Wentworth Catholic District School Board", aliases: ["Hamilton-Wentworth CDSB"], lmsName: "Brightspace", host: "hwcdsb.elearningontario.ca", loginUrl: "https://hwcdsb.elearningontario.ca/d2l/login" },
+  { id: "ocdsb", name: "Ottawa-Carleton District School Board", aliases: ["Ottawa-Carleton DSB"], lmsName: "Brightspace", host: "ocdsb.elearningontario.ca", loginUrl: "https://ocdsb.elearningontario.ca/d2l/login" },
+  { id: "ocsb", name: "Ottawa Catholic School Board", lmsName: "Brightspace", host: "ocsb.elearningontario.ca", loginUrl: "https://ocsb.elearningontario.ca/d2l/login" },
+  { id: "cepeo", name: "Conseil des écoles publiques de l'Est de l'Ontario", lmsName: "EAV / Brightspace", host: "cepeo.apprentissageelectroniqueontario.ca", loginUrl: "https://cepeo.apprentissageelectroniqueontario.ca/d2l/login" },
+  { id: "cecce", name: "Conseil des écoles catholiques du Centre-Est", aliases: ["Conseil des écoles catholiques du centre-Est de l'Ontario"], lmsName: "EAV / Brightspace", host: "cecce.apprentissageelectroniqueontario.ca", loginUrl: "https://cecce.apprentissageelectroniqueontario.ca/d2l/login" },
+  { id: "wrdsb", name: "Waterloo Region District School Board", aliases: ["Waterloo Region DSB"], lmsName: "Brightspace", host: "wrdsb.elearningontario.ca", loginUrl: "https://wrdsb.elearningontario.ca/d2l/login" },
+  { id: "wcdsb", name: "Waterloo Catholic District School Board", aliases: ["Waterloo CDSB"], lmsName: "Brightspace", host: "wcdsb.elearningontario.ca", loginUrl: "https://wcdsb.elearningontario.ca/d2l/login" },
+  { id: "tvdsb", name: "Thames Valley District School Board", aliases: ["Thames Valley DSB"], lmsName: "Brightspace", host: "tvdsb.elearningontario.ca", loginUrl: "https://tvdsb.elearningontario.ca/d2l/login" },
+  { id: "ldcsb", name: "London District Catholic School Board", lmsName: "Brightspace", host: "ldcsb.elearningontario.ca", loginUrl: "https://ldcsb.elearningontario.ca/d2l/login" },
+  { id: "gecdsb", name: "Greater Essex County District School Board", aliases: ["Greater Essex County DSB"], lmsName: "Brightspace", host: "gecdsb.elearningontario.ca", loginUrl: "https://gecdsb.elearningontario.ca/d2l/login" },
+  { id: "wecdsb", name: "Windsor-Essex Catholic District School Board", aliases: ["Windsor-Essex CDSB"], lmsName: "Brightspace", host: "wecdsb.elearningontario.ca", loginUrl: "https://wecdsb.elearningontario.ca/d2l/login" },
+  { id: "dsbn", name: "District School Board of Niagara", aliases: ["DSB of Niagara"], lmsName: "Brightspace", host: "dsbn.elearningontario.ca", loginUrl: "https://dsbn.elearningontario.ca/d2l/login" },
+  { id: "ncdsb", name: "Niagara Catholic District School Board", aliases: ["Niagara CDSB", "Niagara Catholic"], lmsName: "Brightspace", host: "niagaracatholic.elearningontario.ca", loginUrl: "https://niagaracatholic.elearningontario.ca/d2l/login" },
+  { id: "scdsb", name: "Simcoe County District School Board", aliases: ["Simcoe County DSB"], lmsName: "Brightspace", host: "scdsb.elearningontario.ca", loginUrl: "https://scdsb.elearningontario.ca/d2l/login" },
+  { id: "smcdsb", name: "Simcoe Muskoka Catholic District School Board", aliases: ["Simcoe Muskoka CDSB"], lmsName: "Brightspace", host: "smcdsb.elearningontario.ca", loginUrl: "https://smcdsb.elearningontario.ca/d2l/login" },
+  { id: "ldsb", name: "Limestone District School Board", aliases: ["Limestone DSB"], lmsName: "Brightspace", host: "ldsb.elearningontario.ca", loginUrl: "https://ldsb.elearningontario.ca/d2l/login" },
+  { id: "alcdsb", name: "Algonquin and Lakeshore Catholic District School Board", aliases: ["Algonquin and Lakeshore CDSB"], lmsName: "Brightspace", host: "alcdsb.elearningontario.ca", loginUrl: "https://alcdsb.elearningontario.ca/d2l/login" },
+  { id: "ugdsb", name: "Upper Grand District School Board", aliases: ["Upper Grand DSB"], lmsName: "Brightspace", host: "ugdsb.elearningontario.ca", loginUrl: "https://ugdsb.elearningontario.ca/d2l/login" },
+  { id: "welcdsb", name: "Wellington Catholic District School Board", aliases: ["Wellington CDSB"], lmsName: "Brightspace", host: "welcdsb.elearningontario.ca", loginUrl: "https://welcdsb.elearningontario.ca/d2l/login" },
+  { id: "lakehead-dsb", name: "Lakehead District School Board", aliases: ["Lakehead DSB", "Lakehead Public Schools"], lmsName: "Brightspace", host: "lhbe.elearningontario.ca", loginUrl: "https://lhbe.elearningontario.ca/d2l/login" },
+  { id: "tbcdsb", name: "Thunder Bay Catholic District School Board", aliases: ["Thunder Bay CDSB"], lmsName: "Brightspace", host: "tbcdsb.elearningontario.ca", loginUrl: "https://tbcdsb.elearningontario.ca/d2l/login" },
+  { id: "rainbow", name: "Rainbow District School Board", aliases: ["RDSB"], lmsName: "Brightspace", host: "rdsb.elearningontario.ca", loginUrl: "https://rdsb.elearningontario.ca/d2l/login" },
+  { id: "sudbury-cdsb", name: "Sudbury Catholic District School Board", aliases: ["Sudbury CDSB", "SRCDSB"], lmsName: "Brightspace", host: "srcdsb.elearningontario.ca", loginUrl: "https://srcdsb.elearningontario.ca/d2l/login" },
+];

@@ -20,7 +20,7 @@ import { selfCommand } from "../clients/self.js";
 import { client } from "../client.js";
 import { getConfig, writeConfig, type School } from "../config.js";
 import { listCourses } from "../courseResolver.js";
-import { detectSchool, findPreset, PRESETS } from "../schools.js";
+import { AmbiguousSchoolError, findPreset, PRESETS, resolveSchool, resolveSchoolMatch } from "../schools.js";
 import { amICooked } from "../tools/cooked.js";
 import { reportSetup } from "../telemetry.js";
 
@@ -57,44 +57,72 @@ function presetList(): string {
   return PRESETS.map((s) => `  ${s.id.padEnd(11)} ${s.name} (${s.lmsName})`).join("\n");
 }
 
-async function chooseSchool(flag: string | undefined): Promise<School> {
-  if (flag) return findPreset(flag) ?? (await detectSchool(flag));
+export async function chooseSchool(flag: string | undefined): Promise<School> {
   const current = getConfig().school;
 
-  if (!interactive()) {
+  if (!flag && !interactive()) {
     if (current) return current;
     throw new SetupStop(
-      `Which school? Ask the student, then run setup again with --school <id> or --school <the URL they log in through>.\n\nPresets:\n${presetList()}`,
+      `Which school? Ask the student, then run setup again with --school "School Name" or --school <the URL they log in through>.\n\nPresets:\n${presetList()}`,
       NEEDS_INPUT
     );
   }
 
-  const choice = await p.select({
-    message: "Which school do you go to?",
-    initialValue: current?.id === "custom" ? "other" : current?.id,
-    options: [
-      ...PRESETS.map((s) => ({ value: s.id, label: s.name, hint: s.lmsName })),
-      { value: "other", label: "Somewhere else", hint: "paste the URL you log in through" },
-    ],
-  });
-  if (p.isCancel(choice)) throw new SetupStop("Setup cancelled.");
-  if (choice !== "other") return findPreset(choice)!;
+  if (!flag) {
+    const choice = await p.select({
+      message: "Which school do you go to?",
+      initialValue: current?.id === "custom" ? "other" : current?.id,
+      options: [
+        ...PRESETS.map((s) => ({ value: s.id, label: s.name, hint: s.lmsName })),
+        { value: "other", label: "Somewhere else", hint: "search by school name or paste a portal URL" },
+      ],
+    });
+    if (p.isCancel(choice)) throw new SetupStop("Setup cancelled.");
+    if (choice !== "other") return findPreset(choice)!;
+  }
 
-  const url = await p.text({
-    message: "Paste the web address you use to log in to your courses",
-    placeholder: "https://learn.myschool.edu",
-    validate: (v) => (v?.trim() ? undefined : "Paste a URL"),
-  });
-  if (p.isCancel(url)) throw new SetupStop("Setup cancelled.");
-  const spin = p.spinner();
-  spin.start("Finding your school's Brightspace");
-  try {
-    const school = await detectSchool(url);
-    spin.stop(`Found ${school.host}`);
-    return school;
-  } catch (error) {
-    spin.stop("Couldn't find it");
-    throw error;
+  let input = flag;
+  while (true) {
+    if (!input) {
+      const answer = await p.text({
+        message: "Enter your school name or paste your course portal URL",
+        placeholder: "Dalhousie University or https://learn.myschool.edu",
+        validate: (v) => (v?.trim() ? undefined : "Enter a school name or URL"),
+      });
+      if (p.isCancel(answer)) throw new SetupStop("Setup cancelled.");
+      input = answer;
+    }
+    const spin = p.spinner();
+    spin.start("Finding your school's Brightspace");
+    try {
+      const school = await resolveSchool(input);
+      spin.stop(`Found ${school.name} (${school.host})`);
+      return school;
+    } catch (error) {
+      spin.stop("School lookup needs attention");
+      if (error instanceof AmbiguousSchoolError) {
+        if (!interactive()) throw new SetupStop(error.message, NEEDS_INPUT);
+        const match = await p.select({
+          message: "Which school did you mean?",
+          options: [
+            ...error.matches.map((school, index) => ({ value: String(index), label: school.name, hint: new URL(school.loginUrl).host })),
+            { value: "retry", label: "Search again or paste a portal URL" },
+          ],
+        });
+        if (p.isCancel(match)) throw new SetupStop("Setup cancelled.");
+        if (match !== "retry") {
+          try {
+            return await resolveSchoolMatch(error.matches[Number(match)]);
+          } catch (validationError) {
+            p.log.warn(validationError instanceof Error ? validationError.message : String(validationError));
+          }
+        }
+      } else {
+        if (!interactive()) throw error;
+        p.log.warn(error instanceof Error ? error.message : String(error));
+      }
+      input = undefined;
+    }
   }
 }
 

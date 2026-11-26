@@ -4,7 +4,11 @@
 // Must match the preset ids in src/schools.ts; a unit test checks this.
 export const SCHOOLS = [
   "mcmaster", "waterloo", "western", "queens", "guelph", "laurier", "tmu",
-  "uottawa", "carleton", "brock", "windsor", "laurentian", "lakehead", "custom",
+  "uottawa", "carleton", "brock", "windsor", "laurentian", "lakehead",
+  "tdsb", "tcdsb", "pdsb", "dpcdsb", "yrdsb", "ycdsb", "ddsb", "dcdsb", "hdsb", "hcdsb", "viamonde", "monavenir",
+  "hwdsb", "hwcdsb", "ocdsb", "ocsb", "cepeo", "cecce", "wrdsb", "wcdsb", "tvdsb", "ldcsb", "gecdsb", "wecdsb",
+  "dsbn", "ncdsb", "scdsb", "smcdsb", "ldsb", "alcdsb", "ugdsb", "welcdsb", "lakehead-dsb", "tbcdsb", "rainbow", "sudbury-cdsb",
+  "custom",
 ];
 export const PLATFORMS = ["darwin-arm64", "darwin-x64", "linux-x64", "linux-arm64", "win32-x64", "win32-arm64"];
 
