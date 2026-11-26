@@ -10,10 +10,11 @@ import { renderSlides } from "./slides.js";
 // A render runs as two processes of the same Am I Cooked launcher, so minutes of work never block a tool call and
 // a crash can't take the server down:
 //
-// - `video render-lesson` is a detached supervisor. It owns job.json while it runs, writes a heartbeat, fetches
-//   missing slide tools, and stops its own renderer child at the deadline. Because it holds that child's handle,
+// - `video render-lesson` is a detached supervisor. It owns job.json while it runs, writes a heartbeat and
+//   stops its own renderer child at the deadline. Because it holds that child's handle,
 //   the PID it stops can't belong to anything else.
-// - `video render-lesson-work` does the rendering and prints its result.
+// - `video render-lesson-work` fetches missing slide tools, renders and prints its result. Preparation runs
+//   blocking installs, so it lives here, where the supervisor's heartbeat and deadline still cover it.
 //
 // Status only reads job.json, so any Am I Cooked process (each AI app starts its own) can report it. A heartbeat
 // that stops means the supervisor died; nothing is ever killed on the strength of a saved PID.
@@ -143,7 +144,6 @@ export function startRender(id: string, launch: Launch = launchDetached, now = D
 }
 
 export interface SupervisorDeps {
-  prepare?: typeof prepareVideo;
   /** Starts the renderer child. Its stdout carries the result as JSON. */
   work?: (id: string) => ChildProcess;
   stop?: (pid: number) => void;
@@ -159,7 +159,7 @@ const startWork = (id: string): ChildProcess => {
 
 /** The hidden `video render-lesson` command: the supervisor for one job. */
 export async function renderLessonCommand(id: string, jobId: string, deps: SupervisorDeps = {}): Promise<number> {
-  const { prepare = prepareVideo, work = startWork, stop = stopTree } = deps;
+  const { work = startWork, stop = stopTree } = deps;
   const lesson = getLesson(id);
   const job = readJob(lesson.folder);
   if (!job || job.jobId !== jobId || job.state !== "running") return 1;
@@ -185,10 +185,6 @@ export async function renderLessonCommand(id: string, jobId: string, deps: Super
   });
   const render = (async () => {
     try {
-      // A chat with no shell can't run video prepare, so fetch the narrated slide tools here when they're missing
-      const status = videoStatus();
-      if (status.state !== "ready" && status.slidesState !== "ready") await prepare(console.error, true);
-      if (finished) return 1;
       child = work(id);
       let stdout = "";
       child.stdout?.on("data", chunk => { stdout += chunk; });
@@ -213,9 +209,12 @@ export async function renderLessonCommand(id: string, jobId: string, deps: Super
   }
 }
 
-/** The hidden `video render-lesson-work` command: checks the lesson again and renders it. */
-export function renderLessonWork(id: string): number {
+/** The hidden `video render-lesson-work` command: prepares the slide tools if needed, checks the lesson again and renders it. */
+export async function renderLessonWork(id: string, prepare = prepareVideo): Promise<number> {
   const lesson = getLesson(id);
+  // A chat with no shell can't run video prepare, so fetch the narrated slide tools here when they're missing
+  const status = videoStatus();
+  if (status.state !== "ready" && status.slidesState !== "ready") await prepare(console.error, true);
   checkLessonFiles(lesson.folder);
   const result = renderSlides(lesson.folder);
   console.log(JSON.stringify({ output: result.output, slides: result.slides }));
