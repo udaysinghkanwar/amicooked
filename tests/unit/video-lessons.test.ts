@@ -6,7 +6,7 @@ import { reloadConfig } from "../../src/config.js";
 import { EventEmitter } from "node:events";
 import { PassThrough } from "node:stream";
 import { checkLessonFiles, createLesson, getLesson, LIMITS, unsafeContent, writeLessonFile } from "../../src/video/lessons.js";
-import { RENDER_LIMIT_MS, renderLessonCommand, renderLessonWork, renderStatus, startRender } from "../../src/video/jobs.js";
+import { animationDeadline, RENDER_LIMIT_MS, renderLessonCommand, renderLessonWork, renderStatus, startRender } from "../../src/video/jobs.js";
 
 let home: string;
 beforeEach(() => {
@@ -265,5 +265,14 @@ describe("the renderer", () => {
     const prepare = vi.fn(async () => { throw new Error("Couldn't download the voice model."); });
     await expect(renderLessonWork(id, prepare as never)).rejects.toThrow("voice model");
     expect(prepare).toHaveBeenCalledWith(expect.any(Function), true);
+  });
+});
+
+describe("the HyperFrames time budget", () => {
+  it("leaves the slide fallback time to narrate every scene before the job deadline", () => {
+    const deadline = Date.parse("2026-01-01T00:30:00Z");
+    expect(deadline - animationDeadline(deadline, 3)).toBe(2 * 60_000 + 3 * 45_000);
+    // A long lesson still gets a HyperFrames attempt within the 30-minute limit
+    expect(deadline - animationDeadline(deadline, 100)).toBe(15 * 60_000);
   });
 });

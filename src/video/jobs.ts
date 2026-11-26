@@ -5,7 +5,7 @@ import path from "node:path";
 import { selfCommand } from "../clients/self.js";
 import { checkLessonFiles, getLesson, lessonsRoot } from "./lessons.js";
 import { prepareVideo, probeVideo, videoStatus } from "./runtime.js";
-import { renderSlides } from "./slides.js";
+import { readSlideStoryboard, renderSlides } from "./slides.js";
 import { renderAnimatedLesson } from "./lesson-animation.js";
 
 // A render runs as two processes of the same Am I Cooked launcher, so minutes of work never block a tool call and
@@ -213,6 +213,14 @@ export async function renderLessonCommand(id: string, jobId: string, deps: Super
   }
 }
 
+/**
+ * When HyperFrames must stop so narrated slides can still finish before the job deadline: a fixed reserve plus time
+ * per scene (slides narrate every scene again), capped so long lessons still get a HyperFrames attempt.
+ */
+export function animationDeadline(deadline: number, scenes: number): number {
+  return deadline - Math.min(15 * 60_000, 2 * 60_000 + scenes * 45_000);
+}
+
 /** The hidden `video render-lesson-work` command: prepares the slide tools if needed, checks the lesson again and renders it. */
 export async function renderLessonWork(id: string, prepare = prepareVideo): Promise<number> {
   const lesson = getLesson(id);
@@ -221,9 +229,11 @@ export async function renderLessonWork(id: string, prepare = prepareVideo): Prom
   if (status.state !== "ready" && status.slidesState !== "ready") await prepare(console.error, true);
   checkLessonFiles(lesson.folder);
   let result: LessonRender | undefined;
-  if (status.state === "ready" && probeVideo(lesson.folder).ok) {
+  const job = readJob(lesson.folder);
+  const until = animationDeadline(job ? Date.parse(job.deadline) : Date.now() + RENDER_LIMIT_MS, readSlideStoryboard(lesson.folder).length);
+  if (status.state === "ready" && Date.now() < until && probeVideo(lesson.folder).ok) {
     try {
-      result = { ...renderAnimatedLesson(lesson.folder), renderer: "hyperframes" };
+      result = { ...renderAnimatedLesson(lesson.folder, until), renderer: "hyperframes" };
     } catch (error) {
       console.error(`HyperFrames could not finish; using narrated slides. ${(error as Error).message}`);
     }
