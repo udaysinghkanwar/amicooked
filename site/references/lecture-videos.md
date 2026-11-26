@@ -10,7 +10,8 @@ Do this first, before choosing the lesson, asking questions or requesting folder
 
 - **Same computer:** the platform matches `host` and the launcher's `command` exists in your shell. Use the launcher.
 - **A different machine on a supported platform** (for example a chat app's cloud workspace on `linux-x64`): you can render there. Run `npx -y amicooked@0 video prepare`, then the probe below. Before starting, tell the student in one sentence that the video will be made in your workspace, not on their computer, so the lecture material is processed there. Deliver the files to them and offer to save them into their course folder.
-- **An unsupported platform** (for example a `linux-arm64` VM), or prepare or the probe fails: don't install anything else. Use the fallback below.
+- **An unsupported platform** (for example a `linux-arm64` VM), or prepare fails: don't install anything else. Use the fallback below.
+- **The probe fails:** follow its `reason` and `nextStep`, which may point to another render path. Use the fallback below only once every render path has failed.
 
 **Fallback when you can't render:** say so in one sentence, then offer (a) source-linked notes and a scene-by-scene storyboard of the lesson now, and (b) the way to get the MP4: open Claude Code, Codex or the ChatGPT desktop app on the Am I Cooked computer and ask it to "make a lecture video" for the same lecture.
 
