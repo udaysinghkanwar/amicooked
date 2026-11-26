@@ -2,6 +2,7 @@ import { prepareVideoSafely } from "../video/command.js";
 import * as p from "@clack/prompts";
 import * as fs from "fs";
 import * as path from "path";
+import { stripVTControlCharacters } from "node:util";
 import { hasActiveSession, login } from "../auth.js";
 import { detectChannel } from "../browser.js";
 import { APPS, CLAUDE_CODE_DOWNLOAD, desktopAppsSupported, isRunning, isRunningInside, open, openUrl, quit, type DesktopApp } from "../clients/apps.js";
@@ -380,7 +381,7 @@ export async function setup(options: SetupOptions): Promise<number> {
     return outcomes.some((o) => o.failed) ? 1 : 0;
   } catch (error) {
     const code = error instanceof SetupStop ? error.code : 1;
-    p.cancel(error instanceof Error ? error.message : String(error));
+    p.outro(stripVTControlCharacters(error instanceof Error ? error.message : String(error)));
     return code;
   }
 }
