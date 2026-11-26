@@ -185,6 +185,7 @@ try {
       }
       assert.equal(render.state, "done", JSON.stringify(render));
       assert.equal(render.slides, 2);
+      assert.equal(render.renderer, "hyperframes");
       assert.equal(realpathSync.native(path.dirname(render.output)), realpathSync.native(lesson.folder));
       const lessonStreams = JSON.parse(cli("video", "run", "ffprobe", "--",
         "-v", "error", "-show_entries", "stream=codec_type", "-of", "json", render.output)).streams;

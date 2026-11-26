@@ -4,8 +4,9 @@ import * as fs from "node:fs";
 import path from "node:path";
 import { selfCommand } from "../clients/self.js";
 import { checkLessonFiles, getLesson, lessonsRoot } from "./lessons.js";
-import { prepareVideo, videoStatus } from "./runtime.js";
+import { prepareVideo, probeVideo, videoStatus } from "./runtime.js";
 import { renderSlides } from "./slides.js";
+import { renderAnimatedLesson } from "./lesson-animation.js";
 
 // A render runs as two processes of the same Am I Cooked launcher, so minutes of work never block a tool call and
 // a crash can't take the server down:
@@ -24,6 +25,8 @@ export const HEARTBEAT_MS = 10_000;
 /** No heartbeat for this long means the supervisor is gone (it also covers a slow first start). */
 export const STALE_MS = 60_000;
 
+type LessonRender = { output: string; slides: number; renderer: "hyperframes" | "slides" };
+
 export interface Job {
   jobId: string;
   state: "running" | "done" | "failed";
@@ -33,6 +36,7 @@ export interface Job {
   finishedAt?: string;
   output?: string;
   slides?: number;
+  renderer?: LessonRender["renderer"];
   error?: string;
 }
 
@@ -191,8 +195,8 @@ export async function renderLessonCommand(id: string, jobId: string, deps: Super
       const code = await new Promise<number | null>((resolve, reject) => { child!.once("error", reject); child!.once("close", resolve); });
       if (finished) return 1;
       if (code !== 0) throw new Error(`The renderer stopped with exit code ${code}. See the log for details.`);
-      const result = JSON.parse(stdout.trim().split(/\r?\n/).pop() ?? "{}") as { output?: string; slides?: number };
-      finish({ state: "done", output: result.output, slides: result.slides });
+      const result = JSON.parse(stdout.trim().split(/\r?\n/).pop() ?? "{}") as LessonRender;
+      finish({ state: "done", output: result.output, slides: result.slides, renderer: result.renderer });
       return 0;
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -216,7 +220,15 @@ export async function renderLessonWork(id: string, prepare = prepareVideo): Prom
   const status = videoStatus();
   if (status.state !== "ready" && status.slidesState !== "ready") await prepare(console.error, true);
   checkLessonFiles(lesson.folder);
-  const result = renderSlides(lesson.folder);
-  console.log(JSON.stringify({ output: result.output, slides: result.slides }));
+  let result: LessonRender | undefined;
+  if (status.state === "ready" && probeVideo(lesson.folder).ok) {
+    try {
+      result = { ...renderAnimatedLesson(lesson.folder), renderer: "hyperframes" };
+    } catch (error) {
+      console.error(`HyperFrames could not finish; using narrated slides. ${(error as Error).message}`);
+    }
+  }
+  result ??= { ...renderSlides(lesson.folder), renderer: "slides" };
+  console.log(JSON.stringify(result));
   return 0;
 }

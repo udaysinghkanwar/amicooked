@@ -48,7 +48,7 @@ export const writeVideoLessonFile: Tool = {
 export const startVideoRender: Tool = {
   name: "start_video_render",
   description:
-    "Render a lesson made with create_video_lesson into lesson.mp4 on the student's computer, using Am I Cooked's local narration and video tools. Returns immediately; check progress with get_video_render. Calling it again returns the same render.",
+    "Render a lesson made with create_video_lesson into lesson.mp4 on the student's computer, using HyperFrames when its host probe passes and animated slides otherwise. Returns immediately; check progress with get_video_render. Calling it again returns the same render.",
   schema: { lessonId: z.string() },
   annotations: { ...writes, idempotentHint: true },
   handler: async ({ lessonId }) => json(startRender(lessonId)),
@@ -59,7 +59,13 @@ export const getVideoRender: Tool = {
   description:
     "Check a render started with start_video_render. When done, returns the MP4's path on the student's computer, for them to open there. A failure includes the reason and the end of the render log.",
   schema: { lessonId: z.string() },
-  handler: async ({ lessonId }) => json(renderStatus(lessonId)),
+  handler: async ({ lessonId }) => {
+    const job = renderStatus(lessonId);
+    return json(job.state === "done" && job.renderer === "slides" ? {
+      ...job,
+      rerender: "For richer motion or transitions, rerender this lesson in local Codex, Claude Code, or Antigravity CLI where the HyperFrames probe passes.",
+    } : job);
+  },
 };
 
 export const LESSON_TOOLS = [createVideoLesson, writeVideoLessonFile, startVideoRender, getVideoRender];

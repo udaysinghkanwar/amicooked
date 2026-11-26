@@ -1,6 +1,6 @@
 # Lecture videos
 
-Use this workflow only for a requested lecture/study video. Am I Cooked supplies course material and teaching guidance; the host agent creates the lesson using an external renderer. Setup and updates prepare the local tools automatically. Prepare them when the student requests a video if they were skipped or could not be installed. An AI client with local files and commands can use every renderer. A chat that can only call Am I Cooked's tools can still make narrated slides with the lesson tools below.
+Use this workflow only for a requested lecture/study video. Am I Cooked supplies course material and teaching guidance; the host agent creates the lesson using an external renderer. Setup and updates prepare the local tools automatically. Prepare them when the student requests a video if they were skipped or could not be installed. An AI client with local files and commands can use every renderer. A chat that can only call Am I Cooked's tools can render the same lesson with the tools below.
 
 ## 1. Check capabilities before asking the student anything
 
@@ -11,19 +11,19 @@ Do this first, before choosing the lesson, asking questions or requesting folder
 - **Same computer:** the platform matches `host` and the launcher's `command` exists in your shell. Use the launcher.
 - **A different machine on a supported platform** (for example a chat app's cloud workspace on `linux-x64`): you can render there. Run `npx -y amicooked@0 video prepare`, then the probe below. Before starting, tell the student in one sentence that the video will be made in your workspace, not on their computer, so the lecture material is processed there. Deliver the files to them and offer to save them into their course folder.
 - **No shell, or an unsupported platform** (for example Claude Desktop chat, the ChatGPT desktop app's chat, Gemini, or a `linux-arm64` VM): if you can call `create_video_lesson`, use the lesson tools below. Otherwise use the fallback.
-- **Preparation fails:** if the browser download or preview listener is blocked, try `video prepare --media-only` with the same launcher. If a shared dependency is blocked or preparation still fails, use the fallback below.
+- **Preparation fails:** if the browser download or preview listener is blocked, try `video prepare --media-only` with the same launcher. If a shared dependency is blocked or preparation still fails, use the lesson tools when available, then offer the fallback below if they also fail.
 - **The probe fails:** follow its `reason` and `nextStep`, which may point to another render path. Use the fallback below only once every render path has failed.
 
 **Fallback when you can't render:** say so in one sentence, then offer (a) source-linked notes and a scene-by-scene storyboard of the lesson now, and (b) the way to get the MP4: open Claude Code, Codex or the ChatGPT desktop app on the Am I Cooked computer and ask it to "make a lecture video" for the same lecture.
 
-**Lesson tools (no shell needed):** Am I Cooked renders narrated slides on the student's computer from text you write through its tools.
+**Lesson tools (no shell needed):** Am I Cooked renders the validated storyboard on the student's computer. It chooses a built-in HyperFrames template when its host probe passes and uses animated slides otherwise.
 
 1. `create_video_lesson` with a short title. It returns a `lessonId` and the files to write.
 2. `write_video_lesson_file` for each file: one self-contained 1280×720 SVG per explanation step, a UTF-8 `.txt` narration per slide, and `slides.json` in the format shown under "Render animated slides" below. Style SVGs with attributes like `fill`, `stroke` and `font-size`, not `style` rules, and link only to their own `#ids` or embedded `data:image` values. Am I Cooked stores a cleaned copy.
 3. `start_video_render`, then call `get_video_render` every 20 to 30 seconds until it is `done` or `failed`. The first render can take a few minutes while the voice and video tools download.
-4. When done, give the student the MP4 path on their computer. If they want richer motion or transitions, offer to rerender the same lesson with HyperFrames from a local Codex, Claude Code, or Antigravity CLI session where the browser probe passes. On failure, report the `error`, fix the lesson files and call `start_video_render` again. To change a finished video, create a new lesson.
+4. When done, give the student the MP4 path on their computer. If the result includes a `rerender` note, pass it on as an optional way to get richer animation. On failure, report the `error`, fix the lesson files and call `start_video_render` again. To change a finished video, create a new lesson.
 
-For HyperFrames, the host needs local command execution and file access, plus permission to open a browser. MCP access alone, a chat subscription, or installing this skill does not provide those capabilities. If missing, offer source-linked notes/storyboard and explain which capability is needed for an MP4. Never claim an export was produced when only a script exists.
+To author a custom HyperFrames composition, the AI session needs authorized local commands, file access, and browser access. Use the lesson tools when the session cannot author or render locally. Verify the MP4 before claiming it was exported.
 
 Start with `get_lecture_video_workflow` when available. Its status describes the installation, and its `launcher` gives the executable, base arguments and Am I Cooked home on that computer. On the same computer, if the shell cannot find `amicooked`, use that command with its arguments and environment instead of reinstalling. In PowerShell, invoke a quoted executable path with `&`. If setup used npx, `npx -y amicooked@0` is also an option.
 
