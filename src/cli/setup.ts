@@ -318,7 +318,7 @@ export function finishMessage(outcomes: Outcome[]): { steps: string | null; outr
   return { steps, outro: outcomes.some((o) => o.ready) ? "You're set." : "Almost there. Do the step above." };
 }
 
-function setupText(color: "green" | "blue", text: string): string {
+function setupText(color: "green" | "blue" | "bold", text: string): string {
   return process.stdout.isTTY && process.env.NO_COLOR === undefined && process.env.TERM !== "dumb"
     ? styleText(color, text) : text;
 }
@@ -396,7 +396,7 @@ export async function setup(options: SetupOptions): Promise<number> {
     const reported = connected ? reportSetup(school.id) : undefined;
     if (schoolConnection) p.log.success(setupText("green", schoolConnection));
     const [starterNote] = setupPromptNotes(connected, options.login !== false, false);
-    if (starterNote) p.note(starterNote.text, setupText("blue", starterNote.title));
+    if (starterNote) p.note(starterNote.text.replace("Am I cooked?", setupText("bold", "Am I cooked?")), setupText("blue", starterNote.title));
 
     if (options.login !== false) await firstRoast();
 
