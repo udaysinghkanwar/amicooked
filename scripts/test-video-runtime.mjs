@@ -84,7 +84,7 @@ try {
       cli(...setup);
       cli("refresh-skills");
       assert.equal(existsSync(path.join(data, "video")), false);
-      assert.match(cli("features", "lecture-videos"), /run `amicooked video prepare` yourself/);
+      assert.match(cli("features", "lecture-videos"), /run `amicooked video prepare` in an authorized local shell/);
     }
     // Keep every actual download except Hugging Face. Require all four files from the public backup.
     const blockHuggingFace = `data:text/javascript,${encodeURIComponent(`

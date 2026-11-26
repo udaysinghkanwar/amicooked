@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import * as fs from "node:fs";
 import path from "node:path";
 import { paths, writePrivateFile } from "../config.js";
@@ -93,9 +94,17 @@ function smokeTest(tools: Tools, work: string, env: NodeJS.ProcessEnv, stage?: (
 </div></body></html>`);
   if (stage) {
     stage("browser-check");
-    const report = JSON.parse(runTool(tools.node, [tools.hyperframes, "check", "--json"], env, work));
-    if (report.ok !== true || report.browserSkipped !== false) {
-      throw new Error(report.runtime?.findings?.[0]?.message ?? "HyperFrames did not complete the browser check.");
+    const result = spawnSync(tools.node, [tools.hyperframes, "check", "--json"], {
+      env, cwd: work, encoding: "utf8", timeout: 300_000, windowsHide: true,
+    });
+    if (result.error) throw result.error;
+    let report;
+    try { report = JSON.parse(result.stdout); }
+    catch { throw new Error(result.stderr.trim().split("\n").at(-1) || "HyperFrames returned no browser check report."); }
+    if (result.status !== 0 || report.ok !== true || report.browserSkipped !== false) {
+      const errors = [...report.runtime?.findings ?? [], ...report.layout?.findings ?? []];
+      const finding = errors.find(item => item.severity === "error") ?? errors[0];
+      throw new Error(finding?.message ?? "HyperFrames did not complete the browser check.");
     }
   }
   stage?.("render");
