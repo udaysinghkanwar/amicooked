@@ -58,7 +58,7 @@ If the probe reports `reason: "local-preview-blocked"` or `reason: "slides-ready
    Use transparent SVGs or PNGs to animate a point on a graph, a token on a diagram, or a highlight over an equation. Each overlay appears at its first keyframe, moves smoothly between positions, and holds at the last. Times are seconds from the start of that slide's narration. Positions are pixels from the top-left of the 1280×720 canvas. A single keyframe reveals an element at the specified time. Add waypoints for curved paths.
 
 3. Run `amicooked video render-slides --project "<absolute project folder>"`. Add `--scratch "<absolute writable scratch folder>"` if needed. Am I Cooked narrates each slide, matches its duration to the audio, and verifies the finished `lesson.mp4`.
-4. Share the MP4 and the source references. If file or process access is blocked, preserve the prepared slides and narration and report the capability needed to finish.
+4. Share the MP4 and the source references. If the student wants richer motion or transitions, offer to rerender the same lesson with HyperFrames from a local Codex, Claude Code, or Antigravity CLI session where the browser probe passes. If file or process access is blocked, preserve the prepared slides and narration and report the capability needed to finish.
 
 For the HyperFrames workflow, read the renderer's composition rules:
 
