@@ -6,6 +6,7 @@ import { Readable, Transform } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import type { ReadableStream as NodeReadableStream } from "node:stream/web";
 import { setTimeout as delay } from "node:timers/promises";
+import type { Dispatcher } from "undici";
 import { type Download } from "./manifest.js";
 
 export const fingerprint = (value: unknown) => createHash("sha256").update(JSON.stringify(value)).digest("hex");
@@ -16,14 +17,43 @@ interface DownloadOptions {
   retryDelayMs?: number;
 }
 
+async function environmentProxy(): Promise<Dispatcher | undefined> {
+  if (process.versions.bun || !(process.env.http_proxy || process.env.HTTP_PROXY ||
+      process.env.https_proxy || process.env.HTTPS_PROXY)) return;
+  const { EnvHttpProxyAgent } = await import("undici");
+  return new EnvHttpProxyAgent();
+}
+
+function proxyRefusal(error: unknown): number | undefined {
+  // Fetch may wrap Undici's tunnel error in more than one cause.
+  for (let depth = 0; depth < 3 && error instanceof Error; depth++, error = error.cause) {
+    const match = /^Proxy response \((\d{3})\) !== 200 when HTTP Tunneling$/.exec(error.message);
+    if (match) return Number(match[1]);
+  }
+}
+
+function downloadFailure(error: unknown, proxied: boolean): string {
+  const refusal = proxied ? proxyRefusal(error) : undefined;
+  if (refusal) return `Proxy refused the connection (HTTP ${refusal}).`;
+  const cause = error instanceof Error ? error.cause ?? error : error;
+  if (proxied && cause !== error) {
+    const code = (cause as NodeJS.ErrnoException)?.code;
+    return code && /^[A-Z0-9_]+$/.test(code) ? `Network request failed (${code}).` : "Network request failed.";
+  }
+  return cause instanceof Error ? cause.message : String(cause);
+}
+
 export async function download(asset: Download, destination: string, {
-  fetcher = fetch, stallMs = 60_000, retryDelayMs = 1_000,
+  fetcher, stallMs = 60_000, retryDelayMs = 1_000,
 }: DownloadOptions = {}): Promise<void> {
   fs.mkdirSync(path.dirname(destination), { recursive: true });
   const staging = fs.mkdtempSync(path.join(path.dirname(destination), "download-"));
   const partial = path.join(staging, "partial");
   const failures: string[] = [];
+  let dispatcher: Dispatcher | undefined;
   try {
+    if (!fetcher) dispatcher = await environmentProxy();
+    const request = fetcher ?? fetch;
     for (const url of [asset.url, ...(asset.mirrors ?? [])]) {
       fs.rmSync(partial, { force: true });
       let failure: unknown;
@@ -40,7 +70,8 @@ export async function download(asset: Download, destination: string, {
         try {
           const headers: Record<string, string> = { "Accept-Encoding": "identity" };
           if (offset) headers.Range = `bytes=${offset}-`;
-          const response = await fetcher(url, { headers, signal: abort.signal });
+          const init: RequestInit & { dispatcher?: Dispatcher } = { headers, signal: abort.signal, dispatcher };
+          const response = await request(url, init);
           if (!response.ok || !response.body) {
             await response.body?.cancel();
             failure = new Error(`HTTP ${response.status}`);
@@ -78,16 +109,18 @@ export async function download(asset: Download, destination: string, {
           return;
         } catch (error) {
           failure = abort.signal.reason ?? error;
+          const refusal = dispatcher && proxyRefusal(failure);
+          if (refusal && refusal < 500 && ![408, 429].includes(refusal)) break;
         } finally {
           clearTimeout(timer);
         }
       }
-      const reason = failure instanceof Error ? failure.cause ?? failure.message : failure;
-      failures.push(`${new URL(url).hostname}: ${String(reason)}`);
+      failures.push(`${new URL(url).hostname}: ${downloadFailure(failure, !!dispatcher)}`);
     }
     throw new Error(`Could not download ${path.basename(destination)} (${failures.join("; ")}).`);
   } finally {
     fs.rmSync(staging, { recursive: true, force: true });
+    await dispatcher?.destroy();
   }
 }
 

@@ -1,6 +1,6 @@
 {
   "name": "amicooked",
-  "version": "0.1.18",
+  "version": "0.1.19",
   "description": "Ask your AI if you're cooked. A local MCP server for D2L Brightspace: grades, deadlines and announcements in Claude, ChatGPT and Gemini.",
   "type": "module",
   "bin": {
@@ -55,6 +55,7 @@
     "@xmldom/xmldom": "^0.8.15",
     "jszip": "^3.10.1",
     "mammoth": "^1.11.0",
+    "undici": "^7.30.2",
     "unpdf": "^1.9.1",
     "zod": "^4.6.7"
   },

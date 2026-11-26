@@ -73,6 +73,12 @@ export function renderSlides(directory?: string, scratchDirectory?: string, prep
       const segment = `slide-${index + 1}.mp4`;
       runTool(tools.node, ["-e", rasterize, tools.voice, image, frame], env, work);
       runTool(tools.node, [tools.voice, tools.model, narration, speech], env, work);
+      const duration = runTool(tools.ffprobe, [
+        "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", speech,
+      ], env, work);
+      if (!Number.isFinite(Number(duration)) || Number(duration) <= 0) {
+        throw new Error(`Slide ${index + 1} has no measurable narration.`);
+      }
       const layers = overlays.map(({ image, keyframes }, i) => {
         const file = path.join(work, `overlay-${i}.png`);
         runTool(tools.node, ["-e", rasterize, tools.voice, image, file, "overlay"], env, work);
@@ -89,7 +95,7 @@ export function renderSlides(directory?: string, scratchDirectory?: string, prep
         "-protocol_whitelist", "file,pipe", "-f", "wav", "-i", speech,
         ...video, "-map", `${layers.length + 1}:a`,
         "-c:v", "libx264", "-preset", "fast", "-pix_fmt", "yuv420p",
-        "-c:a", "aac", "-ar", "48000", "-ac", "1", "-shortest", segment,
+        "-c:a", "aac", "-ar", "48000", "-ac", "1", "-t", duration, segment,
       ], env, work);
       return segment;
     });
