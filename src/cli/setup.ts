@@ -373,12 +373,13 @@ export async function setup(options: SetupOptions): Promise<number> {
       p.log.step("Sign in in the browser that opens. Setup continues after it verifies access to Brightspace.");
       await login();
     }
+    let schoolConnection: string | undefined;
     if (options.login !== false) {
       const me = (await client.whoami()) as { FirstName?: string };
       const courses = await listCourses();
       const signedIn = me.FirstName ? `Signed in as ${me.FirstName}.` : "Signed in.";
       const found = `Found ${courses.length} course${courses.length === 1 ? "" : "s"}.`;
-      p.log.success(setupText("green", `${school.lmsName} is connected. ${signedIn} ${found}`));
+      schoolConnection = `${school.lmsName} is connected. ${signedIn} ${found}`;
     }
 
     if (getConfig().uninstalled) writeConfig({ uninstalled: undefined });
@@ -393,6 +394,9 @@ export async function setup(options: SetupOptions): Promise<number> {
     // Count the setup only if an app was connected. Started now so it runs alongside the first report
     const connected = outcomes.some((o) => o.connected);
     const reported = connected ? reportSetup(school.id) : undefined;
+    if (schoolConnection) p.log.success(setupText("green", schoolConnection));
+    const [starterNote] = setupPromptNotes(connected, options.login !== false, false);
+    if (starterNote) p.note(starterNote.text, setupText("blue", starterNote.title));
 
     if (options.login !== false) await firstRoast();
 
@@ -400,9 +404,8 @@ export async function setup(options: SetupOptions): Promise<number> {
     if (steps) p.note(steps, "Next");
     await reported;
     const videoReady = await prepareVideoSafely({ humanOutput: true });
-    for (const note of setupPromptNotes(connected, options.login !== false, videoReady)) {
-      p.note(note.text, setupText("blue", note.title));
-    }
+    const [, videoNote] = setupPromptNotes(connected, options.login !== false, videoReady);
+    if (videoNote) p.note(videoNote.text, setupText("blue", videoNote.title));
     p.outro(outro);
     return outcomes.some((o) => o.failed) ? 1 : 0;
   } catch (error) {
