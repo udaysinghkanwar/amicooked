@@ -3,7 +3,7 @@ import path from "node:path";
 import { z } from "zod";
 import { runTool } from "./install.js";
 import { getVideoTools, videoEnvironment } from "./runtime.js";
-import { videoProject, videoScratch } from "./workspace.js";
+import { realPath, videoProject, videoScratch } from "./workspace.js";
 
 const keyframe = z.object({ at: z.number().nonnegative(), x: z.number(), y: z.number() });
 const overlay = z.object({
@@ -28,8 +28,9 @@ function position(frames: z.infer<typeof keyframe>[], axis: "x" | "y"): string {
 
 function asset(project: string, name: string, extensions: string[]): string {
   if (path.isAbsolute(name)) throw new Error("Use relative paths for slide assets.");
-  const file = fs.realpathSync.native(path.resolve(project, name));
-  if (!file.startsWith(project + path.sep) || !extensions.includes(path.extname(file).toLowerCase()) ||
+  const file = realPath(path.resolve(project, name));
+  const relative = path.relative(project, file);
+  if (!relative || path.isAbsolute(relative) || relative.split(path.sep)[0] === ".." || !extensions.includes(path.extname(file).toLowerCase()) ||
       !fs.statSync(file).isFile()) {
     throw new Error(`Use a local ${extensions.join(" or ")} file inside the project for ${name}.`);
   }
