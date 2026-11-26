@@ -1,2 +1,2 @@
 // Must match package.json; a unit test checks this
-export const VERSION = "0.1.12";
+export const VERSION = "0.1.13";
