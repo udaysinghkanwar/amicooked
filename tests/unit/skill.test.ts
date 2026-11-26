@@ -42,6 +42,7 @@ describe("skill", () => {
   it("gives the server instructions without the setup section", () => {
     const instructions = serverInstructions();
     expect(instructions).toContain("am_i_cooked");
+    expect(instructions.split("\n").slice(0, 6).join("\n")).toMatch(/quiz a student on their slides, start with get_course_content/);
     expect(instructions).not.toContain("amicooked setup");
   });
 });
