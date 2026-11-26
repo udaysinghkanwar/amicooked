@@ -66,12 +66,7 @@ Course tools are read-only and take a code like `"3BB4"`.
 
 University presets cover McMaster, Waterloo, Western, Queen's, Guelph, Laurier, TMU, uOttawa, Carleton, Brock, Windsor, Laurentian and Lakehead.
 
-There are also 36 Ontario school-board presets, accepting full board names, common acronyms and directory names:
-
-- **GTA:** TDSB, TCDSB, Peel, Dufferin-Peel Catholic, York Region, York Catholic, Durham, Durham Catholic, Halton, Halton Catholic, Viamonde and MonAvenir.
-- **Other Ontario centres:** Hamilton, Ottawa (including CEPEO and CECCE), Waterloo Region, London/Thames Valley, Windsor/Essex, Niagara, Barrie/Simcoe, Kingston, Guelph/Wellington, Thunder Bay and Sudbury, with public and Catholic boards. See the [verified portal list and research sources](docs/research/ontario-school-board-portals-2026-11-26.md).
-
-For example, `amicooked setup --school tdsb` or `amicooked setup --school "Peel District School Board"`. These presets work without a directory search. Portal URLs and compatible Brightspace APIs were checked on November 26, 2026; student sign-in and course access are not yet tested at these boards.
+School-board presets cover the Toronto District School Board (TDSB) and the Peel District School Board, e.g. `amicooked setup --school tdsb` or `amicooked setup --school "Peel District School Board"`. Other Ontario boards on the provincial Brightspace work through “Somewhere else” by name or portal URL; see the [verified portal list and research sources](docs/research/ontario-school-board-portals-2026-11-26.md). Student sign-in and course access are not yet tested at the boards.
 
 For other schools, choose “Somewhere else” and enter a school name, or run `amicooked setup --school "Dalhousie University"`. Am I Cooked searches the public directory used by [D2L's Login Finder](https://login-finder.d2l.com/) and validates the portal's Brightspace API before opening it. If several schools match, setup asks you to pick one; automated setup lists the matches so you can retry with a full name or URL. You can always paste the URL you log in through if the school isn't listed or the directory is unavailable. School-name searches are sent to D2L. This supports Brightspace schools; it doesn't add Canvas, Moodle or Blackboard support. McMaster sign-in has been tested. Access at other schools depends on their Brightspace and sign-in configuration.
 

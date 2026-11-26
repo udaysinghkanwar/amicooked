@@ -7,13 +7,8 @@ import { VERSION } from "./version.js";
 export const SIGNUP_URL = "https://amicooked-mcp.vercel.app/api/signup";
 export const PRIVACY_URL = "https://amicooked-mcp.vercel.app/privacy";
 
-/** Id of the wording below. Change it with the wording and add it to CONSENT_VERSIONS in site/api/signup.js. */
-export const CONSENT_VERSION = "2026-11-26";
-export const CONSENT_TEXT = [
-  "Want occasional Am I Cooked update emails? Optional, for post-secondary students.",
-  "Sent by the Am I Cooked maintainers. Unsubscribe anytime. Stored in the US.",
-  `Privacy and contact: ${PRIVACY_URL}`,
-].join("\n");
+/** Id of the prompt wording below. Change it with the wording and add it to CONSENT_VERSIONS in site/api/signup.js. */
+export const CONSENT_VERSION = "2026-11-26-prompt";
 export const PROMPT = "Enter your email to stay up to date (or N/A):";
 
 const EMAIL = /^[^\s@]{1,64}@[^\s@.]+(\.[^\s@.]+)+$/;
@@ -72,7 +67,6 @@ export async function askForEmail(school: { host: string }, options: AskOptions)
     }
   };
 
-  options.say(CONSENT_TEXT);
   while (true) {
     const answer = parseEmailAnswer(await options.prompt(PROMPT));
     if ("skip" in answer) {

@@ -3,7 +3,7 @@
 // Rate limit keys are a salted SHA-256 of day + IP and expire after a day. Needs SIGNUP_SALT plus the Upstash env vars.
 
 // Prompt wordings the CLI may send. Add a new id whenever the prompt text changes, so each record proves what was shown.
-export const CONSENT_VERSIONS = ["2026-11-26"];
+export const CONSENT_VERSIONS = ["2026-11-26", "2026-11-26-prompt"];
 export const MAX_PER_IP_PER_DAY = 5;
 const EMAIL = /^[^\s@]{1,64}@[^\s@.]+(\.[^\s@.]+)+$/;
 const VERSION = /^\d{1,6}\.\d{1,6}\.\d{1,6}$/;

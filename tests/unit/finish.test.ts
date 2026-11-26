@@ -10,7 +10,7 @@ describe("finishMessage", () => {
     expect(m.steps).toBe(
       "Claude Desktop: set up, and opening now.\nChatGPT app: install the ChatGPT app from https://chatgpt.com/download, then run `amicooked setup` again."
     );
-    expect(m.outro).toBe("You're set.");
+    expect(m.outro).toBe("You're in. Go ask your AI \"am I cooked?\" and brace yourself.");
   });
 
   it("says what's left when nothing is ready yet", () => {
