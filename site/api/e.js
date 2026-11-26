@@ -1,4 +1,5 @@
 // Counts finished setups, successful upgrades and install-command copies. Stores counters only: no IPs, no install IDs, nothing from Brightspace.
+// The same Redis also holds opt-in update emails under separate signup:* keys, written only by signup.js.
 // Redis comes from the Upstash integration on Vercel (KV_REST_API_* or UPSTASH_REDIS_REST_* env vars).
 
 // Must match the preset ids in src/schools.ts; a unit test checks this.

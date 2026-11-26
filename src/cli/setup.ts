@@ -23,6 +23,7 @@ import { listCourses } from "../courseResolver.js";
 import { AmbiguousSchoolError, findPreset, PRESETS, resolveSchool, resolveSchoolMatch } from "../schools.js";
 import { amICooked } from "../tools/cooked.js";
 import { reportSetup } from "../telemetry.js";
+import { askForEmail } from "../signup.js";
 
 /**
  * Every app listed here starts Am I Cooked on the student's computer. `chatgpt` (ChatGPT on the web, over a
@@ -407,6 +408,16 @@ export async function setup(options: SetupOptions): Promise<number> {
     p.outro(outro);
     await reported;
     await prepareVideoSafely({ humanOutput: true });
+    // Optional, last, and only when a person is at the keyboard: agents and --yes never sign anyone up
+    if (interactive() && !options.yes && outcomes.some((o) => o.connected) && !outcomes.some((o) => o.failed)) {
+      await askForEmail(school, {
+        prompt: async (message) => {
+          const answer = await p.text({ message });
+          return p.isCancel(answer) ? undefined : answer;
+        },
+        say: (message) => p.log.message(message),
+      });
+    }
     return outcomes.some((o) => o.failed) ? 1 : 0;
   } catch (error) {
     const code = error instanceof SetupStop ? error.code : 1;

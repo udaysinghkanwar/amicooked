@@ -8,9 +8,13 @@ Keep school selection and login as they are. Finish client setup and enabled vid
 
 > Enter your email to stay up to date (or N/A):
 
-Recommend **Brevo as the initial contact system**, reached through a small endpoint on the existing Vercel site. This matches the actual requirement: a manageable contact list that can receive product updates. A database alone stores addresses but leaves campaign delivery, unsubscribes, bounces and contact management to us. Start with one source of truth and export it periodically; do not introduce two independently writable subscriber databases.
+**Update (implemented):** store signups in the existing Upstash Redis behind `site/api/signup.js`, under its own `signup:*` keys, and import them into **Kit's free plan** (10,000 subscribers, no send limit, subscriber API on Free) when the first update is sent. This costs nothing and needs no new account. Brevo was dropped as the first choice because its free plan sends at most 300 emails a day with no rollover. Resend's free marketing plan caps contacts at 1,000.
 
-The app already has an Upstash-compatible Redis endpoint for anonymous setup counters (`site/api/e.js`). That establishes an integration path, not proof of the deployed account's plan, available quota or suitability for contacts. Contact collection must use a separate endpoint and schema; preserve the analytics promise that counters contain no personal information.
+The prompt is skipped for Ontario K-12 board presets (students may be minors), in non-interactive runs, with `--yes`, and after it has been answered once on a computer. Each record keeps the email, timestamp, consent-wording id, source and app version, which is the consent proof CASL expects. The disclosure lives at `site/privacy.html`.
+
+Before the prompt ships: set `SIGNUP_SALT` in Vercel, add a mailing address and private contact to the privacy page, and export `signup:emails` regularly (free Upstash databases can be archived after 30 inactive days; the setup counters keep it active while installs happen).
+
+The original analysis follows.
 
 ## Compared options
 
