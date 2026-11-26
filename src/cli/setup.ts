@@ -3,7 +3,7 @@ import * as p from "@clack/prompts";
 import * as fs from "fs";
 import * as path from "path";
 import { stripVTControlCharacters } from "node:util";
-import { hasActiveSession, login } from "../auth.js";
+import { clearTokenCache, hasActiveSession, login } from "../auth.js";
 import { detectChannel } from "../browser.js";
 import { APPS, CLAUDE_CODE_DOWNLOAD, desktopAppsSupported, isRunning, isRunningInside, open, openUrl, quit, type DesktopApp } from "../clients/apps.js";
 import { claudeDesktopDir, installClaudeDesktop, InvalidConfigError, manualSnippet } from "../clients/claudeDesktop.js";
@@ -116,7 +116,7 @@ export async function chooseClients(flag: string | undefined, detected: Record<C
     options: [
       { value: "desktop" as const, label: "Claude Desktop", hint: detected.desktop ? "found" : "not found" },
       { value: "code" as const, label: "Claude Code", hint: detected.code ? "found" : "not found" },
-      { value: "chatgpt-desktop" as const, label: "ChatGPT desktop app", hint: detected["chatgpt-desktop"] ? "found" : "not found" },
+      { value: "chatgpt-desktop" as const, label: "ChatGPT desktop (Codex)", hint: detected["chatgpt-desktop"] ? "found" : "not found" },
       ...(desktopAppsSupported() ? [{ value: "gemini-desktop" as const, label: process.platform === "win32" ? "Gemini (Antigravity CLI)" : "Gemini", hint: detected["gemini-desktop"] ? "found" : "not found" }] : []),
     ],
   });
@@ -231,7 +231,7 @@ async function configureClients(clients: ClientId[]): Promise<Outcome[]> {
       outcomes.push(
         await connectDesktopApp(
           APPS.chatgpt,
-          "ChatGPT app",
+          "ChatGPT desktop (Codex)",
           () => {
             installCodex(launch);
             installCodexSkill();
@@ -347,6 +347,7 @@ export async function setup(options: SetupOptions): Promise<number> {
       throw new SetupStop("Am I Cooked logs in through Google Chrome or Microsoft Edge. Install one of them, then run setup again.");
     }
     const schoolChanged = getConfig().school?.host !== school.host;
+    if (schoolChanged) clearTokenCache();
     writeConfig({ school, browser, ...(options.prepareVideo === undefined ? {} : { prepareVideo: options.prepareVideo }) });
 
     if (options.login !== false && (schoolChanged || !hasActiveSession())) {

@@ -10,7 +10,7 @@ Setup runs on the student's computer. If the current chat cannot run local comma
 
 If you can run commands locally:
 
-1. Ask which school and AI app to connect if the student hasn't said. Any D2L Brightspace school works; use its login URL when there is no preset.
+1. Ask which school and AI app to connect if the student hasn't said. If the Brightspace school has no preset, use its Brightspace login URL.
 2. For an automated setup, install without opening the picker. On macOS or Linux, append `-s -- --no-setup` to the shell command above. On Windows, set `$env:AMICOOKED_NO_SETUP=1` before running the installer. With Node.js, use `npx -y amicooked@0` in place of `amicooked`.
 3. Run `amicooked setup --school mcmaster --clients <app>` with the real school and app, and allow at least five minutes for browser sign-in. Choose only the apps the student requested.
 
@@ -18,11 +18,13 @@ If you can run commands locally:
    |---|---|
    | Claude Desktop | `desktop` |
    | Claude Code | `code` |
-   | ChatGPT desktop or Codex | `chatgpt-desktop` |
+   | ChatGPT desktop in Codex mode or Codex CLI | `chatgpt-desktop` |
    | Gemini app on Mac or Antigravity CLI on Windows | `gemini` |
 
 4. Have the student sign in on their school's page. Never ask for their password.
 5. Relay the Next steps printed by setup. When the selected app is ready, start a chat or session there and ask “am I cooked?” If an app asks for connection approval, use its normal prompts.
+
+For ChatGPT desktop, switch to **Codex** and choose **This computer**. This setup configures local Codex MCP. ChatGPT Work uses [separate workspace settings](https://learn.chatgpt.com/docs/developer-settings#developer-settings).
 
 Setup downloads and verifies the lecture-video tools automatically. If the student asks to skip automatic video downloads, add `--skip-video-deps`. This applies to future updates too. Use `amicooked setup --with-video-deps` to re-enable automatic preparation. The guide is installed either way, and video requests can still prepare the tools on demand.
 

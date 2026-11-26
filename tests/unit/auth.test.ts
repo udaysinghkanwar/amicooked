@@ -3,7 +3,7 @@ import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 import { reloadConfig, writeConfig } from "../../src/config.js";
-import { clearTokenCache, driver, getToken, IN_CALL_WAIT_MS, LoginPendingError, type Session } from "../../src/auth.js";
+import { clearTokenCache, driver, getToken, hasActiveSession, IN_CALL_WAIT_MS, LoginPendingError, type Session } from "../../src/auth.js";
 
 let home: string;
 
@@ -38,6 +38,14 @@ describe("getToken", () => {
     // A second process reads the saved token instead of opening a browser
     expect(await getToken()).toBe(s.token);
     expect(silent).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps a verified login scoped to the school it was obtained for", async () => {
+    vi.spyOn(driver, "silent").mockResolvedValue(fresh());
+    await getToken();
+    expect(hasActiveSession()).toBe(true);
+    writeConfig({ school: { id: "other", name: "Other school", lmsName: "D2L", host: "d2l.other.edu" } });
+    expect(hasActiveSession()).toBe(false);
   });
 
   it("finishes the call when the student signs in within the wait", async () => {

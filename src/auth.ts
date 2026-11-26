@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import { canShowWindow, openProfile, type Tab } from "./browser.js";
-import { getSchool, paths, writePrivateFile, type School } from "./config.js";
+import { getConfig, getSchool, paths, writePrivateFile, type School } from "./config.js";
 
 export interface Session {
   token: string;
@@ -24,7 +24,8 @@ const INTERACTIVE_TIMEOUT_MS = 5 * 60 * 1000;
 /** How long a tool call waits for an interactive login; MCP clients give up around 60s. */
 export const IN_CALL_WAIT_MS = 40000;
 
-let session: Session | null = null;
+type SavedSession = Session & { schoolHost?: string };
+let session: SavedSession | null = null;
 
 /**
  * Expiry time of a D2L access token. They're JWTs that live about an hour,
@@ -40,12 +41,13 @@ export function tokenExpiry(token: string): number {
   return Date.now() + 50 * 60 * 1000;
 }
 
-function isFresh(s: Session | null): s is Session {
-  return !!s && Date.now() < s.expiresAt - EXPIRY_MARGIN_MS;
+function isFresh(s: SavedSession | null): s is SavedSession {
+  return !!s && Date.now() < s.expiresAt - EXPIRY_MARGIN_MS &&
+    (s.schoolHost === undefined || s.schoolHost === getConfig().school?.host);
 }
 
 /** A token another Am I Cooked process (Claude Desktop, the ChatGPT service) already saved. */
-function readSavedSession(): Session | null {
+function readSavedSession(): SavedSession | null {
   try {
     return JSON.parse(fs.readFileSync(paths().token, "utf8"));
   } catch {
@@ -53,9 +55,9 @@ function readSavedSession(): Session | null {
   }
 }
 
-function saveSession(s: Session): void {
-  session = s;
-  writePrivateFile(paths().token, JSON.stringify(s));
+function saveSession(s: Session, school: School): void {
+  session = { ...s, schoolHost: school.host };
+  writePrivateFile(paths().token, JSON.stringify(session));
 }
 
 function isSignedIn(url: string, school: School): boolean {
@@ -126,7 +128,7 @@ export function login(): Promise<Session> {
       .interactive(school)
       .then((s) => {
         if (!s) throw new Error("Login timed out. Run `amicooked login` to try again.");
-        saveSession(s);
+        saveSession(s, school);
         return s;
       })
       .finally(() => {
@@ -139,10 +141,11 @@ export function login(): Promise<Session> {
 /** Log in without showing anything, using the saved browser profile. */
 async function silentLogin(): Promise<Session | null> {
   if (!silentInFlight) {
+    const school = getSchool();
     silentInFlight = driver
-      .silent(getSchool())
+      .silent(school)
       .then((s) => {
-        if (s) saveSession(s);
+        if (s) saveSession(s, school);
         return s;
       })
       .finally(() => {

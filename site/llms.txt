@@ -1,8 +1,8 @@
 # Am I Cooked
 
-> Am I Cooked is a free, open-source (MIT) MCP server that runs on a student's laptop and connects Claude Desktop, Claude Code, the ChatGPT desktop app, Gemini on Mac, or Antigravity CLI on Windows to their D2L Brightspace courses: grades, assignments and due dates, announcements, course content and files. Every tool is read-only. Not affiliated with or endorsed by D2L or any university.
+> Am I Cooked is a free, open-source (MIT) MCP server that runs on a student's laptop and connects Claude Desktop, Claude Code, local Codex in the ChatGPT desktop app or CLI, Gemini on Mac, or Antigravity CLI on Windows to their D2L Brightspace courses: grades, assignments and due dates, announcements, course content and files. Every tool is read-only. Not affiliated with or endorsed by D2L or any university.
 
-The student signs in on their school's own login page in a real browser window. Am I Cooked keeps the session in `~/.amicooked` on the laptop and never sees the password. Downloaded files go to `~/Downloads/amicooked`. Setup has presets for McMaster, Waterloo, Western, Queen's, Guelph, Laurier, TMU, uOttawa, Carleton, Brock, Windsor, Laurentian and Lakehead, and accepts any Brightspace URL. Login is tested at McMaster.
+The student signs in on their school's own login page in a real browser window. Am I Cooked keeps the session in `~/.amicooked` on the laptop and never sees the password. Downloaded files go to `~/Downloads/amicooked`. Setup has presets for McMaster, Waterloo, Western, Queen's, Guelph, Laurier, TMU, uOttawa, Carleton, Brock, Windsor, Laurentian and Lakehead, and accepts custom Brightspace login URLs. Sign-in has been tested at McMaster.
 
 ## Setting it up
 
@@ -11,7 +11,7 @@ The student signs in on their school's own login page in a real browser window. 
 - macOS and Linux: `curl -fsSL https://amicooked-mcp.vercel.app/install.sh | sh`
 - Windows (PowerShell): `irm https://amicooked-mcp.vercel.app/install.ps1 | iex`
 - With Node.js 22 or newer: `npx -y amicooked@0 setup`
-- Pick your AI app during setup, then follow the printed next steps. Gemini works on Mac and with Antigravity CLI on Windows.
+- Pick your AI app during setup, then follow the printed next steps. For ChatGPT desktop, use Codex on This computer. ChatGPT Work is configured separately. Gemini works on Mac and with Antigravity CLI on Windows.
 - Updates: `amicooked update --check` checks availability and `amicooked update` installs the latest stable release. Installed copies check automatically for patches after setup. Use `amicooked auto-update status` or `amicooked auto-update disable` to manage them.
 - Uninstall: `amicooked uninstall` (`--purge` also deletes login and settings)
 
@@ -26,6 +26,7 @@ The student signs in on their school's own login page in a real browser window. 
 - `get_course_content`: modules, lectures and files
 - `download_file`: save a course file and read its text (PDF, Word, PowerPoint)
 - `read_file`: read a file that was already downloaded
+- `get_lecture_video_workflow`: find the local launcher, check video tools, and get the guide. Rendering requires local commands, project access and a supported browser environment.
 
 ## Links
 

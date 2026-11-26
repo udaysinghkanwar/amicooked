@@ -1,6 +1,6 @@
 # Am I Cooked
 
-Ask your AI if you're cooked. Am I Cooked connects Claude, ChatGPT and Gemini to your D2L Brightspace courses (Avenue to Learn, LEARN, onQ, OWL Brightspace, CourseLink and others) so they can read your grades, deadlines, announcements and course files, and tell you straight.
+Ask your AI if you're cooked. Am I Cooked connects supported local Claude, ChatGPT and Gemini clients to your D2L Brightspace courses (Avenue to Learn, LEARN, onQ, OWL Brightspace, CourseLink and others) so they can read your grades, deadlines, announcements and course files, and tell you straight.
 
 It runs on your own computer. You sign in to your school in a normal browser window; your password never touches anything else.
 
@@ -38,7 +38,9 @@ Gemini works with the Mac app and its bundled CLI, or with [Antigravity CLI](htt
 
 The Am I Cooked skill can guide a capable local agent through making a narrated, animated lesson from selected course material. It first asks about your goal, prior knowledge, time budget and mode: **cramming**, **fully cooked** (from the foundations), **chill**, or **bird's-eye**. Shorter modes reduce scope rather than skip necessary reasoning.
 
-Video creation is an optional agent workflow, with [complete first-use instructions](skill/references/lecture-videos.md). It uses external media tools, installed only for a video request; Am I Cooked adds no renderer, video command, models or paid service. Local clients receive the guide with the skill, and MCP-only clients can retrieve it using `get_feature_guide` with `feature: "lecture-videos"`.
+Setup downloads and verifies the managed local renderer, narration model and media tools automatically. Updates reuse installed components and prepare new dependencies when needed. To skip automatic video downloads, run `amicooked setup --skip-video-deps`. You can install the tools later with `amicooked video prepare` or ask your AI to prepare them when you request a video. Replace `amicooked` with `npx -y amicooked@0` in those commands if you installed through npx.
+
+The AI session needs local command and file access and permission to launch the browser and use a loopback server. Run `amicooked video probe` in that session before rendering. The [lecture-video guide](skill/references/lecture-videos.md) covers the full workflow.
 
 ## Tools
 
@@ -54,18 +56,19 @@ Video creation is an optional agent workflow, with [complete first-use instructi
 | `download_file` | Save a course file and read its text (PDF, Word, PowerPoint) |
 | `read_file` | Read a file you already downloaded |
 | `get_feature_guide` | List shipped features or read a bundled guide |
+| `get_lecture_video_workflow` | Get the video guide, check the installation and locate the local launcher |
 
 Every tool is read-only. Course tools take a code like `"3BB4"`.
 
 ## Schools
 
-Presets for McMaster, Waterloo, Western, Queen's, Guelph, Laurier, TMU, uOttawa, Carleton, Brock, Windsor, Laurentian and Lakehead. Any other Brightspace school works with the URL you log in through. Login is tested at McMaster; other schools should work and we'd love to hear if they don't.
+Presets for McMaster, Waterloo, Western, Queen's, Guelph, Laurier, TMU, uOttawa, Carleton, Brock, Windsor, Laurentian and Lakehead. If your school is missing, choose **Other** and enter its Brightspace URL. McMaster sign-in has been tested. Access at other schools depends on their Brightspace and sign-in configuration.
 
-## ChatGPT
+## ChatGPT and Codex
 
-`amicooked setup --clients chatgpt-desktop` connects the ChatGPT desktop app the same way as Claude Desktop: the app starts Am I Cooked on your computer, with no tunnel or extra account. Restart the app afterwards. It works with the ChatGPT desktop app that's built on Codex (and the Codex CLI), which reads `~/.codex/config.toml`.
+Choose **ChatGPT desktop (Codex)** in setup or run `amicooked setup --clients chatgpt-desktop`. Restart the app, switch to **Codex**, and start a chat that runs on **This computer**. Setup configures the shared local MCP server for the desktop app and Codex CLI.
 
-ChatGPT on the web and on phones can't start programs on your computer, so they aren't supported yet. Neither is Claude on the web.
+ChatGPT Work uses separate workspace configuration. The public installer supports the local Codex connection. See [OpenAI’s developer settings](https://learn.chatgpt.com/docs/developer-settings#developer-settings) for the distinction.
 
 ## Commands
 
@@ -83,17 +86,13 @@ Your settings and login live in `~/.amicooked`; downloaded files go to `~/Downlo
 
 The first time setup finishes on a computer, it sends one anonymous count: your school's preset name (or "custom") and your OS. Successful manual/automatic version upgrades send an anonymous count with the old/new versions, update mode, native/npm channel and OS/architecture. Checks, unchanged versions and failures do not count. Nothing from Brightspace, no IP or installation ID is stored. Set `AMICOOKED_NO_TELEMETRY=1` or `DO_NOT_TRACK=1` to turn it off.
 
-## Lecture videos
-
-Setup installs the local lecture-video tools automatically. Manual and background updates prepare new dependencies when needed and reuse the tools already installed. To skip automatic video downloads, run `amicooked setup --skip-video-deps`. You can still ask your AI to prepare the tools when you request a video. The one-time setup needs internet access. Run `amicooked video prepare` to install the tools directly. Use the `npx -y amicooked@0` prefix if you installed through npx.
-
 ## Updates
 
 Run `amicooked update` to install the latest stable release and refresh the full skill folder. Use `amicooked update --check` to check first. Both commands support `--json`. The updater uses GitHub release binaries or npm to match your installation, keeps your school login and settings, and reports release notes and any restart needed. Changed skill files are saved under that skill folder's `.backups/`; put personal instructions in a separate file so they stay in place.
 
 After setup, installed copies automatically check for stable patches in the current major/minor when Am I Cooked starts or is used, at most once every three days. The check runs in the background. Run `amicooked auto-update status` for the last attempt and log, or `amicooked auto-update disable` to stop. Reload your AI app after an update. No update runs while the app is unused. This works with installed binaries/npm packages; source checkouts stay under Git control.
 
-For other local AI clients, configure a stdio MCP server running `amicooked mcp`. `amicooked setup --clients none --skill-dir "/path/to/client/skills/amicooked" --school <school>` installs the full skill folder and remembers it for updates. MCP-only clients can read the same references using `get_feature_guide`. Optional feature dependencies and account connections are only set up when requested. The updater itself has no AI-provider dependency.
+For other local AI clients, configure a stdio MCP server running `amicooked mcp`. `amicooked setup --clients none --skill-dir "/path/to/client/skills/amicooked" --school <school>` installs the full skill folder and remembers it for updates. MCP-only clients can read the same references using `get_feature_guide`. Account connections are set up for the apps you select. The updater itself has no AI-provider dependency.
 
 
 ## Development
