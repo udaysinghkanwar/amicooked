@@ -10,7 +10,7 @@ Setup runs on the student's computer. If the current chat cannot run local comma
 
 If you can run commands locally:
 
-1. Ask which school and AI app to connect if the student hasn't said. If the Brightspace school has no preset, use its Brightspace login URL.
+1. Ask which school and AI app to connect if the student hasn't said. For a Brightspace school without a preset, use `--school "Full School Name"` to search D2L's public directory, or `--school https://...` with the course portal URL. If several schools match, ask which one the student uses and retry with its full name or listed URL.
 2. For an automated setup, install without opening the picker. On macOS or Linux, append `-s -- --no-setup` to the shell command above. On Windows, set `$env:AMICOOKED_NO_SETUP=1` before running the installer. With Node.js, use `npx -y amicooked@0` in place of `amicooked`.
 3. Run `amicooked setup --school mcmaster --clients <app>` with the real school and app, and allow at least five minutes for browser sign-in. Choose only the apps the student requested.
 
@@ -20,6 +20,8 @@ If you can run commands locally:
    | Claude Code | `code` |
    | ChatGPT desktop in Codex mode or Codex CLI | `chatgpt-desktop` |
    | Gemini app on Mac or Antigravity CLI on Windows | `gemini` |
+
+   Custom URLs can be the Brightspace host, a deep course URL, or a stable portal link that redirects or links to Brightspace. If discovery cannot see the LMS behind a portal's sign-in or JavaScript, have the student sign in in their browser and paste the final course homepage URL containing `/d2l/`. Do not ask for cookies, tokens or temporary Microsoft/SAML callback links.
 
 4. Have the student sign in on their school's page. Never ask for their password.
 5. Relay the Next steps printed by setup. When the selected app is ready, start a chat or session there and ask “am I cooked?” If an app asks for connection approval, use its normal prompts.
