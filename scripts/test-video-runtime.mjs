@@ -1,7 +1,7 @@
 // External downloads are intentional here. A fresh home exercises the real user setup path.
 import assert from "node:assert/strict";
 import { execFileSync, spawn, spawnSync } from "node:child_process";
-import { chmodSync, mkdtempSync, mkdirSync, existsSync, readdirSync, readFileSync, realpathSync, rmSync, writeFileSync, copyFileSync } from "node:fs";
+import { chmodSync, mkdtempSync, mkdirSync, existsSync, readdirSync, readFileSync, realpathSync, renameSync, rmSync, writeFileSync, copyFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import os from "node:os";
 import path from "node:path";
@@ -245,6 +245,22 @@ try {
         assert(!isMarker("0.1", 430));
         assert(!isMarker("0.9", 94));
         assert(isMarker("0.9", 430));
+        // A clean ready record must be possible under a listener denial, even before a full render.
+        const savedMarker = `${marker}.full-test-backup`;
+        renameSync(marker, savedMarker);
+        try {
+          const mediaOnly = execFileSync(command, [...prefix, "video", "prepare", "--media-only"], {
+            env: restrictedEnv, cwd: home, encoding: "utf8", timeout: 180_000,
+          });
+          assert.equal(JSON.parse(mediaOnly).slidesState, "ready");
+          assert.equal(existsSync(marker), false);
+          const slidesProbe = spawnSync(command, [...prefix, "video", "probe", ...context], {
+            env: restrictedEnv, cwd: home, encoding: "utf8", timeout: 90_000,
+          });
+          assert.equal(JSON.parse(slidesProbe.stdout).reason, "slides-ready");
+        } finally {
+          renameSync(savedMarker, marker);
+        }
       }
       const probe = JSON.parse(fromOutside("video", "probe", ...context));
       assert.equal(probe.ok, true, JSON.stringify(probe));
@@ -279,5 +295,5 @@ try {
   }
 } finally {
   server.kill();
-  rmSync(root, { recursive: true, force: true });
+  rmSync(root, { recursive: true, force: true, maxRetries: 3 });
 }

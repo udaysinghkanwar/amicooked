@@ -10,7 +10,8 @@ Do this first, before choosing the lesson, asking questions or requesting folder
 
 - **Same computer:** the platform matches `host` and the launcher's `command` exists in your shell. Use the launcher.
 - **A different machine on a supported platform** (for example a chat app's cloud workspace on `linux-x64`): you can render there. Run `npx -y amicooked@0 video prepare`, then the probe below. Before starting, tell the student in one sentence that the video will be made in your workspace, not on their computer, so the lecture material is processed there. Deliver the files to them and offer to save them into their course folder.
-- **An unsupported platform** (for example a `linux-arm64` VM), or prepare fails: don't install anything else. Use the fallback below.
+- **An unsupported platform** (for example a `linux-arm64` VM): use the fallback below.
+- **Preparation fails:** if the browser download or preview listener is blocked, try `video prepare --media-only` with the same launcher. If a shared dependency is blocked or preparation still fails, use the fallback below.
 - **The probe fails:** follow its `reason` and `nextStep`, which may point to another render path. Use the fallback below only once every render path has failed.
 
 **Fallback when you can't render:** say so in one sentence, then offer (a) source-linked notes and a scene-by-scene storyboard of the lesson now, and (b) the way to get the MP4: open Claude Code, Codex or the ChatGPT desktop app on the Am I Cooked computer and ask it to "make a lecture video" for the same lecture.
@@ -19,7 +20,7 @@ The host needs local command execution and file access. The animated HyperFrames
 
 Start with `get_lecture_video_workflow` when available. Its status describes the installation, and its `launcher` gives the executable, base arguments and Am I Cooked home on that computer. On the same computer, if the shell cannot find `amicooked`, use that command with its arguments and environment instead of reinstalling. In PowerShell, invoke a quoted executable path with `&`. If setup used npx, `npx -y amicooked@0` is also an option.
 
-If installation is `missing` or `previous`, run `amicooked video prepare` in an authorized local shell. If an update fails and status remains `previous`, the last verified tools can still be used. Never install system packages to satisfy the renderer.
+If installation is `missing` or `previous`, run `amicooked video prepare` in an authorized local shell. If an update fails and status remains `previous`, the last verified tools can still be used. If the browser cannot be downloaded or full preparation fails specifically because the preview listener is blocked, run `amicooked video prepare --media-only` in the authorized shell and use the animated slide renderer. When `video status` already reports `slidesState: "ready"`, use that renderer directly. Never install system packages to satisfy the renderer.
 
 Create a project inside a folder this AI session is allowed to read and write. If the preferred course folder is unavailable, ask the student to connect it or use an accessible working folder. From the same shell the AI will use for the lesson, run:
 
@@ -31,7 +32,7 @@ The probe synthesizes a short local recording, runs the browser check, renders a
 
 ### Render animated slides when the browser preview is unavailable
 
-If the probe reports `reason: "local-preview-blocked"` in ChatGPT Work or another local AI session, stay in the same session and use the installed narration and video tools directly. This path needs permission to read the installed tools, run local commands, and write to the project and scratch folders.
+If the probe reports `reason: "local-preview-blocked"` or `reason: "slides-ready"` in ChatGPT Work or another local AI session, stay in the same session and use the installed narration and video tools directly. This path needs permission to read the installed tools, run local commands, and write to the project and scratch folders.
 
 1. Use course sources to design one visual per explanation step. Save each visual as an SVG, PNG or JPEG in the project. Use a 16:9 canvas, large text, diagrams, and progressive reveals across slides. Save its spoken narration in a separate UTF-8 text file.
 2. Save an ordered array in `slides.json` using project-relative paths. For example:
