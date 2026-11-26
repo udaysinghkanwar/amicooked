@@ -74,8 +74,10 @@ export const getLectureVideoWorkflow: Tool = {
       },
       host: `${process.platform}-${process.arch}`,
       supportedTargets: Object.keys(targets),
-      checkFirst: "Before asking the student anything, run node -p \"process.platform+'-'+process.arch\" in your own shell. If it matches host and launcher.command exists, use the launcher. If it differs but is in supportedTargets, you can render in your own workspace with npx -y amicooked@0 video prepare and the probe; tell the student first that the video is made in your workspace, not on their computer. If the probe fails, follow its reason and nextStep, which may point to another render path. If your platform is unsupported, prepare fails, or every render path fails, offer source-linked notes and a storyboard, and tell the student to ask Claude Code, Codex or the ChatGPT desktop app on their computer.",
-      nextStep: videoNextStep[videoTools.state],
+      checkFirst: "Before asking the student anything, run node -p \"process.platform+'-'+process.arch\" in your own shell. If it matches host and launcher.command exists, use the launcher. If it differs but is in supportedTargets, you can render in your own workspace with npx -y amicooked@0 video prepare and the probe; tell the student first that the video is made in your workspace, not on their computer. If the probe fails, follow its reason and nextStep, which may point to another render path. If the browser download or preview listener blocks full preparation, try video prepare --media-only. If your platform is unsupported or every applicable preparation or render path fails, offer source-linked notes and a storyboard, and tell the student to ask Claude Code, Codex or the ChatGPT desktop app on their computer.",
+      nextStep: videoTools.slidesState === "ready"
+        ? "Use video render-slides in an authorized local shell. The narrated slide tools are ready."
+        : videoNextStep[videoTools.state],
       execution: "Status describes installation on the computer running Am I Cooked. Use the launcher only in an authorized local shell on that computer. Append probe --project <writable folder> to its arguments to test that shell. A remote MCP connection cannot run the probe for you.",
     }, null, 2);
   },
