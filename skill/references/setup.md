@@ -26,7 +26,13 @@ If you can run commands locally:
 
 Setup downloads and verifies the lecture-video tools automatically. If the student asks to skip automatic video downloads, add `--skip-video-deps`. This applies to future updates too. Use `amicooked setup --with-video-deps` to re-enable automatic preparation. The guide is installed either way, and video requests can still prepare the tools on demand.
 
-For troubleshooting, run `amicooked status`. For Gemini, `amicooked doctor --live` checks school access. If running inside a Gemini sandbox home such as `.gemini/users/…`, have the student run the regular installer from their Mac Terminal. Windows users need [Antigravity CLI](https://antigravity.google/docs/cli-getting-started). The standalone Windows Gemini app, legacy Gemini CLI, and web or phone chats are outside this setup flow.
+## Troubleshooting
+
+Capture the exact error and run `amicooked --version` and `amicooked status` when local commands are available. If setup used npx, use `npx -y amicooked@0` in place of `amicooked`.
+
+Use the [Am I Cooked GitHub repository](https://github.com/udaysinghkanwar/amicooked) to trace errors and find supported fixes. Read the source at the tag for the installed version (for example, `v0.1.14`). If you find a bug, prepare minimal steps to reproduce it with secrets removed and propose a patch for review.
+
+For Gemini, `amicooked doctor --live` checks school access. If running inside a Gemini sandbox home such as `.gemini/users/…`, have the student run the regular installer from their Mac Terminal. Windows users need [Antigravity CLI](https://antigravity.google/docs/cli-getting-started). The standalone Windows Gemini app, legacy Gemini CLI, and web or phone chats are outside this setup flow.
 
 ## Other local AI clients
 
