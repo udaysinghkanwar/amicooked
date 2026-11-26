@@ -172,6 +172,10 @@ it("prepares video tools during updates by default and honors the skip preferenc
     expect(await updateCommand({ json: true }, deps)).toBe(0);
     expect(downloads).toHaveBeenCalledTimes(2);
     expect(errors).toHaveBeenCalledWith(expect.stringContaining("HTTP 403"));
+    errors.mockClear();
+    expect(await updateCommand({}, deps)).toBe(0);
+    expect(output).toHaveBeenCalledWith(expect.stringContaining("Course tools still work."));
+    expect(errors).not.toHaveBeenCalled();
   } finally {
     output.mockRestore();
     errors.mockRestore();
