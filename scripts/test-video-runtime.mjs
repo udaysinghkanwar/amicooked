@@ -1,7 +1,7 @@
 // External downloads are intentional here. A fresh home exercises the real user setup path.
 import assert from "node:assert/strict";
 import { execFileSync, spawn, spawnSync } from "node:child_process";
-import { chmodSync, mkdtempSync, mkdirSync, existsSync, readdirSync, readFileSync, rmSync, writeFileSync, copyFileSync } from "node:fs";
+import { chmodSync, mkdtempSync, mkdirSync, existsSync, readdirSync, readFileSync, realpathSync, rmSync, writeFileSync, copyFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import os from "node:os";
 import path from "node:path";
@@ -227,7 +227,7 @@ try {
           env: restrictedEnv, cwd: home, encoding: "utf8", timeout: 180_000,
         }));
         assert.equal(rendered.slides, 2);
-        assert.equal(rendered.output, path.join(slideProject, "lesson.mp4"));
+        assert.equal(rendered.output, path.join(realpathSync.native(slideProject), "lesson.mp4"));
         const slideStreams = JSON.parse(cli("video", "run", "ffprobe", "--",
           "-v", "error", "-show_entries", "stream=codec_type", "-of", "json", rendered.output)).streams;
         assert.deepEqual(slideStreams.map(stream => stream.codec_type).sort(), ["audio", "video"]);
