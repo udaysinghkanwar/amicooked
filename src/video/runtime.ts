@@ -10,6 +10,8 @@ import npmLock from "./runtime-lock.json" with { type: "json" };
 import { renderSlides } from "./slides.js";
 import { voiceScript } from "./voice.js";
 import { videoProject, videoScratch } from "./workspace.js";
+import { cleanupVideoWork, type VideoCleanupWarning } from "./cleanup.js";
+import { logVideoProgress, videoProgress, type VideoReporter } from "./progress.js";
 
 const targetName = `${process.platform}-${process.arch}`;
 const target = Object.hasOwn(targets, targetName) ? targetName as VideoTarget : undefined;
@@ -148,11 +150,12 @@ function smokeTest(tools: Tools, work: string, env: NodeJS.ProcessEnv, stage?: (
   runTool(tools.ffmpeg, ["-v", "error", "-xerror", "-i", video, "-f", "null", "-"], env);
 }
 
-export function probeVideo(directory?: string, scratchDirectory?: string) {
+export function probeVideo(directory?: string, scratchDirectory?: string, report: VideoReporter = logVideoProgress) {
   let project: string | undefined;
   let work: string | undefined;
   let stage = "installation";
   const steps: string[] = [];
+  const warnings: VideoCleanupWarning[] = [];
   try {
     const tools = getVideoTools();
     steps.push(stage);
@@ -165,25 +168,26 @@ export function probeVideo(directory?: string, scratchDirectory?: string) {
     smokeTest(tools, work, videoEnvironment(tools, scratch), step => {
       steps.push(stage);
       stage = step;
+      videoProgress(report, step);
     });
     steps.push(stage);
-    return { ok: true, project, scratch: scratch.cache, steps };
+    return { ok: true, project, scratch: scratch.cache, steps, warnings };
   } catch (error) {
     if (error instanceof LocalPreviewBlockedError || error instanceof BrowserCheckTimeoutError) {
       const reason = error instanceof LocalPreviewBlockedError ? "local-preview-blocked" : "browser-check-timeout";
-      return { ok: false, project, steps, stage, reason, error: error.message,
+      return { ok: false, project, steps, stage, reason, error: error.message, warnings,
         nextStep: "This session could not use the browser preview. Use video render-slides in the same approved project folder to make an animated narrated lesson with the installed tools. See the lecture-video guide for the slides.json format." };
     }
     if (stage === "installation" && slidesReady()) {
-      return { ok: false, project, steps, stage, reason: "slides-ready", error: "The browser renderer is unavailable.",
+      return { ok: false, project, steps, stage, reason: "slides-ready", error: "The browser renderer is unavailable.", warnings,
         nextStep: "Use video render-slides in the approved project folder. The narrated slide tools are ready." };
     }
     const nextStep = stage === "installation" ? "Run video prepare in the local installer environment, then retry the probe." :
       "Use a local project and scratch folder this session can write, and confirm it can launch the managed browser and bind a local preview port. If the client blocks those capabilities, connect an approved local workspace or use a local client with those capabilities.";
-    return { ok: false, project, steps, stage, error: error instanceof Error ? error.message : String(error),
+    return { ok: false, project, steps, stage, warnings, error: error instanceof Error ? error.message : String(error),
       nextStep };
   } finally {
-    if (work) fs.rmSync(work, { recursive: true, force: true, maxRetries: 3 });
+    if (work) cleanupVideoWork(work, warnings);
   }
 }
 
@@ -208,7 +212,7 @@ function smokeSlideTools(tools: SlideTools) {
     if (!["audio", "video"].every(type => streams.some(stream => stream.codec_type === type)) || frame("0") === frame("1.2")) {
       throw new Error("The narrated slide test did not produce audio and movement.");
     }
-  } finally { fs.rmSync(work, { recursive: true, force: true, maxRetries: 3 }); }
+  } finally { cleanupVideoWork(work); }
 }
 
 export async function prepareVideo(log: (message: string) => void = console.error, mediaOnly = false) {
@@ -280,7 +284,7 @@ export async function prepareVideo(log: (message: string) => void = console.erro
     log("Testing a narrated video render…");
     const work = fs.mkdtempSync(path.join(root(), "pending-"));
     try { smokeTest(tools, work, videoEnvironment(tools)); }
-    finally { fs.rmSync(work, { recursive: true, force: true }); }
+    finally { cleanupVideoWork(work); }
     writePrivateFile(marker(), JSON.stringify({ schema, target, identity, tools } satisfies Ready<Tools>) + "\n");
     return videoStatus();
   } finally {

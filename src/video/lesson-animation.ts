@@ -4,11 +4,13 @@ import { runTool } from "./install.js";
 import { getVideoTools, videoEnvironment } from "./runtime.js";
 import { narrateSlide, readSlideStoryboard } from "./slides.js";
 import { videoScratch } from "./workspace.js";
+import { cleanupVideoWork, type VideoCleanupWarning } from "./cleanup.js";
+import { logVideoProgress, videoProgress, type VideoReporter } from "./progress.js";
 
 const VENDORED_GSAP = "dist/vendor/npm/gsap@3.14.2/dist/gsap.min.js";
 
 /** Renders with HyperFrames, giving up once `until` (ms since epoch) passes so the slide fallback still has time. */
-export function renderAnimatedLesson(project: string, until = Number.POSITIVE_INFINITY) {
+export function renderAnimatedLesson(project: string, until = Number.POSITIVE_INFINITY, report: VideoReporter = logVideoProgress) {
   const left = (step: string) => {
     const ms = until - Date.now();
     if (ms <= 0) throw new Error(`HyperFrames ran out of time before ${step}.`);
@@ -19,6 +21,7 @@ export function renderAnimatedLesson(project: string, until = Number.POSITIVE_IN
   const scratch = videoScratch(project);
   const env = videoEnvironment(tools, scratch);
   const work = fs.mkdtempSync(path.join(scratch.temp, "lecture-animation-"));
+  const warnings: VideoCleanupWarning[] = [];
   try {
     fs.copyFileSync(path.resolve(path.dirname(tools.hyperframes), "..", VENDORED_GSAP), path.join(work, "gsap.js"));
     // Serve only the storyboard's validated images, generated narration and our own fixed template.
@@ -33,6 +36,7 @@ export function renderAnimatedLesson(project: string, until = Number.POSITIVE_IN
       const scene = `scene-${index}`;
       const audio = `${scene}.wav`;
       left(`narrating scene ${index + 1}`);
+      videoProgress(report, "narrating", { renderer: "hyperframes", scene: index + 1, total: scenes.length });
       const duration = narrateSlide(tools, narration, path.join(work, audio), env, work);
       const transition = Math.min(0.32, duration / 4);
       timeline.push(`tl.from("#${scene} .art",{opacity:0,scale:.985,duration:${transition},ease:"power2.out"},${start});`);
@@ -64,8 +68,10 @@ const tl=gsap.timeline({paused:true});${timeline.join("\n")}
 window.__timelines={lesson:tl};</script></html>`);
 
     const assembled = path.join(work, "lesson.mp4");
+    videoProgress(report, "rendering", { renderer: "hyperframes" });
     runTool(tools.node, [tools.hyperframes, "render", "--quality", "delivery", "--workers", "1", "--no-best-effort", "--output", assembled], env, work,
       Math.min(20 * 60_000, left("rendering")));
+    videoProgress(report, "verifying", { renderer: "hyperframes" });
     const { streams } = JSON.parse(runTool(tools.ffprobe,
       ["-v", "error", "-show_entries", "stream=codec_type", "-of", "json", assembled], env));
     if (!["audio", "video"].every(type => streams.some((stream: { codec_type: string }) => stream.codec_type === type))) {
@@ -73,9 +79,10 @@ window.__timelines={lesson:tl};</script></html>`);
     }
     runTool(tools.ffmpeg, ["-v", "error", "-xerror", "-i", assembled, "-f", "null", "-"], env);
     const output = path.join(project, "lesson.mp4");
+    videoProgress(report, "saving", { renderer: "hyperframes" });
     fs.copyFileSync(assembled, output, fs.constants.COPYFILE_EXCL);
-    return { output, slides: scenes.length };
+    return { output, slides: scenes.length, warnings };
   } finally {
-    fs.rmSync(work, { recursive: true, force: true, maxRetries: 3 });
+    cleanupVideoWork(work, warnings);
   }
 }

@@ -214,11 +214,42 @@ function fakeChild() {
 }
 
 describe("the render supervisor", () => {
+  it("persists progress from split worker messages for any client's status query", async () => {
+    const { id } = createLesson("progress");
+    const job = startRender(id, () => 4242);
+    const { child, exit } = fakeChild();
+    const done = renderLessonCommand(id, job.jobId, { work: () => child as never });
+    const progress = { stage: "narrating", renderer: "slides", scene: 2, total: 11, updatedAt: new Date().toISOString() };
+    const message = JSON.stringify({ type: "progress", progress }) + "\r\n";
+    child.stdout.write(message.slice(0, 12));
+    expect(renderStatus(id).progress).toBeUndefined();
+    child.stdout.write(message.slice(12));
+    expect(renderStatus(id)).toMatchObject({ state: "running", progress });
+    // A supervisor heartbeat does not change the timestamp of the last useful work.
+    expect(renderStatus(id).progress!.updatedAt).toBe(progress.updatedAt);
+    exit(0, { output: "lesson.mp4", slides: 11, renderer: "slides", warnings: [{ code: "video_cleanup_deferred", errno: "EBUSY", path: "owned-scratch" }] });
+    expect(await done).toBe(0);
+    expect(renderStatus(id)).toMatchObject({ state: "done", progress, warnings: [{ errno: "EBUSY" }] });
+  });
+
+  it("keeps the last useful stage when a renderer fails", async () => {
+    const { id } = createLesson("failed progress");
+    const job = startRender(id, () => 4242);
+    const { child, exit } = fakeChild();
+    const done = renderLessonCommand(id, job.jobId, { work: () => child as never });
+    const progress = { stage: "encoding", renderer: "slides", updatedAt: new Date().toISOString() };
+    child.stdout.write("not JSON\n");
+    child.stdout.write(JSON.stringify({ type: "progress", progress }) + "\n");
+    exit(1);
+    expect(await done).toBe(1);
+    expect(renderStatus(id)).toMatchObject({ state: "failed", progress });
+  });
+
   it("records the renderer's result", async () => {
     const { id, folder } = createLesson("t");
     const job = startRender(id, () => 4242);
     const { child, exit } = fakeChild();
-    const done = renderLessonCommand(id, job.jobId, { work: () => (setImmediate(() => exit(0, { output: "lesson.mp4", slides: 2 })), child as never) });
+    const done = renderLessonCommand(id, job.jobId, { work: () => (setImmediate(() => exit(0, { output: "lesson.mp4", slides: 2, renderer: "slides" })), child as never) });
     expect(await done).toBe(0);
     const saved = JSON.parse(fs.readFileSync(path.join(folder, "job.json"), "utf8"));
     expect(saved).toMatchObject({ state: "done", output: "lesson.mp4", slides: 2 });
@@ -241,6 +272,16 @@ describe("the render supervisor", () => {
     const { child, exit } = fakeChild();
     expect(await renderLessonCommand(id, job.jobId, { work: () => (setImmediate(() => exit(3)), child as never) })).toBe(1);
     expect(renderStatus(id).error).toContain("exit code 3");
+  });
+
+  it("does not mistake a final progress message for a completed render", async () => {
+    const { id } = createLesson("incomplete");
+    const job = startRender(id, () => 4242);
+    const { child, exit } = fakeChild();
+    const done = renderLessonCommand(id, job.jobId, { work: () => child as never });
+    exit(0, { type: "progress", progress: { stage: "encoding", updatedAt: new Date().toISOString() } });
+    expect(await done).toBe(1);
+    expect(renderStatus(id)).toMatchObject({ state: "failed", error: expect.stringContaining("without a completed video result") });
   });
 
   it("ignores a stale or unknown job", async () => {

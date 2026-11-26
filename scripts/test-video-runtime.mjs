@@ -8,6 +8,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { testVideoRecovery } from "./test-video-recovery.mjs";
 
 // The ordinary local suite stays offline. The existing GitHub matrix runs the full acceptance test.
 if (process.argv.includes("--ci") && process.env.GITHUB_ACTIONS !== "true") process.exit(0);
@@ -111,6 +112,7 @@ try {
     assert.doesNotMatch(output, /Try asking (?:your AI|for a lecture video)/);
     if (channel === "npm") console.log(output.split("\n").at(-1));
     assert.equal(JSON.parse(cli("video", "status")).state, "ready");
+    if (channel === "npm") await testVideoRecovery({ command, prefix, env, project });
     for (const tool of ["ffmpeg", "ffprobe"]) {
       assert.match(cli("video", "run", tool, "--", "-version"), new RegExp(`^${tool} version 9[.]1(?:\\D|$)`));
     }

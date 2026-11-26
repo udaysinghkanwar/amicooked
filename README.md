@@ -42,6 +42,8 @@ Setup downloads and verifies the managed local renderer, narration model and med
 
 The AI session needs local command and file access and permission to launch the browser and use a loopback server. Run `amicooked video probe` in that session before rendering. The [lecture-video guide](skill/references/lecture-videos.md) covers the full workflow.
 
+Managed lessons automatically use narrated slides if the browser probe or renderer cannot finish. Temporary-file cleanup failures (including Windows folder locks) are returned as warnings and do not replace the probe result or a verified export. Direct video commands report stages on stderr while keeping their final JSON on stdout. `get_video_render` includes the latest stage, scene count when available, and its `updatedAt` timestamp separately from the supervisor heartbeat, so any connected AI client can check useful progress. Locked scratch files may remain at the exact path reported in a cleanup warning; cleanup never scans course folders or stops unrelated processes.
+
 ## Tools
 
 | Tool | What it does |
