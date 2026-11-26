@@ -21,7 +21,7 @@ Do this first, before choosing the lesson, asking questions or requesting folder
 1. `create_video_lesson` with a short title. It returns a `lessonId` and the files to write.
 2. `write_video_lesson_file` for each file: one self-contained 1280×720 SVG per explanation step, a UTF-8 `.txt` narration per slide, and `slides.json` in the format shown under "Render animated slides" below. SVGs may only link to their own `#ids` or embedded `data:image` values.
 3. `start_video_render`, then call `get_video_render` every 20 to 30 seconds until it is `done` or `failed`. The first render can take a few minutes while the voice and video tools download.
-4. When done, give the student the MP4 path on their computer. On failure, report the `error`, fix the lesson files and call `start_video_render` again. To change a finished video, create a new lesson.
+4. When done, give the student the MP4 path on their computer. If they want richer motion or transitions, offer to rerender the same lesson with HyperFrames from a local Codex, Claude Code, or Antigravity CLI session where the browser probe passes. On failure, report the `error`, fix the lesson files and call `start_video_render` again. To change a finished video, create a new lesson.
 
 For HyperFrames, the host needs local command execution and file access, plus permission to open a browser. MCP access alone, a chat subscription, or installing this skill does not provide those capabilities. If missing, offer source-linked notes/storyboard and explain which capability is needed for an MP4. Never claim an export was produced when only a script exists.
 
