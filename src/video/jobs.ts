@@ -7,6 +7,8 @@ import { checkLessonFiles, getLesson, lessonsRoot } from "./lessons.js";
 import { prepareVideo, probeVideo, videoStatus } from "./runtime.js";
 import { readSlideStoryboard, renderSlides } from "./slides.js";
 import { renderAnimatedLesson } from "./lesson-animation.js";
+import type { VideoCleanupWarning } from "./cleanup.js";
+import { videoProgress, type VideoProgress, type VideoReporter } from "./progress.js";
 
 // A render runs as two processes of the same Am I Cooked launcher, so minutes of work never block a tool call and
 // a crash can't take the server down:
@@ -25,7 +27,7 @@ export const HEARTBEAT_MS = 10_000;
 /** No heartbeat for this long means the supervisor is gone (it also covers a slow first start). */
 export const STALE_MS = 60_000;
 
-type LessonRender = { output: string; slides: number; renderer: "hyperframes" | "slides" };
+type LessonRender = { output: string; slides: number; renderer: "hyperframes" | "slides"; warnings?: VideoCleanupWarning[] };
 
 export interface Job {
   jobId: string;
@@ -38,6 +40,8 @@ export interface Job {
   slides?: number;
   renderer?: LessonRender["renderer"];
   error?: string;
+  progress?: VideoProgress;
+  warnings?: VideoCleanupWarning[];
 }
 
 const jobFile = (folder: string) => path.join(folder, "job.json");
@@ -169,13 +173,14 @@ export async function renderLessonCommand(id: string, jobId: string, deps: Super
   if (!job || job.jobId !== jobId || job.state !== "running") return 1;
 
   let finished = false;
+  let progress: VideoProgress | undefined;
   let child: ChildProcess | undefined;
   const finish = (update: Partial<Job>) => {
     if (finished) return;
     finished = true;
-    writeJob(lesson.folder, { ...job, ...update, heartbeat: new Date().toISOString(), finishedAt: new Date().toISOString() });
+    writeJob(lesson.folder, { ...job, progress, ...update, heartbeat: new Date().toISOString(), finishedAt: new Date().toISOString() });
   };
-  const beat = () => { if (!finished) writeJob(lesson.folder, { ...job, heartbeat: new Date().toISOString() }); };
+  const beat = () => { if (!finished) writeJob(lesson.folder, { ...job, progress, heartbeat: new Date().toISOString() }); };
   beat();
   const heartbeat = setInterval(beat, HEARTBEAT_MS);
   let timeout: NodeJS.Timeout | undefined;
@@ -191,12 +196,32 @@ export async function renderLessonCommand(id: string, jobId: string, deps: Super
     try {
       child = work(id);
       let stdout = "";
-      child.stdout?.on("data", chunk => { stdout += chunk; });
+      let pending = "";
+      child.stdout?.setEncoding("utf8");
+      child.stdout?.on("data", chunk => {
+        stdout += chunk;
+        pending += chunk;
+        const lines = pending.split(/\r?\n/);
+        pending = lines.pop() ?? "";
+        for (const line of lines) {
+          let message;
+          try { message = JSON.parse(line); } catch { continue; }
+          if (message?.type === "progress" && typeof message.progress?.stage === "string" &&
+              Number.isFinite(Date.parse(message.progress.updatedAt))) {
+            progress = message.progress;
+            beat();
+          }
+        }
+      });
       const code = await new Promise<number | null>((resolve, reject) => { child!.once("error", reject); child!.once("close", resolve); });
       if (finished) return 1;
       if (code !== 0) throw new Error(`The renderer stopped with exit code ${code}. See the log for details.`);
       const result = JSON.parse(stdout.trim().split(/\r?\n/).pop() ?? "{}") as LessonRender;
-      finish({ state: "done", output: result.output, slides: result.slides, renderer: result.renderer });
+      if (typeof result.output !== "string" || !result.output || !Number.isInteger(result.slides) || result.slides < 1 ||
+          !["slides", "hyperframes"].includes(result.renderer)) {
+        throw new Error("The renderer exited without a completed video result. See the log for details.");
+      }
+      finish({ state: "done", output: result.output, slides: result.slides, renderer: result.renderer, warnings: result.warnings });
       return 0;
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -224,21 +249,32 @@ export function animationDeadline(deadline: number, scenes: number): number {
 /** The hidden `video render-lesson-work` command: prepares the slide tools if needed, checks the lesson again and renders it. */
 export async function renderLessonWork(id: string, prepare = prepareVideo): Promise<number> {
   const lesson = getLesson(id);
+  // Private worker stdout is a line-delimited protocol; the supervisor persists progress for any MCP client.
+  const report: VideoReporter = progress => console.log(JSON.stringify({ type: "progress", progress }));
+  videoProgress(report, "preparing");
   // A chat with no shell can't run video prepare, so fetch the narrated slide tools here when they're missing
   const status = videoStatus();
   if (status.state !== "ready" && status.slidesState !== "ready") await prepare(console.error, true);
   checkLessonFiles(lesson.folder);
+  videoProgress(report, "validating");
   let result: LessonRender | undefined;
+  let warnings: VideoCleanupWarning[] = [];
   const job = readJob(lesson.folder);
   const until = animationDeadline(job ? Date.parse(job.deadline) : Date.now() + RENDER_LIMIT_MS, readSlideStoryboard(lesson.folder).length);
-  if (status.state === "ready" && Date.now() < until && probeVideo(lesson.folder).ok) {
+  if (status.state === "ready" && Date.now() < until) {
     try {
-      result = { ...renderAnimatedLesson(lesson.folder, until), renderer: "hyperframes" };
+      const probe = probeVideo(lesson.folder, undefined, report);
+      warnings = probe.warnings;
+      if (probe.ok) result = { ...renderAnimatedLesson(lesson.folder, until, report), renderer: "hyperframes" };
+      else console.error(`Video probe could not finish; using narrated slides. ${probe.stage}: ${probe.error}`);
     } catch (error) {
-      console.error(`HyperFrames could not finish; using narrated slides. ${(error as Error).message}`);
+      console.error(`Video probe or HyperFrames could not finish; using narrated slides. ${error instanceof Error ? error.message : String(error)}`);
     }
   }
-  result ??= { ...renderSlides(lesson.folder), renderer: "slides" };
-  console.log(JSON.stringify(result));
+  if (!result) {
+    videoProgress(report, "fallback", { renderer: "slides" });
+    result = { ...renderSlides(lesson.folder, undefined, undefined, report), renderer: "slides" };
+  }
+  console.log(JSON.stringify({ ...result, warnings: [...warnings, ...(result.warnings ?? [])] }));
   return 0;
 }

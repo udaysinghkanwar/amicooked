@@ -4,6 +4,8 @@ import { z } from "zod";
 import { runTool } from "./install.js";
 import { getSlideTools, videoEnvironment, type SlideTools } from "./runtime.js";
 import { realPath, videoProject, videoScratch } from "./workspace.js";
+import { cleanupVideoWork, type VideoCleanupWarning } from "./cleanup.js";
+import { logVideoProgress, videoProgress, type VideoReporter } from "./progress.js";
 
 const keyframe = z.object({ at: z.number().nonnegative(), x: z.number(), y: z.number() });
 const overlay = z.object({
@@ -69,7 +71,8 @@ frame.png().toFile(process.argv[3])
   .catch(error => { console.error(error.message); process.exitCode = 1; });
 `;
 
-export function renderSlides(directory?: string, scratchDirectory?: string, preparedTools?: SlideTools) {
+export function renderSlides(directory?: string, scratchDirectory?: string, preparedTools?: SlideTools, report: VideoReporter = logVideoProgress) {
+  videoProgress(report, "validating", { renderer: "slides" });
   const project = videoProject(directory);
   const output = path.join(project, "lesson.mp4");
   if (fs.existsSync(output)) throw new Error("Move the existing lesson.mp4 before rendering again.");
@@ -78,13 +81,17 @@ export function renderSlides(directory?: string, scratchDirectory?: string, prep
   const scratch = videoScratch(project, scratchDirectory);
   const env = videoEnvironment(tools, scratch);
   const work = fs.mkdtempSync(path.join(scratch.temp, "slides-"));
+  const warnings: VideoCleanupWarning[] = [];
   try {
     const stillInput = (file: string) => ["-protocol_whitelist", "file,pipe", "-loop", "1", "-framerate", "30", "-i", file];
     const segments = scenes.map(({ image, narration, overlays }, index) => {
       const frame = path.join(work, "frame.png");
       const speech = path.join(work, "voice.wav");
       const segment = `slide-${index + 1}.mp4`;
+      const progress = (stage: string) => videoProgress(report, stage, { renderer: "slides", scene: index + 1, total: scenes.length });
+      progress("rasterizing");
       runTool(tools.node, ["-e", rasterize, tools.voice, image, frame], env, work);
+      progress("narrating");
       const duration = narrateSlide(tools, narration, speech, env, work);
       const layers = overlays.map(({ image, keyframes }, i) => {
         const file = path.join(work, `overlay-${i}.png`);
@@ -97,6 +104,7 @@ export function renderSlides(directory?: string, scratchDirectory?: string, prep
       const video = layers.length
         ? ["-filter_complex", layers.map(layer => layer.filter).join(";"), "-map", `[layer${layers.length - 1}]`]
         : ["-map", "0:v"];
+      progress("encoding");
       runTool(tools.ffmpeg, [
         "-v", "error", "-y", ...stillInput(frame), ...layers.flatMap(layer => stillInput(layer.file)),
         "-protocol_whitelist", "file,pipe", "-f", "wav", "-i", speech,
@@ -108,14 +116,22 @@ export function renderSlides(directory?: string, scratchDirectory?: string, prep
     });
     fs.writeFileSync(path.join(work, "segments.txt"), segments.map(file => `file '${file}'\n`).join(""));
     const assembled = path.join(work, "lesson.mp4");
+    videoProgress(report, "assembling", { renderer: "slides" });
     runTool(tools.ffmpeg, [
       "-v", "error", "-protocol_whitelist", "file,pipe", "-f", "concat", "-safe", "1", "-i", "segments.txt",
       "-c", "copy", "-movflags", "+faststart", assembled,
     ], env, work);
+    videoProgress(report, "verifying", { renderer: "slides" });
+    const { streams } = JSON.parse(runTool(tools.ffprobe,
+      ["-v", "error", "-show_entries", "stream=codec_type", "-of", "json", assembled], env, work));
+    if (!["audio", "video"].every(type => streams.some((stream: { codec_type: string }) => stream.codec_type === type))) {
+      throw new Error("The slide render did not contain both video and narration.");
+    }
     runTool(tools.ffmpeg, ["-v", "error", "-xerror", "-i", assembled, "-f", "null", "-"], env, work);
+    videoProgress(report, "saving", { renderer: "slides" });
     fs.copyFileSync(assembled, output, fs.constants.COPYFILE_EXCL);
-    return { ok: true, output, slides: scenes.length };
+    return { ok: true, output, slides: scenes.length, warnings };
   } finally {
-    fs.rmSync(work, { recursive: true, force: true, maxRetries: 3 });
+    cleanupVideoWork(work, warnings);
   }
 }
