@@ -44,20 +44,31 @@ try {
   assert(ready, "Local HTTP service did not become ready");
   assert.equal(installGeminiHttp(connection, home), "added");
   assert.equal(installGeminiHttp(connection, home), "unchanged");
-  assert.equal(await checkMcp(geminiEntry(home)), 11);
+  assert.equal(await checkMcp(geminiEntry(home)), 15);
   const client = new Client({ name: "gemini-http-discovery", version: "1" });
   await client.connect(new StreamableHTTPClientTransport(new URL(connection.url), {
     requestInit: { headers: connection.headers },
   }));
   try {
     assert.match(client.getInstructions(), /get_lecture_video_workflow/);
+    // Only the lesson tools write, and nothing reaches beyond the student's computer
+    const { tools } = await client.listTools();
+    const writers = ["create_video_lesson", "write_video_lesson_file", "start_video_render"];
+    for (const name of [...writers, "get_video_render", "am_i_cooked", "get_lecture_video_workflow"]) {
+      assert(tools.some(tool => tool.name === name), `missing ${name}`);
+    }
+    for (const tool of tools) {
+      assert.equal(tool.annotations?.readOnlyHint, !writers.includes(tool.name), tool.name);
+      assert.equal(tool.annotations?.openWorldHint, false, tool.name);
+      if (writers.includes(tool.name)) assert.equal(tool.annotations?.destructiveHint, false, tool.name);
+    }
     const workflow = await client.callTool({ name: "get_lecture_video_workflow", arguments: {} });
     assert.notEqual(workflow.isError, true);
     assert.match(JSON.parse(workflow.content[0].text).instructions, /Kokoro/);
   } finally {
     await client.close();
   }
-  assert.match(run(["doctor"]), /11 read-only tools/);
+  assert.match(run(["doctor"]), /15 tools verified/);
   assert.equal(existsSync(path.join(home, ".claude")), false);
   assert.equal(existsSync(path.join(home, ".codex")), false);
   run(["uninstall"]);

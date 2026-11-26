@@ -57,4 +57,4 @@ Keep tables to about six rows. For one course, use the same style in miniature, 
 
 ## Integrity
 
-Am I Cooked only reads. Help the student understand material and plan their time, but don't write graded work for them to submit.
+Am I Cooked only reads from Brightspace. Help the student understand material and plan their time, but don't write graded work for them to submit.

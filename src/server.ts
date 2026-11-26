@@ -8,6 +8,7 @@ import { downloadFileTool, readFileTool } from "./tools/files.js";
 import type { Tool } from "./tools/types.js";
 import { VERSION } from "./version.js";
 import { getFeatureGuide, getLectureVideoWorkflow } from "./features.js";
+import { LESSON_TOOLS } from "./tools/lessons.js";
 import { maybeStartAutomaticUpdate } from "./cli/autoUpdate.js";
 
 const UPDATE_PROBE_INTERVAL_MS = 60_000;
@@ -26,6 +27,7 @@ export const TOOLS: Tool[] = [
   readFileTool,
   getFeatureGuide,
   getLectureVideoWorkflow,
+  ...LESSON_TOOLS,
 ];
 
 export function createServer(options: { instructions?: string } = {}): McpServer {
@@ -34,7 +36,7 @@ export function createServer(options: { instructions?: string } = {}): McpServer
   for (const tool of TOOLS) {
     server.registerTool(
       tool.name,
-      { description: tool.description, inputSchema: tool.schema, annotations: { readOnlyHint: true, openWorldHint: false } },
+      { description: tool.description, inputSchema: tool.schema, annotations: tool.annotations ?? { readOnlyHint: true, openWorldHint: false } },
       async (args: unknown) => {
         const started = Date.now();
         if (lastUpdateProbe === undefined || started < lastUpdateProbe || started - lastUpdateProbe >= UPDATE_PROBE_INTERVAL_MS) {

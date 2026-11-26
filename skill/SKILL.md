@@ -5,7 +5,7 @@ description: "Use Am I Cooked for making a lecture video, turning course slides 
 
 # Am I Cooked
 
-Am I Cooked connects an AI assistant to a student's D2L Brightspace account (Avenue to Learn, LEARN, onQ, OWL Brightspace, CourseLink, MyLearningSpace and others). It runs on the student's own computer and is read-only.
+Am I Cooked connects an AI assistant to a student's D2L Brightspace account (Avenue to Learn, LEARN, onQ, OWL Brightspace, CourseLink, MyLearningSpace and others). It runs on the student's own computer and only reads from Brightspace. The only files it writes are lesson videos the student asks for, on their computer.
 
 ## Choose a workflow
 
