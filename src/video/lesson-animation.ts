@@ -7,7 +7,13 @@ import { videoScratch } from "./workspace.js";
 
 const VENDORED_GSAP = "dist/vendor/npm/gsap@3.14.2/dist/gsap.min.js";
 
-export function renderAnimatedLesson(project: string) {
+/** Renders with HyperFrames, giving up once `until` (ms since epoch) passes so the slide fallback still has time. */
+export function renderAnimatedLesson(project: string, until = Number.POSITIVE_INFINITY) {
+  const left = (step: string) => {
+    const ms = until - Date.now();
+    if (ms <= 0) throw new Error(`HyperFrames ran out of time before ${step}.`);
+    return ms;
+  };
   const scenes = readSlideStoryboard(project);
   const tools = getVideoTools();
   const scratch = videoScratch(project);
@@ -26,6 +32,7 @@ export function renderAnimatedLesson(project: string) {
     const sections = scenes.map(({ image, narration, overlays }, index) => {
       const scene = `scene-${index}`;
       const audio = `${scene}.wav`;
+      left(`narrating scene ${index + 1}`);
       const duration = narrateSlide(tools, narration, path.join(work, audio), env, work);
       const transition = Math.min(0.32, duration / 4);
       timeline.push(`tl.from("#${scene} .art",{opacity:0,scale:.985,duration:${transition},ease:"power2.out"},${start});`);
@@ -57,7 +64,8 @@ const tl=gsap.timeline({paused:true});${timeline.join("\n")}
 window.__timelines={lesson:tl};</script></html>`);
 
     const assembled = path.join(work, "lesson.mp4");
-    runTool(tools.node, [tools.hyperframes, "render", "--quality", "delivery", "--workers", "1", "--no-best-effort", "--output", assembled], env, work, 20 * 60_000);
+    runTool(tools.node, [tools.hyperframes, "render", "--quality", "delivery", "--workers", "1", "--no-best-effort", "--output", assembled], env, work,
+      Math.min(20 * 60_000, left("rendering")));
     const { streams } = JSON.parse(runTool(tools.ffprobe,
       ["-v", "error", "-show_entries", "stream=codec_type", "-of", "json", assembled], env));
     if (!["audio", "video"].every(type => streams.some((stream: { codec_type: string }) => stream.codec_type === type))) {
