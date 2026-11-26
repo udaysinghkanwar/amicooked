@@ -5,6 +5,7 @@ import { VERSION } from "./version.js";
 import { currentRuntime } from "./clients/self.js";
 import { paths } from "./config.js";
 import { videoStatus } from "./video/runtime.js";
+import { targets } from "./video/manifest.js";
 import type { Tool } from "./tools/types.js";
 
 type Feature = {
@@ -71,6 +72,9 @@ export const getLectureVideoWorkflow: Tool = {
         args: [...(runtime.isCompiled ? [] : [runtime.argv[1]]), "video"],
         env: { AMICOOKED_HOME: paths().home },
       },
+      host: `${process.platform}-${process.arch}`,
+      supportedTargets: Object.keys(targets),
+      checkFirst: "Before asking the student anything, run node -p \"process.platform+'-'+process.arch\" in your own shell and confirm launcher.command exists there. If the platform differs from host or the launcher is missing, your shell is another machine and cannot render: offer source-linked notes and a storyboard, and tell the student to ask Claude Code, Codex or the ChatGPT desktop app on this computer.",
       nextStep: videoNextStep[videoTools.state],
       execution: "Status describes installation on the computer running Am I Cooked. Use the launcher only in an authorized local shell on that computer. Append probe --project <writable folder> to its arguments to test that shell. A remote MCP connection cannot run the probe for you.",
     }, null, 2);
