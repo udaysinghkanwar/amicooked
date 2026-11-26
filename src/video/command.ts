@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { parseArgs, stripVTControlCharacters, styleText } from "node:util";
+import { parseArgs, stripVTControlCharacters } from "node:util";
 import path from "node:path";
 import { log } from "@clack/prompts";
 import { isNpxRuntime } from "../clients/self.js";
@@ -11,20 +11,23 @@ import { videoEntry, videoProject, videoScratch } from "./workspace.js";
 
 const workspaceOptions = { project: { type: "string" }, scratch: { type: "string" } } as const;
 
-export async function prepareVideoSafely({ force = false, humanOutput = false } = {}) {
+export async function prepareVideoSafely({ force = false, humanOutput = false } = {}): Promise<boolean> {
   const config = getConfig();
-  if (!force && (!config.school || config.uninstalled || config.prepareVideo === false)) return;
+  if (!force && (!config.school || config.uninstalled || config.prepareVideo === false)) return false;
   const { state } = videoStatus();
-  if (state === "ready" || state === "unsupported") return;
+  if (state === "ready") return true;
+  if (state === "unsupported") return false;
   const print = humanOutput ? console.log : console.error;
   try {
     await prepareVideo(print);
-    if (humanOutput) log.success(styleText("green", "Lecture video tools are ready."));
+    if (humanOutput) log.success("Lecture video tools are ready.");
     else print("Lecture video tools are ready.");
+    return true;
   } catch (error) {
     const retry = isNpxRuntime() ? "npx -y amicooked@0 video prepare" : "amicooked video prepare";
     const message = stripVTControlCharacters(error instanceof Error ? error.message : String(error));
     print(`Lecture video setup could not finish: ${message}\nCourse tools still work. Check your internet connection and run ${retry} to retry.`);
+    return false;
   }
 }
 
