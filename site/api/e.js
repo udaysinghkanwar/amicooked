@@ -1,10 +1,15 @@
 // Counts finished setups, successful upgrades and install-command copies. Stores counters only: no IPs, no install IDs, nothing from Brightspace.
+// The same Redis also holds opt-in update emails under separate signup:* keys, written only by signup.js.
 // Redis comes from the Upstash integration on Vercel (KV_REST_API_* or UPSTASH_REDIS_REST_* env vars).
 
 // Must match the preset ids in src/schools.ts; a unit test checks this.
 export const SCHOOLS = [
   "mcmaster", "waterloo", "western", "queens", "guelph", "laurier", "tmu",
-  "uottawa", "carleton", "brock", "windsor", "laurentian", "lakehead", "custom",
+  "uottawa", "carleton", "brock", "windsor", "laurentian", "lakehead",
+  "tdsb", "tcdsb", "pdsb", "dpcdsb", "yrdsb", "ycdsb", "ddsb", "dcdsb", "hdsb", "hcdsb", "viamonde", "monavenir",
+  "hwdsb", "hwcdsb", "ocdsb", "ocsb", "cepeo", "cecce", "wrdsb", "wcdsb", "tvdsb", "ldcsb", "gecdsb", "wecdsb",
+  "dsbn", "ncdsb", "scdsb", "smcdsb", "ldsb", "alcdsb", "ugdsb", "welcdsb", "lakehead-dsb", "tbcdsb", "rainbow", "sudbury-cdsb",
+  "custom",
 ];
 export const PLATFORMS = ["darwin-arm64", "darwin-x64", "linux-x64", "linux-arm64", "win32-x64", "win32-arm64"];
 
