@@ -4,7 +4,9 @@ import path from "node:path";
 import { log } from "@clack/prompts";
 import { isNpxRuntime } from "../clients/self.js";
 import { getConfig } from "../config.js";
-import { getVideoTools, prepareVideo, probeVideo, videoEnvironment, videoStatus } from "./runtime.js";
+import { getSlideTools, getVideoTools, prepareVideo, probeVideo, videoEnvironment, videoStatus } from "./runtime.js";
+import { renderSlides } from "./slides.js";
+import { renderLessonCommand, renderLessonWork } from "./jobs.js";
 import { videoEntry, videoProject, videoScratch } from "./workspace.js";
 
 const workspaceOptions = { project: { type: "string" }, scratch: { type: "string" } } as const;
@@ -34,15 +36,31 @@ export async function videoCommand([action = "status", ...args]: string[]) {
     case "status":
       console.log(JSON.stringify(videoStatus()));
       return 0;
-    case "prepare":
-      if (args.length) throw new Error("Use amicooked video prepare.");
-      console.log(JSON.stringify(await prepareVideo()));
+    case "prepare": {
+      const { values } = parseArgs({ args, options: { "media-only": { type: "boolean" } } });
+      console.log(JSON.stringify(await prepareVideo(undefined, values["media-only"])));
       return 0;
+    }
     case "probe": {
       const { values } = parseArgs({ args, options: workspaceOptions });
       const result = probeVideo(values.project, values.scratch);
       console.log(JSON.stringify(result));
       return result.ok ? 0 : 1;
+    }
+    case "render-slides": {
+      const { values } = parseArgs({ args, options: workspaceOptions });
+      console.log(JSON.stringify(renderSlides(values.project, values.scratch)));
+      return 0;
+    }
+    case "render-lesson": {
+      // Hidden: start_video_render runs this as a child process for a lesson an AI app built through MCP
+      const { values } = parseArgs({ args, options: { lesson: { type: "string" }, job: { type: "string" } } });
+      return renderLessonCommand(values.lesson ?? "", values.job ?? "");
+    }
+    case "render-lesson-work": {
+      // Hidden: the renderer child of render-lesson
+      const { values } = parseArgs({ args, options: { lesson: { type: "string" } } });
+      return renderLessonWork(values.lesson ?? "");
     }
     case "run": {
       const separator = args.indexOf("--");
@@ -52,7 +70,8 @@ export async function videoCommand([action = "status", ...args]: string[]) {
       if (separator < 0 || extra.length || !["hyperframes", "ffmpeg", "ffprobe", "voice"].includes(tool)) {
         throw new Error("Use amicooked video run <hyperframes|ffmpeg|ffprobe|voice> [--project <folder>] [--scratch <folder>] -- <arguments>.");
       }
-      const tools = getVideoTools();
+      const browserTools = tool === "hyperframes" ? getVideoTools() : undefined;
+      const tools = browserTools ?? getSlideTools();
       const toolArgs = args.slice(separator + 1);
       if (tool === "voice" && toolArgs.length !== 2) throw new Error("Voice arguments: narration.txt output.wav.");
       const project = videoProject(values.project);
@@ -62,12 +81,12 @@ export async function videoCommand([action = "status", ...args]: string[]) {
       const command = tool === "ffmpeg" || tool === "ffprobe" ? tools[tool] : tools.node;
       const argv = tool === "voice"
         ? [tools.voice, tools.model, ...toolArgs.map(file => path.resolve(project, file))]
-        : tool === "hyperframes" ? [tools.hyperframes, ...toolArgs] : toolArgs;
+        : browserTools ? [browserTools.hyperframes, ...toolArgs] : toolArgs;
       const result = spawnSync(command, argv, { cwd: project, env: videoEnvironment(tools, scratch), stdio: "inherit" });
       if (result.error) throw result.error;
       return result.status ?? 1;
     }
     default:
-      throw new Error("Use amicooked video status, prepare, probe, or run.");
+      throw new Error("Use amicooked video status, prepare, probe, render-slides, or run.");
   }
 }

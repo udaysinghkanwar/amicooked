@@ -34,7 +34,7 @@ Usage: amicooked <command>
   doctor       Test the Gemini connection (--live for school access)
   update       Update the app and installed skills (--check to only check; --json)
   auto-update  Manage automatic patch updates: enable|disable|status|check-if-due
-  video        Manage local lecture-video tools: status|prepare|probe|run
+  video        Manage local lecture-video tools: status|prepare|probe|render-slides|run
   features     List available features; features <id> reads a guide (--json)
   uninstall    Disconnect your AI apps (--purge also deletes your login and settings)
   mcp          Run the MCP server over stdio (AI apps run this for you)
