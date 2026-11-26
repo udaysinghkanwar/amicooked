@@ -2,7 +2,7 @@ import * as fs from "node:fs";
 import path from "node:path";
 import { z } from "zod";
 import { runTool } from "./install.js";
-import { getVideoTools, videoEnvironment } from "./runtime.js";
+import { getSlideTools, videoEnvironment, type SlideTools } from "./runtime.js";
 import { realPath, videoProject, videoScratch } from "./workspace.js";
 
 const keyframe = z.object({ at: z.number().nonnegative(), x: z.number(), y: z.number() });
@@ -51,7 +51,7 @@ frame.png().toFile(process.argv[3])
   .catch(error => { console.error(error.message); process.exitCode = 1; });
 `;
 
-export function renderSlides(directory?: string, scratchDirectory?: string) {
+export function renderSlides(directory?: string, scratchDirectory?: string, preparedTools?: SlideTools) {
   const project = videoProject(directory);
   const output = path.join(project, "lesson.mp4");
   if (fs.existsSync(output)) throw new Error("Move the existing lesson.mp4 before rendering again.");
@@ -61,7 +61,7 @@ export function renderSlides(directory?: string, scratchDirectory?: string) {
     narration: asset(project, narration, [".txt"]),
     overlays: overlays.map(layer => ({ ...layer, image: asset(project, layer.image, imageTypes) })),
   }));
-  const tools = getVideoTools();
+  const tools = preparedTools ?? getSlideTools();
   const scratch = videoScratch(project, scratchDirectory);
   const env = videoEnvironment(tools, scratch);
   const work = fs.mkdtempSync(path.join(scratch.temp, "slides-"));
@@ -71,11 +71,11 @@ export function renderSlides(directory?: string, scratchDirectory?: string) {
       const frame = path.join(work, "frame.png");
       const speech = path.join(work, "voice.wav");
       const segment = `slide-${index + 1}.mp4`;
-      runTool(tools.node, ["-e", rasterize, tools.hyperframes, image, frame], env, work);
+      runTool(tools.node, ["-e", rasterize, tools.voice, image, frame], env, work);
       runTool(tools.node, [tools.voice, tools.model, narration, speech], env, work);
       const layers = overlays.map(({ image, keyframes }, i) => {
         const file = path.join(work, `overlay-${i}.png`);
-        runTool(tools.node, ["-e", rasterize, tools.hyperframes, image, file, "overlay"], env, work);
+        runTool(tools.node, ["-e", rasterize, tools.voice, image, file, "overlay"], env, work);
         const base = i === 0 ? "[0:v]" : `[layer${i - 1}]`;
         const filter = `${base}[${i + 1}:v]overlay=x='${position(keyframes, "x")}':y='${position(keyframes, "y")}'` +
           `:enable='gte(t,${keyframes[0].at})'[layer${i}]`;
