@@ -2,22 +2,15 @@
 
 Research date: November 26, 2026 (America/Toronto). Scope: all 49 current Am I Cooked presets: 13 universities and 36 Ontario school boards. This is research and a proposed design; this document does not enable email collection or change setup behavior.
 
-## Recommendation
+## Current decision: school selection first, optional updates last
 
-Ask for a school email during interactive CLI setup and use an exact, maintained domain-to-institution registry to suggest the school. Keep school-name search and pasted portal URLs available. After a successful connection, ask whether the student wants to subscribe to Am I Cooked product updates, with an option to use another contact address. Save the contact centrally only after the disclosed signup/consent step. Keep anonymous installation counts separate.
+The user's revised direction supersedes the email-first proposal: keep the existing school selector, name search and portal-URL fallback. Do not infer or change the school from the newsletter address. Complete client setup and all enabled downloads first, show the final success message, then ask exactly:
 
-The school address helps route the user to their learning platform. The contact address is where they want to receive messages; a personal address may be more useful after graduation or where school mail blocks external senders. Do not require the two addresses to be equal.
+> Enter your email to stay up to date (or N/A):
 
-## Proposed setup copy and sequence
+A personal or school address is acceptable. N/A skips registration. Email collection remains a proposal in this PR, not an enabled feature. See [storage and email-platform comparison](email-signup-storage-2026-11-26.md) for the recommended backend and implementation contract.
 
-1. **What's your school email?** Helper: “We'll use its domain to suggest your school. You can choose your school instead.” Provide Skip / Choose school manually.
-2. On a supported domain: **Found McMaster University — Avenue to Learn. Continue?** Give Continue and Choose another school. For shared/uncertain mappings show candidates, not a guessed portal. Unknown/personal email domains use school-name search or a URL.
-3. Open the known school login URL and let the student sign in there. Never ask for a school password in the CLI. Keep the email exactly as entered for any identity-provider login; an alternate Google suffix is not automatically a valid Microsoft login.
-4. Once the selected AI app is connected: **Get Am I Cooked feature updates and early-access invitations by email?** Explicit Yes / No, default No. Explain that choosing Yes saves the selected contact address and signup details with Am I Cooked / its email provider. Link to the privacy notice and identify the sender. Avoid vague “other stuff”.
-5. If Yes: **Send updates to [school address] or use another email?** Record a pending subscription and send a confirmation through the email provider once configured. Subscription verification must not block course access or successful setup. Show pending/failed status accurately.
-6. Count successful installations independently. A skipped email or declined marketing consent can still increment an anonymous setup count. Do not call those users contactable subscribers.
-
-Use the interactive prompt as the normal path. A separate web signup page is useful for people who have not installed yet; it should use the same contact/subscription backend. A raw --email flag can be optional for explicit automation but is a poor default because shell history and command logs retain arguments. AI-assisted setup should not copy a student's email into shared logs or model instructions.
+The institution-domain matrix below is retained as research only. It does not authorize an upfront school-email prompt or an automatic domain-routing feature.
 
 ## What the current code actually does
 
@@ -118,7 +111,7 @@ A school-domain match must also carry an LMS type and support state. Do not rout
 
 These are platform identifications, not outage/status checks or end-to-end integration tests.
 
-## Routing implementation contract
+## Archived routing proposal (outside the current implementation scope)
 
 Keep a registry with schoolId, exact domain, accountKind (email/login/Google), evidenceUrl, checkedAt, confidence/status and LMS support. Prefer explicit verified domains over broad suffix wildcards. Normalize domain case and internationalized domain representation, but preserve the entered email. Do not infer someone's name or role from the local part. Reject malformed addresses without network calls. Do not match mcmaster.ca.attacker.example or fakemcmaster.ca to mcmaster.ca.
 
@@ -158,15 +151,15 @@ Source: [Brevo double-opt-in contact API](https://developers.brevo.com/reference
 
 ## Consent and school-age users
 
-Explain both purposes plainly: using the domain to find a portal, and storing a contact address to send specified kinds of updates. Keep marketing opt-in separate and optional; include unsubscribe handling. Canadian CRTC guidance says commercial electronic messages generally require consent, sender identification and an unsubscribe mechanism; do not treat entering an address for school discovery as blanket permission for promotional mail. The precise legal obligations depend on the actual service and users.
+Explain the current purpose plainly: storing the optional contact address to send Am I Cooked product updates. School selection remains independent. Keep marketing opt-in separate and optional; include unsubscribe handling. Canadian CRTC guidance says commercial electronic messages generally require consent, sender identification and an unsubscribe mechanism; do not treat entering an address for school discovery as blanket permission for promotional mail. The precise legal obligations depend on the actual service and users.
 
 K–12 use makes age-appropriate consent part of the product design. The Canadian privacy regulator generally expects parent/guardian consent for children under 13 and meaningful, maturity-appropriate consent for older youth; non-essential uses should be opt-in. Do not silently enable a child marketing list through the existing anonymous telemetry. Decide the age/guardian flow before launching K–12 contact collection, without collecting full birthdates merely to build an email list.
 
 Sources: [CRTC CASL FAQ](https://crtc.gc.ca/eng/com500/faq500.htm), [OPC meaningful consent](https://www.priv.gc.ca/en/privacy-topics/privacy-for-businesses/appropriate-handling-of-personal-information/collecting-personal-information-and-consent/consent/gl_omc_201805/), [OPC Children's Privacy Code](https://www.priv.gc.ca/en/privacy-topics/privacy-for-businesses/protection-of-children-for-businesses/childrens-privacy-code/children-code-final-report-2026/).
 
-## Proposed delivery sequence
+## Revised delivery sequence
 
-1. Add and test a source-backed domain registry and email-to-school suggestions, preserving name/URL fallbacks. Keep the five unresolved student-domain entries out of automatic matching until there is stronger evidence; reconfirm dated patterns where possible.
-2. Add the school-email prompt, editable school confirmation, contact-email choice and explicit updates opt-in. Preserve noninteractive and --no-login paths; do not prompt inside MCP tool calls.
-3. Connect the signup endpoint to a chosen contact/email service, publish the privacy/consent wording and configure sender identity, confirmation and unsubscribe flows. Keep existing anonymous telemetry semantics unchanged.
-4. Test duplicate setup, alternate contact email, unknown domains, staff/alumni addresses, stale board domains, email/school disagreement, declined consent, blocked school mail, registration failure and unsubscribe/reinstall behavior. Test with consenting adult accounts before enabling K–12 marketing collection.
+1. Preserve normal school selection and authentication. Finish enabled downloads before the final setup success message.
+2. Add the optional post-success email prompt, accepting N/A, without changing school selection. Preserve unattended setup and cancellation behavior.
+3. Connect a server-side signup endpoint to the selected provider; configure sender identity, confirmation, consent wording and unsubscribe handling. Do not ship a prompt that discards submissions or falsely claims they were saved.
+4. Test duplicate setup, personal and school addresses, skip/cancel, network/provider failure, interrupted setup, quota exhaustion and unsubscribe/reinstall behavior. Keep setup usable when optional signup fails.
