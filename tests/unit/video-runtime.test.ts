@@ -106,6 +106,49 @@ it("tries the mirror after transient failures and validates it against the origi
   expect(fs.readFileSync(file, "utf8")).toBe("trusted");
 });
 
+it("uses the environment proxy for video downloads and reports a refused origin before trying a mirror", async () => {
+  const connected: string[] = [];
+  const proxy = createServer();
+  const sockets = new Set<import("node:net").Socket>();
+  proxy.on("connection", socket => {
+    sockets.add(socket);
+    socket.once("close", () => sockets.delete(socket));
+  });
+  proxy.on("connect", (request, socket) => {
+    connected.push(request.url!);
+    if (request.url === "upstream.invalid:443") {
+      socket.end("HTTP/1.1 403 Forbidden\r\nContent-Length: 0\r\n\r\n");
+    } else {
+      socket.write("HTTP/1.1 200 Connection Established\r\n\r\n");
+      socket.once("data", () => socket.end("HTTP/1.1 200 OK\r\nContent-Length: 7\r\nConnection: close\r\n\r\ntrusted"));
+    }
+  });
+  const direct = createServer((_request, response) => response.end("trusted"));
+  const listen = (server: ReturnType<typeof createServer>) => new Promise<number>(resolve => {
+    server.listen(0, "127.0.0.1", () => resolve((server.address() as { port: number }).port));
+  });
+  const [proxyPort, directPort] = await Promise.all([listen(proxy), listen(direct)]);
+  vi.stubEnv("http_proxy", `http://127.0.0.1:${proxyPort}`);
+  vi.stubEnv("https_proxy", `http://127.0.0.1:${proxyPort}`);
+  vi.stubEnv("no_proxy", "127.0.0.1");
+  const file = path.join(home, "download");
+  const asset = { url: "https://upstream.invalid/asset", sha256: createHash("sha256").update("trusted").digest("hex") };
+  try {
+    await expect(download(asset, file, { retryDelayMs: 0 })).rejects.toThrow(
+      "upstream.invalid: Proxy refused the connection (HTTP 403).",
+    );
+    await download({ ...asset, mirrors: ["http://mirror.invalid/asset"] }, file, { retryDelayMs: 0 });
+    expect(fs.readFileSync(file, "utf8")).toBe("trusted");
+    await download({ ...asset, url: `http://127.0.0.1:${directPort}/asset` }, path.join(home, "no-proxy"));
+    expect(connected).toEqual(["upstream.invalid:443", "upstream.invalid:443", "mirror.invalid:80"]);
+  } finally {
+    for (const socket of sockets) socket.destroy();
+    direct.closeAllConnections();
+    direct.close();
+    proxy.close();
+  }
+});
+
 it("reuses complete components and retries an incomplete component without publishing staging files", async () => {
   const prepare = vi.fn(async directory => { fs.writeFileSync(path.join(directory, "tool"), "okay"); });
   const first = await installComponent(home, "tool-v1", ["tool"], prepare);
