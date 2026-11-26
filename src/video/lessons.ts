@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import * as fs from "node:fs";
 import path from "node:path";
 import { getConfig } from "../config.js";
+import { svgProblem } from "./svg.js";
 import { realPath } from "./workspace.js";
 
 // Lessons an AI app builds through Am I Cooked's tools (#21), for chats with no shell on the student's computer.
@@ -26,6 +27,8 @@ export const LIMITS = { fileBytes: 2 * 1024 * 1024, lessonBytes: 40 * 1024 * 102
 const ALLOWED: Record<LessonFormat, string[]> = { slides: [".svg", ".txt", ".json"] };
 /** Files Am I Cooked owns inside a lesson. */
 const RESERVED = new Set([MANIFEST, "job.json", "job.log", "lesson.mp4"]);
+/** Compared case-insensitively: Windows and default macOS volumes treat Lesson.JSON as lesson.json. */
+const reserved = (name: string) => RESERVED.has(name.toLowerCase());
 
 export const lessonsRoot = () => path.join(getConfig().filesDir, "Lessons");
 
@@ -58,19 +61,39 @@ export function getLesson(id: string): Lesson {
 
 /** Rejects anything that could make the renderer read outside the lesson (or the network). */
 export function unsafeContent(file: string, content: string): string | null {
-  const ext = path.extname(file).toLowerCase();
-  if (ext === ".svg") {
-    if (/<!DOCTYPE|<!ENTITY/i.test(content)) return "SVG files can't declare a DOCTYPE or ENTITY.";
-    for (const [, , value] of content.matchAll(/\b(xlink:href|href)\s*=\s*("[^"]*"|'[^']*')/gi)) {
-      const target = value.slice(1, -1).trim();
-      if (!target.startsWith("#") && !/^data:image\/(png|jpeg|gif|webp);base64,/i.test(target)) {
-        return `SVG files can only link to their own #ids or embedded data:image values, not "${target.slice(0, 60)}".`;
+  return path.extname(file).toLowerCase() === ".svg" ? svgProblem(content) : null;
+}
+
+/** Every SVG in a lesson, checked again just before rendering in case it changed on disk since it was written. */
+export function checkLessonFiles(folder: string) {
+  const walk = (dir: string) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isSymbolicLink()) throw new Error(`${path.relative(folder, full)} is a link; lessons can only hold regular files.`);
+      if (entry.isDirectory()) walk(full);
+      else if (path.extname(entry.name).toLowerCase() === ".svg") {
+        const problem = svgProblem(fs.readFileSync(full, "utf8"));
+        if (problem) throw new Error(`${path.relative(folder, full)}: ${problem}`);
       }
     }
-    if (/\burl\(\s*['"]?(?!#)/i.test(content)) return "SVG styles can only use url(#id) references.";
-    if (/@import/i.test(content)) return "SVG styles can't @import other files.";
+  };
+  walk(folder);
+}
+
+/** Creates the folders for a lesson file one level at a time, refusing any existing level that is a link or a file. */
+function lessonFolder(lesson: Lesson, folders: string[]): string {
+  let current = lesson.folder;
+  for (const name of folders) {
+    current = path.join(current, name);
+    let info: fs.Stats | undefined;
+    try { info = fs.lstatSync(current); } catch (error) { if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error; }
+    if (!info) fs.mkdirSync(current, { mode: 0o700 });
+    else if (info.isSymbolicLink() || !info.isDirectory()) throw new Error("That path leaves the lesson folder.");
   }
-  return null;
+  // Belt and braces: the folder must still resolve inside the lesson
+  const inside = path.relative(lesson.folder, realPath(current));
+  if (inside.split(path.sep)[0] === ".." || path.isAbsolute(inside)) throw new Error("That path leaves the lesson folder.");
+  return current;
 }
 
 function lessonSize(folder: string): { bytes: number; files: number } {
@@ -99,7 +122,7 @@ export function writeLessonFile(id: string, relative: string, content: string): 
     throw new Error("Use a short relative path inside the lesson, made of letters, numbers, dots, dashes and underscores (up to 4 folders deep).");
   }
   const name = parts.join("/");
-  if (RESERVED.has(name)) throw new Error(`${name} is managed by Am I Cooked and can't be written.`);
+  if (reserved(name)) throw new Error(`${name} is managed by Am I Cooked and can't be written.`);
   const ext = path.extname(name).toLowerCase();
   if (!ALLOWED[lesson.format].includes(ext)) {
     throw new Error(`A ${lesson.format} lesson accepts ${ALLOWED[lesson.format].join(", ")} files only.`);
@@ -109,12 +132,7 @@ export function writeLessonFile(id: string, relative: string, content: string): 
   const problem = unsafeContent(name, content);
   if (problem) throw new Error(problem);
 
-  const target = path.join(lesson.folder, ...parts);
-  fs.mkdirSync(path.dirname(target), { recursive: true, mode: 0o700 });
-  // The parent must still resolve inside the lesson (no folder links), and the file itself must not be a link
-  const parent = realPath(path.dirname(target));
-  const inside = path.relative(lesson.folder, parent);
-  if (inside.split(path.sep)[0] === ".." || path.isAbsolute(inside)) throw new Error("That path leaves the lesson folder.");
+  const target = path.join(lessonFolder(lesson, parts.slice(0, -1)), parts[parts.length - 1]);
   let existing = 0;
   try {
     const info = fs.lstatSync(target);
