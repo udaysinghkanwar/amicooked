@@ -147,6 +147,8 @@ h1 {
 .cmd[hidden] { display: none; }
 .cmd code { flex: 1; min-width: 0; padding-block: 10px; font-size: 0.875rem; line-height: 1.5; color: var(--ink); overflow-wrap: anywhere; }
 .cmd-prompt code { color: var(--soft); }
+/* Open, the prompt keeps its line breaks so each command sits on its own line */
+.cmd-prompt.is-open code, .no-js .cmd-prompt code { white-space: pre-wrap; }
 
 .icon-button {
   appearance: none; flex: none; position: relative; display: inline-grid; place-items: center;
