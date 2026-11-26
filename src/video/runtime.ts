@@ -3,7 +3,7 @@ import path from "node:path";
 import { paths, writePrivateFile } from "../config.js";
 import { acquireLock } from "../lock.js";
 import { download, fingerprint, installComponent, runTool, unpack } from "./install.js";
-import { platformDownloads, targets, voiceModel, type VideoTarget } from "./manifest.js";
+import { platformDownloads, targets, voiceModel, voiceModelMirror, type VideoTarget } from "./manifest.js";
 import manifest from "./runtime-package.json" with { type: "json" };
 import npmLock from "./runtime-lock.json" with { type: "json" };
 import { voiceScript } from "./voice.js";
@@ -137,12 +137,17 @@ export async function prepareVideo(log: (message: string) => void = console.erro
       fs.writeFileSync(path.join(directory, "package.json"), JSON.stringify(manifest));
       fs.writeFileSync(path.join(directory, "package-lock.json"), JSON.stringify(npmLock));
       runTool(node, [path.join(nodeRoot, npmRelative), "ci", "--ignore-scripts", "--no-audit", "--no-fund", "--include=optional",
+        "--fetch-retries", "5",
         "--cache", path.join(root(), "npm-cache"), "--userconfig", path.join(directory, ".npmrc")],
-      { ...Object.fromEntries(Object.entries(process.env).filter(([key]) => !/^(npm_config_|node_options$)/i.test(key))), PATH: `${path.dirname(node)}${path.delimiter}${process.env.PATH ?? ""}` }, directory);
+      { ...Object.fromEntries(Object.entries(process.env).filter(([key]) => !/^(npm_config_|node_options$)/i.test(key))), PATH: `${path.dirname(node)}${path.delimiter}${process.env.PATH ?? ""}` }, directory, 20 * 60_000);
     });
     const model = await installComponent(store, fingerprint(voiceModel), Object.keys(voiceModel), async directory => {
       log("Downloading the local narration model…");
-      for (const [file, asset] of Object.entries(voiceModel)) await download(asset, path.join(directory, file));
+      for (const [file, asset] of Object.entries(voiceModel)) {
+        // Mirrors change where the same pinned bytes come from, not the runtime fingerprint.
+        const mirrors = [`${voiceModelMirror}/${path.posix.basename(file)}`];
+        await download({ ...asset, mirrors }, path.join(directory, file));
+      }
     });
     const voice = path.join(packages, `voice-${fingerprint(voiceScript)}.mjs`);
     if (!fs.existsSync(voice)) writePrivateFile(voice, voiceScript);

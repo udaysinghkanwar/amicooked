@@ -15,7 +15,7 @@ export async function prepareVideoSafely({ force = false, humanOutput = false } 
     if (humanOutput) log.success(styleText("green", "Lecture video tools are ready."));
     else console.error("Lecture video tools are ready.");
   } catch (error) {
-    console.error(`Lecture video setup could not finish: ${error instanceof Error ? error.message : String(error)}\nRun amicooked video prepare to retry.`);
+    console.error(`Lecture video setup could not finish: ${error instanceof Error ? error.message : String(error)}\nCourse tools still work. Check your internet connection and run amicooked video prepare to retry.`);
   }
 }
 

@@ -2,39 +2,103 @@ import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import * as fs from "node:fs";
 import path from "node:path";
-import { Transform } from "node:stream";
+import { Readable, Transform } from "node:stream";
 import { pipeline } from "node:stream/promises";
+import type { ReadableStream as NodeReadableStream } from "node:stream/web";
+import { setTimeout as delay } from "node:timers/promises";
 import { type Download } from "./manifest.js";
 
 export const fingerprint = (value: unknown) => createHash("sha256").update(JSON.stringify(value)).digest("hex");
 
-export async function download(asset: Download, destination: string, fetcher = fetch): Promise<void> {
-  const response = await fetcher(asset.url, { signal: AbortSignal.timeout(180_000) });
-  if (!response.ok || !response.body) throw new Error(`Download failed (${response.status}) from ${new URL(asset.url).hostname}.`);
+interface DownloadOptions {
+  fetcher?: typeof fetch;
+  stallMs?: number;
+  retryDelayMs?: number;
+}
+
+export async function download(asset: Download, destination: string, {
+  fetcher = fetch, stallMs = 60_000, retryDelayMs = 1_000,
+}: DownloadOptions = {}): Promise<void> {
   fs.mkdirSync(path.dirname(destination), { recursive: true });
-  const hash = createHash("sha256");
+  const staging = fs.mkdtempSync(path.join(path.dirname(destination), "download-"));
+  const partial = path.join(staging, "partial");
+  const failures: string[] = [];
   try {
-    const checksum = new Transform({
-      transform(bytes, _encoding, callback) {
-        hash.update(bytes);
-        callback(null, bytes);
-      },
-    });
-    await pipeline(response.body, checksum, fs.createWriteStream(destination, { flags: "wx" }));
-    if (hash.digest("hex") !== asset.sha256) throw new Error(`Checksum mismatch for ${path.basename(destination)}.`);
-  } catch (error) {
-    fs.rmSync(destination, { force: true });
-    throw error;
+    for (const url of [asset.url, ...(asset.mirrors ?? [])]) {
+      fs.rmSync(partial, { force: true });
+      let failure: unknown;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        if (attempt && retryDelayMs) await delay(retryDelayMs * attempt);
+        const offset = fs.statSync(partial, { throwIfNoEntry: false })?.size ?? 0;
+        const abort = new AbortController();
+        let timer = setTimeout(stall, stallMs);
+        function stall() { abort.abort(new Error(`No download progress for ${stallMs / 1_000} seconds.`)); }
+        function progress() {
+          clearTimeout(timer);
+          timer = setTimeout(stall, stallMs);
+        }
+        try {
+          const headers: Record<string, string> = { "Accept-Encoding": "identity" };
+          if (offset) headers.Range = `bytes=${offset}-`;
+          const response = await fetcher(url, { headers, signal: abort.signal });
+          if (!response.ok || !response.body) {
+            await response.body?.cancel();
+            failure = new Error(`HTTP ${response.status}`);
+            if (response.status === 416 && offset) fs.rmSync(partial, { force: true });
+            else if (response.status < 500 && ![408, 429].includes(response.status)) break;
+            continue;
+          }
+          const append = response.status === 206;
+          if (append && (!offset || !response.headers.get("content-range")?.startsWith(`bytes ${offset}-`))) {
+            await response.body.cancel();
+            fs.rmSync(partial, { force: true });
+            failure = new Error("Server returned the wrong byte range.");
+            continue;
+          }
+          progress();
+          const watch = new Transform({
+            transform(bytes, _encoding, callback) {
+              progress();
+              callback(null, bytes);
+            },
+          });
+          // Adapt the fetch stream so a stall also cancels the pending read.
+          const body = Readable.fromWeb(response.body as unknown as NodeReadableStream<Uint8Array>);
+          await pipeline(body, watch, fs.createWriteStream(partial, { flags: append ? "a" : "w" }), { signal: abort.signal });
+          clearTimeout(timer);
+          const hash = createHash("sha256");
+          for await (const bytes of fs.createReadStream(partial)) hash.update(bytes);
+          if (hash.digest("hex") !== asset.sha256) {
+            failure = new Error("Checksum mismatch.");
+            if (!offset) break;
+            fs.rmSync(partial, { force: true });
+            continue;
+          }
+          fs.renameSync(partial, destination);
+          return;
+        } catch (error) {
+          failure = abort.signal.reason ?? error;
+        } finally {
+          clearTimeout(timer);
+        }
+      }
+      const reason = failure instanceof Error ? failure.cause ?? failure.message : failure;
+      failures.push(`${new URL(url).hostname}: ${String(reason)}`);
+    }
+    throw new Error(`Could not download ${path.basename(destination)} (${failures.join("; ")}).`);
+  } finally {
+    fs.rmSync(staging, { recursive: true, force: true });
   }
 }
 
-export function runTool(command: string, args: string[], env?: NodeJS.ProcessEnv, cwd?: string): string {
+export function runTool(command: string, args: string[], env?: NodeJS.ProcessEnv, cwd?: string, timeout = 300_000): string {
   try {
     return execFileSync(command, args, {
-      cwd, env, encoding: "utf8", timeout: 300_000, windowsHide: true, stdio: ["ignore", "pipe", "pipe"],
+      cwd, env, encoding: "utf8", timeout, windowsHide: true, stdio: ["ignore", "pipe", "pipe"],
     }).trim();
   } catch (error) {
-    const failure = error as { stderr?: string; message?: string };
+    const failure = error as { code?: string; stderr?: string; message?: string };
+    if (failure.code === "ETIMEDOUT") throw new Error(`${path.basename(command)} timed out after ${timeout / 60_000} minutes.`);
     const message = failure.stderr?.trim() || failure.message || String(error);
     throw new Error(`${path.basename(command)} failed: ${message.split("\n").slice(-6).join("\n")}`);
   }

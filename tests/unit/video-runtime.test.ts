@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import * as fs from "node:fs";
+import { createServer } from "node:http";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
@@ -28,12 +29,80 @@ it("verifies completed downloads and removes corrupt or interrupted files", asyn
   const url = "https://example.invalid/video-tool";
   const sha256 = createHash("sha256").update("trusted").digest("hex");
   const file = path.join(home, "download");
-  await expect(download({ url, sha256 }, file, async () => new Response("corrupt"))).rejects.toThrow("Checksum");
-  expect(fs.existsSync(file)).toBe(false);
-  const body = new ReadableStream({ pull(controller) { controller.error(new Error("interrupted")); } });
-  await expect(download({ url, sha256 }, file, async () => new Response(body))).rejects.toThrow("interrupted");
-  expect(fs.existsSync(file)).toBe(false);
-  await download({ url, sha256 }, file, async () => new Response("trusted"));
+  await expect(download({ url, sha256 }, file, { fetcher: async () => new Response("corrupt") })).rejects.toThrow("Checksum");
+  const fetcher = async () => new Response(new ReadableStream({
+    pull(controller) { controller.error(new Error("interrupted")); },
+  }));
+  await expect(download({ url, sha256 }, file, { fetcher, retryDelayMs: 0 })).rejects.toThrow("interrupted");
+  expect(fs.readdirSync(home)).toEqual([]);
+  await download({ url, sha256 }, file, { fetcher: async () => new Response("trusted") });
+  expect(fs.readFileSync(file, "utf8")).toBe("trusted");
+});
+
+it.each(["resume", "restart"])("can %s a download after a real connection reset", async (mode) => {
+  const bytes = Buffer.alloc(128 * 1024, 42);
+  const cutoff = bytes.length / 2;
+  const ranges: (string | undefined)[] = [];
+  const server = createServer((request, response) => {
+    ranges.push(request.headers.range);
+    if (ranges.length === 1) {
+      response.writeHead(200, { "content-length": bytes.length });
+      response.write(bytes.subarray(0, cutoff), () => setTimeout(() => response.destroy(), 80));
+    } else if (mode === "resume") {
+      response.writeHead(206, { "content-range": `bytes ${cutoff}-${bytes.length - 1}/${bytes.length}` });
+      response.end(bytes.subarray(cutoff));
+    } else {
+      response.end(bytes);
+    }
+  });
+  const address = await new Promise<{ port: number }>((resolve) => {
+    server.listen(0, "127.0.0.1", () => resolve(server.address() as { port: number }));
+  });
+  try {
+    const url = `http://127.0.0.1:${address.port}/asset`;
+    const file = path.join(home, "download");
+    await download({ url, sha256: createHash("sha256").update(bytes).digest("hex") }, file, { retryDelayMs: 0 });
+    expect(ranges).toEqual([undefined, `bytes=${cutoff}-`]);
+    expect(fs.readFileSync(file)).toEqual(bytes);
+  } finally {
+    server.closeAllConnections();
+    server.close();
+  }
+});
+
+it("times out a stalled transfer but allows a longer download that keeps making progress", async () => {
+  const url = "https://example.invalid/asset";
+  const file = path.join(home, "download");
+  const sha256 = createHash("sha256").update("trusted").digest("hex");
+  const fetcher = vi.fn(async () => new Response(new ReadableStream({})));
+  await expect(download({ url, sha256 }, file, { fetcher, stallMs: 30, retryDelayMs: 0 })).rejects.toThrow("No download progress");
+  expect(fetcher).toHaveBeenCalledTimes(3);
+  expect(fs.readdirSync(home)).toEqual([]);
+
+  await download({ url, sha256 }, file, { stallMs: 160, fetcher: async () => new Response(new ReadableStream({
+    async start(controller) {
+      for (const chunk of ["tr", "us", "te", "d"]) {
+        await new Promise(resolve => setTimeout(resolve, 75));
+        controller.enqueue(Buffer.from(chunk));
+      }
+      controller.close();
+    },
+  })) });
+  expect(fs.readFileSync(file, "utf8")).toBe("trusted");
+});
+
+it("tries the mirror after transient failures and validates it against the original checksum", async () => {
+  const url = "https://upstream.invalid/asset";
+  const mirror = "https://mirror.invalid/asset";
+  const file = path.join(home, "download");
+  const asset = { url, mirrors: [mirror], sha256: createHash("sha256").update("trusted").digest("hex") };
+  const fetcher = vi.fn(async input => input === url ? new Response(null, { status: 503 }) : new Response("corrupt"));
+  await expect(download(asset, file, { fetcher, retryDelayMs: 0 })).rejects.toThrow("upstream.invalid: HTTP 503; mirror.invalid: Checksum mismatch");
+  expect(fs.readdirSync(home)).toEqual([]);
+  expect(fetcher.mock.calls.map(([url]) => url)).toEqual([url, url, url, mirror]);
+  await download(asset, file, {
+    fetcher: async input => input === url ? new Response(null, { status: 403 }) : new Response("trusted"),
+  });
   expect(fs.readFileSync(file, "utf8")).toBe("trusted");
 });
 
@@ -64,9 +133,9 @@ it("keeps the previously verified tools usable after a failed replacement", asyn
   const marker = JSON.stringify({ schema: 1, target: videoStatus().target, identity: "0".repeat(64), tools });
   const markerPath = path.join(root, "ready.json");
   fs.writeFileSync(markerPath, marker);
-  const fetcher = vi.fn().mockRejectedValue(new Error("blocked DNS"));
+  const fetcher = vi.fn().mockResolvedValue(new Response(null, { status: 403 }));
   vi.stubGlobal("fetch", fetcher);
-  await expect(prepareVideo(() => {})).rejects.toThrow("blocked DNS");
+  await expect(prepareVideo(() => {})).rejects.toThrow("HTTP 403");
   expect(videoStatus().state).toBe("previous");
   expect(fs.readFileSync(markerPath, "utf8")).toBe(marker);
   expect(getVideoTools()).toEqual(tools);
@@ -83,7 +152,7 @@ it("rejects concurrent preparation", async () => {
 it("prepares video tools during updates by default and honors the skip preference", async () => {
   if (videoStatus().state === "unsupported") return;
   writeConfig({ school: { id: "fixture", name: "Fixture", host: "fixture.invalid", lmsName: "D2L" } });
-  const downloads = vi.fn().mockRejectedValue(new Error("offline"));
+  const downloads = vi.fn().mockResolvedValue(new Response(null, { status: 403 }));
   vi.stubGlobal("fetch", downloads);
   const deps = { fetch: async () => new Response(JSON.stringify({ tag_name: "v1.0.0" })), version: "1.0.0" };
   const output = vi.spyOn(console, "log").mockImplementation(() => {});
@@ -102,7 +171,7 @@ it("prepares video tools during updates by default and honors the skip preferenc
     expect(downloads).toHaveBeenCalledTimes(1);
     expect(await updateCommand({ json: true }, deps)).toBe(0);
     expect(downloads).toHaveBeenCalledTimes(2);
-    expect(errors).toHaveBeenCalledWith(expect.stringContaining("offline"));
+    expect(errors).toHaveBeenCalledWith(expect.stringContaining("HTTP 403"));
   } finally {
     output.mockRestore();
     errors.mockRestore();
