@@ -94,6 +94,9 @@ export function videoEnvironment(tools: SlideTools & Partial<Pick<Tools, "browse
 }
 
 class LocalPreviewBlockedError extends Error {}
+class BrowserCheckTimeoutError extends Error {}
+
+const BROWSER_CHECK_TIMEOUT_MS = 45_000;
 
 function smokeTest(tools: Tools, work: string, env: NodeJS.ProcessEnv, stage?: (step: string) => void) {
   stage?.("narration");
@@ -113,8 +116,12 @@ function smokeTest(tools: Tools, work: string, env: NodeJS.ProcessEnv, stage?: (
   if (stage) {
     stage("browser-check");
     const result = spawnSync(tools.node, [tools.hyperframes, "check", "--json"], {
-      env, cwd: work, encoding: "utf8", timeout: 300_000, windowsHide: true,
+      env, cwd: work, encoding: "utf8", timeout: BROWSER_CHECK_TIMEOUT_MS,
+      killSignal: "SIGKILL", windowsHide: true,
     });
+    if ((result.error as NodeJS.ErrnoException | undefined)?.code === "ETIMEDOUT") {
+      throw new BrowserCheckTimeoutError(`HyperFrames did not finish the browser check within ${BROWSER_CHECK_TIMEOUT_MS / 1000} seconds.`);
+    }
     if (result.error) throw result.error;
     let report;
     try { report = JSON.parse(result.stdout); }
@@ -162,8 +169,9 @@ export function probeVideo(directory?: string, scratchDirectory?: string) {
     steps.push(stage);
     return { ok: true, project, scratch: scratch.cache, steps };
   } catch (error) {
-    if (error instanceof LocalPreviewBlockedError) {
-      return { ok: false, project, steps, stage, reason: "local-preview-blocked", error: error.message,
+    if (error instanceof LocalPreviewBlockedError || error instanceof BrowserCheckTimeoutError) {
+      const reason = error instanceof LocalPreviewBlockedError ? "local-preview-blocked" : "browser-check-timeout";
+      return { ok: false, project, steps, stage, reason, error: error.message,
         nextStep: "This session could not use the browser preview. Use video render-slides in the same approved project folder to make an animated narrated lesson with the installed tools. See the lecture-video guide for the slides.json format." };
     }
     if (stage === "installation" && slidesReady()) {
