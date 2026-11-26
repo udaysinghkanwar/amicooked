@@ -1,0 +1,31 @@
+{
+  "lecture-videos": {
+    "name": "Lecture videos",
+    "description": "Source-grounded narrated lessons and local study players.",
+    "requests": "making a lecture video, turning course slides or class notes into a narrated lesson, or creating a study video",
+    "requires": "Local command and file access on the computer running Am I Cooked.",
+    "guide": "references/lecture-videos.md",
+    "mcpTool": "get_lecture_video_workflow"
+  },
+  "courses": {
+    "name": "Course planning",
+    "description": "Grades, deadlines, announcements and course files.",
+    "requests": "checking grades or deadlines, finding course files, explaining or summarizing lectures, quizzing the student on their slides, or giving an Am I Cooked overview",
+    "requires": "A Brightspace login for live course material.",
+    "guide": "references/courses.md"
+  },
+  "updates": {
+    "name": "Updates",
+    "description": "Update the app and skills, manually or with automatic patch updates.",
+    "requests": "finding Am I Cooked features, updating the app, or managing automatic patch updates",
+    "requires": "An installed app with local command access.",
+    "guide": "references/updates.md"
+  },
+  "setup": {
+    "name": "Setup",
+    "description": "Connect your school and AI apps.",
+    "requests": "setting up Am I Cooked, connecting an AI app, or signing in to Brightspace",
+    "requires": "Local command access and Chrome or Edge.",
+    "guide": "references/setup.md"
+  }
+}

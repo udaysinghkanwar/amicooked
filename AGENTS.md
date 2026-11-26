@@ -18,7 +18,8 @@ A local MCP server that lets students' AI apps read their D2L Brightspace course
 | `src/clients/` | Writers for Claude Desktop, Claude Code, ChatGPT and Gemini |
 | `src/remote/` | ChatGPT: OAuth store, HTTP server, tunnel, background service |
 | `skill/` | Small skill entry point and on-demand references |
-| `src/features.ts`, `src/skills.ts`, `src/cli/update.ts` | Feature guides, skill lifecycle and release updates |
+| `src/feature-catalog.json`, `src/features.ts` | Feature routing, guides and MCP discovery |
+| `src/skills.ts`, `src/cli/update.ts` | Skill lifecycle and release updates |
 | `install/` | One-line installers (copied into `site/`) |
 | `site/` | Landing page (Vercel, root directory `site`) |
 | `worker/` | Cloudflare Worker that provisions per-student tunnels |

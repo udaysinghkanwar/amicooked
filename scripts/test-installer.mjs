@@ -31,7 +31,7 @@ try {
   fs.writeFileSync(agy, "");
   run(installed, ["auto-update", "disable"]);
   const geminiSetup = ["setup", "--clients", "gemini", "--school", "mcmaster", "--no-login", "--yes", "--skip-video-deps"];
-  assert.match(run(installed, geminiSetup), /MCP handshake and 10 read-only tools verified/);
+  assert.match(run(installed, geminiSetup), /MCP handshake and 11 read-only tools verified/);
   const configFile = path.join(root, ".gemini", "config", "mcp_config.json");
   const config = fs.readFileSync(configFile, "utf8");
   run(installed, geminiSetup);
@@ -39,10 +39,10 @@ try {
   const launch = JSON.parse(config).mcpServers.amicooked;
   assert.equal(fs.realpathSync.native(launch.command), fs.realpathSync.native(installed));
   assert.deepEqual(launch.args, ["mcp"]);
-  assert.match(run(installed, ["doctor"]), /10 read-only tools verified/);
+  assert.match(run(installed, ["doctor"]), /11 read-only tools verified/);
   client = new Client({ name: "windows-antigravity-config-test", version: "1" });
   await client.connect(new StdioClientTransport({ ...launch, stderr: "ignore" }));
-  const result = await client.callTool({ name: "get_feature_guide", arguments: { feature: "lecture-videos" } });
+  const result = await client.callTool({ name: "get_lecture_video_workflow", arguments: {} });
   assert.notEqual(result.isError, true);
   assert.match(JSON.parse(result.content[0].text).instructions, /Lecture videos/);
   await client.close();

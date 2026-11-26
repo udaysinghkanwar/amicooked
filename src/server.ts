@@ -7,7 +7,7 @@ import { getAssignments, getUpcomingDueDates } from "./tools/deadlines.js";
 import { downloadFileTool, readFileTool } from "./tools/files.js";
 import type { Tool } from "./tools/types.js";
 import { VERSION } from "./version.js";
-import { getFeatureGuide } from "./features.js";
+import { getFeatureGuide, getLectureVideoWorkflow } from "./features.js";
 import { maybeStartAutomaticUpdate } from "./cli/autoUpdate.js";
 
 const UPDATE_PROBE_INTERVAL_MS = 60_000;
@@ -25,6 +25,7 @@ export const TOOLS: Tool[] = [
   downloadFileTool,
   readFileTool,
   getFeatureGuide,
+  getLectureVideoWorkflow,
 ];
 
 export function createServer(options: { instructions?: string } = {}): McpServer {

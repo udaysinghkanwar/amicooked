@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { existsSync, readFileSync, mkdtempSync, mkdirSync, writeFileSync, rmSync, readdirSync } from "fs";
 import * as os from "os";
 import * as path from "path";
+import { FEATURES } from "../../src/features.js";
 import { serverInstructions } from "../../src/instructions.js";
 import { SKILL_MD, SKILL_FILES } from "../../src/skill.js";
 import { skillBundleIs } from "../../src/clients/skillFiles.js";
@@ -22,6 +23,16 @@ describe("skill", () => {
     expect(serverInstructions()).not.toContain(guide);
   });
 
+  it("routes every shipped feature from the catalog in both the skill and MCP instructions", () => {
+    for (const feature of FEATURES) {
+      expect(SKILL_MD).toContain(`[${feature.name}](${feature.guide})`);
+      expect(SKILL_FILES[feature.guide]).toBeTruthy();
+      expect(SKILL_MD).toContain(feature.requests);
+      expect(serverInstructions()).toContain(feature.requests);
+      if (feature.mcpTool) expect(SKILL_MD).toContain(feature.mcpTool);
+    }
+  });
+
   it("serves the same install scripts the repo ships", () => {
     for (const name of ["install.sh", "install.ps1"]) {
       if (existsSync(`site/${name}`)) expect(readFileSync(`site/${name}`, "utf8")).toBe(readFileSync(`install/${name}`, "utf8"));
@@ -31,6 +42,7 @@ describe("skill", () => {
   it("gives the server instructions without the setup section", () => {
     const instructions = serverInstructions();
     expect(instructions).toContain("am_i_cooked");
+    expect(instructions.split("\n").slice(0, 6).join("\n")).toMatch(/quiz a student on their slides, start with get_course_content/);
     expect(instructions).not.toContain("amicooked setup");
   });
 });

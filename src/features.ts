@@ -1,15 +1,22 @@
 import { z } from "zod";
+import catalog from "./feature-catalog.json" with { type: "json" };
 import { SKILL_FILES } from "./skill.js";
 import { VERSION } from "./version.js";
+import { videoStatus } from "./video/runtime.js";
 import type { Tool } from "./tools/types.js";
 
-// Add one entry and its reference when shipping a feature. Dependencies remain optional.
-export const FEATURES = [
-  { id: "courses", name: "Course planning", description: "Grades, deadlines, announcements and course files.", requires: "A Brightspace login.", guide: "references/courses.md" },
-  { id: "lecture-videos", name: "Lecture videos", description: "Source-grounded narrated lessons and local study players.", requires: "Local command and file access. Setup prepares the managed video tools.", guide: "references/lecture-videos.md" },
-  { id: "updates", name: "Updates", description: "Update the app and skills, manually or with automatic patch updates.", requires: "An installed app with local command access.", guide: "references/updates.md" },
-  { id: "setup", name: "Setup", description: "Connect your school and AI apps.", requires: "Local command access and Chrome or Edge.", guide: "references/setup.md" },
-] as const;
+type Feature = {
+  name: string;
+  description: string;
+  requests: string;
+  requires: string;
+  guide: string;
+  mcpTool?: string;
+};
+
+// Add a catalog entry and a guide to expose a workflow to the skill, MCP and CLI.
+const featureCatalog: Record<string, Feature> = catalog;
+export const FEATURES = Object.entries(featureCatalog).map(([id, feature]) => ({ id, ...feature }));
 
 export function featureInfo(id?: string) {
   if (!id) return { version: VERSION, features: FEATURES };
@@ -35,7 +42,29 @@ export function featuresCommand(id?: string, json = false): number {
 
 export const getFeatureGuide: Tool = {
   name: "get_feature_guide",
-  description: "List shipped Am I Cooked features, or read one feature's bundled guide. No network, setup or updates are performed.",
+  description: "List Am I Cooked features or read a workflow guide, including lecture videos with the managed local renderer and narration. For a video request, get_lecture_video_workflow also checks tool readiness.",
   schema: { feature: z.enum(FEATURES.map(f => f.id) as [string, ...string[]]).optional() },
   handler: async ({ feature }: { feature?: string }) => JSON.stringify(featureInfo(feature), null, 2),
+};
+
+const videoNextStep = {
+  ready: "Use the managed HyperFrames renderer, Kokoro narration and FFmpeg through amicooked video run.",
+  previous: "Run amicooked video prepare to update the tools. Use the verified previous tools if that fails.",
+  missing: "Run amicooked video prepare on the Am I Cooked computer, then check video status again.",
+  unsupported: "Explain that the managed video tools are unavailable on this platform. Offer source-linked notes or a storyboard.",
+};
+
+export const getLectureVideoWorkflow: Tool = {
+  name: catalog["lecture-videos"].mcpTool,
+  description: `Start here for ${catalog["lecture-videos"].requests}. Returns the Am I Cooked workflow and checks whether its managed HyperFrames, Kokoro and FFmpeg tools are ready.`,
+  schema: {},
+  handler: async () => {
+    const videoTools = videoStatus();
+    return JSON.stringify({
+      ...featureInfo("lecture-videos"),
+      videoTools,
+      nextStep: videoNextStep[videoTools.state],
+      execution: "Status describes the computer running Am I Cooked. Use local commands on that computer and a writable folder. If setup used npx, use npx -y amicooked@0 in place of amicooked.",
+    }, null, 2);
+  },
 };

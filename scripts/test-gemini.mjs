@@ -9,6 +9,8 @@ import { once } from "node:events";
 import { spawn, spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { installGeminiHttp, geminiConfigPath, geminiEntry } from "../dist/clients/gemini.js";
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { checkMcp } from "../dist/clients/check.js";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
@@ -42,8 +44,20 @@ try {
   assert(ready, "Local HTTP service did not become ready");
   assert.equal(installGeminiHttp(connection, home), "added");
   assert.equal(installGeminiHttp(connection, home), "unchanged");
-  assert.equal(await checkMcp(geminiEntry(home)), 10);
-  assert.match(run(["doctor"]), /10 read-only tools/);
+  assert.equal(await checkMcp(geminiEntry(home)), 11);
+  const client = new Client({ name: "gemini-http-discovery", version: "1" });
+  await client.connect(new StreamableHTTPClientTransport(new URL(connection.url), {
+    requestInit: { headers: connection.headers },
+  }));
+  try {
+    assert.match(client.getInstructions(), /get_lecture_video_workflow/);
+    const workflow = await client.callTool({ name: "get_lecture_video_workflow", arguments: {} });
+    assert.notEqual(workflow.isError, true);
+    assert.match(JSON.parse(workflow.content[0].text).instructions, /Kokoro/);
+  } finally {
+    await client.close();
+  }
+  assert.match(run(["doctor"]), /11 read-only tools/);
   assert.equal(existsSync(path.join(home, ".claude")), false);
   assert.equal(existsSync(path.join(home, ".codex")), false);
   run(["uninstall"]);
