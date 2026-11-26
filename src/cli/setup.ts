@@ -344,7 +344,7 @@ export function finishMessage(outcomes: Outcome[]): { steps: string | null; outr
     };
   }
   const steps = outcomes.map((o) => `${o.app}: ${o.next}`).join("\n");
-  return { steps, outro: outcomes.some((o) => o.ready) ? "You're set." : "Almost there. Do the step above." };
+  return { steps, outro: outcomes.some((o) => o.ready) ? "You're in. Go ask your AI \"am I cooked?\" and brace yourself." : "Almost there. Do the step above." };
 }
 
 function setupText(color: "green" | "blue" | "bold", text: string): string {
@@ -439,8 +439,7 @@ export async function setup(options: SetupOptions): Promise<number> {
     if (videoNote) p.box(videoNote.text, setupText("blue", videoNote.title), {
       width: "auto", rounded: true, formatBorder: (border) => setupText("blue", border),
     });
-    p.outro(outro);
-    // Optional, last, and only when a person is at the keyboard: agents and --yes never sign anyone up
+    // Optional, and only when a person is at the keyboard: agents and --yes never sign anyone up
     if (interactive() && !options.yes && outcomes.some((o) => o.connected) && !outcomes.some((o) => o.failed)) {
       await askForEmail(school, {
         prompt: async (message) => {
@@ -450,6 +449,7 @@ export async function setup(options: SetupOptions): Promise<number> {
         say: (message) => p.log.message(message),
       });
     }
+    p.outro(outcomes.some((o) => o.ready) ? setupText("green", outro) : outro);
     return outcomes.some((o) => o.failed) ? 1 : 0;
   } catch (error) {
     const code = error instanceof SetupStop ? error.code : 1;
