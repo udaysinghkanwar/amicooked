@@ -194,16 +194,36 @@ try {
           queueMicrotask(() => this.emit("error", Object.assign(new Error("listen EPERM"), { code: "EPERM" })));
           return this;
         };`);
+        const restrictedEnv = { ...env, NODE_OPTIONS: `--import=${pathToFileURL(denyListener).href}` };
         const restricted = spawnSync(command, [...prefix, "video", "probe", ...context], {
-          env: { ...env, NODE_OPTIONS: `--import=${pathToFileURL(denyListener).href}` },
-          cwd: home, encoding: "utf8", timeout: 90_000,
+          env: restrictedEnv, cwd: home, encoding: "utf8", timeout: 90_000,
         });
         assert.equal(restricted.status, 1, restricted.stderr);
         const blocked = JSON.parse(restricted.stdout);
         assert.equal(blocked.stage, "browser-check");
         assert.equal(blocked.reason, "local-preview-blocked");
-        assert.match(blocked.nextStep, /Codex → This computer/);
+        assert.match(blocked.nextStep, /video render-slides/);
         assert.match(blocked.error, /CORS policy/);
+        const slideProject = path.join(project, "narrated slides");
+        mkdirSync(slideProject);
+        const storyboard = ["first", "second"].map((name, index) => {
+          const image = `${name}.svg`;
+          const narration = `${name}.txt`;
+          writeFileSync(path.join(slideProject, image),
+            `<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720"><rect width="1280" height="720" fill="${index ? "#cc7744" : "#446699"}"/></svg>`);
+          writeFileSync(path.join(slideProject, narration), `This is slide number ${index + 1}.`);
+          return { image, narration };
+        });
+        writeFileSync(path.join(slideProject, "slides.json"), JSON.stringify(storyboard));
+        const rendered = JSON.parse(execFileSync(command, [...prefix, "video", "render-slides",
+          "--project", slideProject, "--scratch", scratch], {
+          env: restrictedEnv, cwd: home, encoding: "utf8", timeout: 180_000,
+        }));
+        assert.equal(rendered.slides, 2);
+        assert.equal(rendered.output, path.join(slideProject, "lesson.mp4"));
+        const slideStreams = JSON.parse(cli("video", "run", "ffprobe", "--",
+          "-v", "error", "-show_entries", "stream=codec_type", "-of", "json", rendered.output)).streams;
+        assert.deepEqual(slideStreams.map(stream => stream.codec_type).sort(), ["audio", "video"]);
       }
       const probe = JSON.parse(fromOutside("video", "probe", ...context));
       assert.equal(probe.ok, true, JSON.stringify(probe));

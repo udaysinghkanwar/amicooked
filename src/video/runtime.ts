@@ -148,7 +148,7 @@ export function probeVideo(directory?: string, scratchDirectory?: string) {
   } catch (error) {
     if (error instanceof LocalPreviewBlockedError) {
       return { ok: false, project, steps, stage, reason: "local-preview-blocked", error: error.message,
-        nextStep: "The video tools are installed, but the browser could not load local narration through the preview fallback. Keep your work in the project folder and rerun video probe there from your own Terminal or an approved local AI session. In ChatGPT desktop, open Codex → This computer and select the same folder." };
+        nextStep: "This session could not use the browser preview. Use video render-slides in the same approved project folder to make a narrated lesson with the installed tools. See the lecture-video guide for the slides.json format." };
     }
     const nextStep = stage === "installation" ? "Run video prepare in the local installer environment, then retry the probe." :
       "Use a local project and scratch folder this session can write, and confirm it can launch the managed browser and bind a local preview port. If the client blocks those capabilities, connect an approved local workspace or use a local client with those capabilities.";
