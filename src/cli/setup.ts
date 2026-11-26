@@ -396,7 +396,9 @@ export async function setup(options: SetupOptions): Promise<number> {
     const reported = connected ? reportSetup(school.id) : undefined;
     if (schoolConnection) p.log.success(setupText("green", schoolConnection));
     const [starterNote] = setupPromptNotes(connected, options.login !== false, false);
-    if (starterNote) p.note(starterNote.text.replace("Am I cooked?", setupText("bold", "Am I cooked?")), setupText("blue", starterNote.title));
+    if (starterNote) p.box(starterNote.text.replace("Am I cooked?", setupText("bold", "Am I cooked?")), setupText("blue", starterNote.title), {
+      width: "auto", rounded: true, formatBorder: (border) => setupText("blue", border),
+    });
 
     if (options.login !== false) await firstRoast();
 
@@ -405,7 +407,9 @@ export async function setup(options: SetupOptions): Promise<number> {
     await reported;
     const videoReady = await prepareVideoSafely({ humanOutput: true });
     const [, videoNote] = setupPromptNotes(connected, options.login !== false, videoReady);
-    if (videoNote) p.note(videoNote.text, setupText("blue", videoNote.title));
+    if (videoNote) p.box(videoNote.text, setupText("blue", videoNote.title), {
+      width: "auto", rounded: true, formatBorder: (border) => setupText("blue", border),
+    });
     p.outro(outro);
     return outcomes.some((o) => o.failed) ? 1 : 0;
   } catch (error) {
