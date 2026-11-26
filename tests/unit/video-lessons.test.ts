@@ -120,6 +120,25 @@ describe("SVG safety", () => {
     expect(unsafeContent("s.svg", `<svg>${"<rect/>".repeat(6000)}</svg>`)).toContain("elements");
   });
 
+  it("stores only the rebuilt markup", () => {
+    const { id, folder } = createLesson("t");
+    writeLessonFile(id, "s.svg", '<?xml version="1.0"?><!-- note --><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><text x="1" fill="#fff">A &amp; B &lt; C</text><use xlink:href="#t"/><g id="t"/></svg>');
+    expect(fs.readFileSync(path.join(folder, "s.svg"), "utf8")).toBe(
+      '<svg xmlns="http://www.w3.org/2000/svg"><text x="1" fill="#fff">A &amp; B &lt; C</text><use href="#t"/><g id="t"/></svg>\n');
+  });
+
+  it("refuses styles, base changes and other namespaces", () => {
+    for (const svg of [
+      '<svg><style>rect { fill: red }</style></svg>',
+      '<svg><rect style="fill:red"/></svg>',
+      '<svg><rect class="a"/></svg>',
+      '<svg xml:base="file:///etc/"><image href="#x"/></svg>',
+      '<svg xmlns:h="http://www.w3.org/1999/xhtml"><h:div/></svg>',
+      '<svg xmlns:e="http://example.com/e"><rect e:thing="1"/></svg>',
+      '<svg><metadata><rdf/></metadata></svg>',
+    ]) expect(unsafeContent("s.svg", svg), svg).not.toBeNull();
+  });
+
   it("is enforced when writing", () => {
     const { id } = createLesson("t");
     expect(() => writeLessonFile(id, "s.svg", '<svg><image href="/etc/hosts"/></svg>')).toThrow("SVG files can only link");
@@ -195,30 +214,15 @@ function fakeChild() {
 }
 
 describe("the render supervisor", () => {
-  const ready = async () => ({ state: "ready" }) as never;
-
   it("records the renderer's result", async () => {
     const { id, folder } = createLesson("t");
     const job = startRender(id, () => 4242);
     const { child, exit } = fakeChild();
-    const done = renderLessonCommand(id, job.jobId, { prepare: ready, work: () => (setImmediate(() => exit(0, { output: "lesson.mp4", slides: 2 })), child as never) });
+    const done = renderLessonCommand(id, job.jobId, { work: () => (setImmediate(() => exit(0, { output: "lesson.mp4", slides: 2 })), child as never) });
     expect(await done).toBe(0);
     const saved = JSON.parse(fs.readFileSync(path.join(folder, "job.json"), "utf8"));
     expect(saved).toMatchObject({ state: "done", output: "lesson.mp4", slides: 2 });
     expect(renderStatus(id).state).toBe("done");
-  });
-
-  it("fetches the narrated slide tools when missing, and reports a failure to do so", async () => {
-    const { id, folder } = createLesson("t");
-    const job = startRender(id, () => 4242);
-    const prepare = vi.fn(async () => { throw new Error("Couldn't download the voice model."); });
-    const work = vi.fn();
-    expect(await renderLessonCommand(id, job.jobId, { prepare: prepare as never, work })).toBe(1);
-    expect(prepare).toHaveBeenCalledWith(expect.any(Function), true);
-    expect(work).not.toHaveBeenCalled();
-    const saved = JSON.parse(fs.readFileSync(path.join(folder, "job.json"), "utf8"));
-    expect(saved.state).toBe("failed");
-    expect(saved.error).toContain("voice model");
   });
 
   it("stops its own renderer at the deadline", async () => {
@@ -226,7 +230,7 @@ describe("the render supervisor", () => {
     const job = startRender(id, () => 4242, Date.now() - RENDER_LIMIT_MS + 100);
     const { child } = fakeChild();
     const stopped: number[] = [];
-    expect(await renderLessonCommand(id, job.jobId, { prepare: ready, work: () => child as never, stop: pid => stopped.push(pid) })).toBe(1);
+    expect(await renderLessonCommand(id, job.jobId, { work: () => child as never, stop: pid => stopped.push(pid) })).toBe(1);
     expect(stopped).toEqual([4242]);
     expect(renderStatus(id).error).toContain("longer than 30 minutes");
   });
@@ -235,7 +239,7 @@ describe("the render supervisor", () => {
     const { id } = createLesson("t");
     const job = startRender(id, () => 4242);
     const { child, exit } = fakeChild();
-    expect(await renderLessonCommand(id, job.jobId, { prepare: ready, work: () => (setImmediate(() => exit(3)), child as never) })).toBe(1);
+    expect(await renderLessonCommand(id, job.jobId, { work: () => (setImmediate(() => exit(3)), child as never) })).toBe(1);
     expect(renderStatus(id).error).toContain("exit code 3");
   });
 
@@ -247,10 +251,19 @@ describe("the render supervisor", () => {
 });
 
 describe("the renderer", () => {
-  it("checks every SVG again before rendering", () => {
+  const ready = async () => ({ state: "ready" }) as never;
+
+  it("checks every SVG again before rendering", async () => {
     const { id, folder } = createLesson("t");
     fs.writeFileSync(path.join(folder, "slide.svg"), '<svg><image href="/etc/hosts"/></svg>');
-    expect(() => renderLessonWork(id)).toThrow("slide.svg");
+    await expect(renderLessonWork(id, ready)).rejects.toThrow("slide.svg");
     expect(() => checkLessonFiles(folder)).toThrow("SVG files can only link");
+  });
+
+  it("fetches the narrated slide tools when missing, before touching the lesson", async () => {
+    const { id } = createLesson("t");
+    const prepare = vi.fn(async () => { throw new Error("Couldn't download the voice model."); });
+    await expect(renderLessonWork(id, prepare as never)).rejects.toThrow("voice model");
+    expect(prepare).toHaveBeenCalledWith(expect.any(Function), true);
   });
 });
