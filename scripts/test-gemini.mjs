@@ -51,6 +51,17 @@ try {
   }));
   try {
     assert.match(client.getInstructions(), /get_lecture_video_workflow/);
+    // Only the lesson tools write, and nothing reaches beyond the student's computer
+    const { tools } = await client.listTools();
+    const writers = ["create_video_lesson", "write_video_lesson_file", "start_video_render"];
+    for (const name of [...writers, "get_video_render", "am_i_cooked", "get_lecture_video_workflow"]) {
+      assert(tools.some(tool => tool.name === name), `missing ${name}`);
+    }
+    for (const tool of tools) {
+      assert.equal(tool.annotations?.readOnlyHint, !writers.includes(tool.name), tool.name);
+      assert.equal(tool.annotations?.openWorldHint, false, tool.name);
+      if (writers.includes(tool.name)) assert.equal(tool.annotations?.destructiveHint, false, tool.name);
+    }
     const workflow = await client.callTool({ name: "get_lecture_video_workflow", arguments: {} });
     assert.notEqual(workflow.isError, true);
     assert.match(JSON.parse(workflow.content[0].text).instructions, /Kokoro/);
