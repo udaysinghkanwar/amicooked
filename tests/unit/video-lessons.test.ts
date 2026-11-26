@@ -3,8 +3,10 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { reloadConfig } from "../../src/config.js";
-import { createLesson, getLesson, LIMITS, unsafeContent, writeLessonFile } from "../../src/video/lessons.js";
-import { renderLessonCommand, renderStatus, startRender } from "../../src/video/jobs.js";
+import { EventEmitter } from "node:events";
+import { PassThrough } from "node:stream";
+import { checkLessonFiles, createLesson, getLesson, LIMITS, unsafeContent, writeLessonFile } from "../../src/video/lessons.js";
+import { RENDER_LIMIT_MS, renderLessonCommand, renderLessonWork, renderStatus, startRender } from "../../src/video/jobs.js";
 
 let home: string;
 beforeEach(() => {
@@ -24,7 +26,7 @@ describe("lesson folders", () => {
   it("creates a lesson under the student's files folder and finds it again", () => {
     const lesson = createLesson("3DB3 Transactions, Nov 24!");
     expect(lesson.id).toMatch(/^3db3-transactions-nov-24-[0-9a-f]{6}$/);
-    expect(lesson.folder).toBe(path.join(fs.realpathSync(path.join(home, "Downloads", "amicooked", "Lessons")), lesson.id));
+    expect(fs.realpathSync.native(lesson.folder)).toBe(path.join(fs.realpathSync.native(path.join(home, "Downloads", "amicooked", "Lessons")), lesson.id));
     expect(getLesson(lesson.id).title).toBe("3DB3 Transactions, Nov 24!");
   });
 
@@ -49,7 +51,7 @@ describe("writing lesson files", () => {
 
   it("refuses file types the renderer doesn't read, and files Am I Cooked manages", () => {
     const { id } = createLesson("t");
-    for (const bad of ["index.html", "run.js", "style.css", "slide.png", "lesson.json", "job.json", "lesson.mp4"]) {
+    for (const bad of ["index.html", "run.js", "style.css", "slide.png", "lesson.json", "job.json", "lesson.mp4", "Lesson.JSON", "JOB.json"]) {
       expect(() => writeLessonFile(id, bad, "x"), bad).toThrow();
     }
   });
@@ -59,6 +61,8 @@ describe("writing lesson files", () => {
     const outside = fs.mkdtempSync(path.join(os.tmpdir(), "amicooked-outside-"));
     fs.symlinkSync(outside, path.join(folder, "linked"), "junction");
     expect(() => writeLessonFile(id, "linked/slide.txt", "x")).toThrow("leaves the lesson");
+    // Nothing is created through the link, not even the folders on the way
+    expect(() => writeLessonFile(id, "linked/deeper/slide.txt", "x")).toThrow("leaves the lesson");
     expect(fs.readdirSync(outside)).toEqual([]);
     fs.writeFileSync(path.join(outside, "target.txt"), "keep");
     fs.symlinkSync(path.join(outside, "target.txt"), path.join(folder, "file.txt"));
@@ -91,8 +95,29 @@ describe("SVG safety", () => {
       '<!DOCTYPE svg [<!ENTITY x SYSTEM "file:///etc/passwd">]><svg>&x;</svg>',
       '<svg><style>@import "x.css";</style></svg>',
       '<svg><rect style="fill:url(other.svg#g)"/></svg>',
+      // Hidden behind character references or CSS escapes
+      '<svg><rect style="fill:&#117;rl(/etc/x)"/></svg>',
+      '<svg><image href="&#47;etc/hosts"/></svg>',
+      '<svg><rect style="fill:\\75rl(/etc/x)"/></svg>',
+      '<svg><style>rect { fill: u\\72l(x.svg) }</style></svg>',
+      // Elements that load or run other things
+      '<svg><script>alert(1)</script></svg>',
+      '<svg><foreignObject><div xmlns="http://www.w3.org/1999/xhtml"/></foreignObject></svg>',
+      '<svg><filter id="f"><feImage href="/etc/x"/></filter></svg>',
+      '<svg onload="x()"/>',
+      '<?xml-stylesheet href="x.css"?><svg/>',
+      // A reference to an id that isn't there, and something that isn't SVG at all
+      '<svg><use href="#missing"/></svg>',
+      '<svg><g></svg>',
+      '<html/>',
     ];
     for (const svg of bad) expect(unsafeContent("s.svg", svg), svg).not.toBeNull();
+  });
+
+  it("limits how much structure a slide can hold", () => {
+    const deep = "<g>".repeat(60) + "</g>".repeat(60);
+    expect(unsafeContent("s.svg", `<svg>${deep}</svg>`)).toContain("nest");
+    expect(unsafeContent("s.svg", `<svg>${"<rect/>".repeat(6000)}</svg>`)).toContain("elements");
   });
 
   it("is enforced when writing", () => {
@@ -104,7 +129,7 @@ describe("SVG safety", () => {
 describe("render jobs", () => {
   it("starts once and returns the same render when called again", () => {
     const { id } = createLesson("t");
-    const launch = vi.fn(() => process.pid);
+    const launch = vi.fn(() => 4242);
     const first = startRender(id, launch);
     expect(first.state).toBe("running");
     const again = startRender(id, launch);
@@ -114,56 +139,118 @@ describe("render jobs", () => {
     expect(args[1]).toEqual(expect.arrayContaining(["video", "render-lesson", "--lesson", id, "--job", first.jobId]));
   });
 
-  it("reports a renderer whose process is gone, instead of leaving it running forever", () => {
-    const dead = createLesson("u");
-    startRender(dead.id, () => 999_999_999);
-    const status = renderStatus(dead.id);
+  it("reports a supervisor that stopped reporting, without touching any process", () => {
+    const { id, folder } = createLesson("u");
+    const started = Date.now();
+    startRender(id, () => 4242, started);
+    expect(renderStatus(id, started + 30_000).state).toBe("running");
+    const status = renderStatus(id, started + 2 * 60_000);
     expect(status.state).toBe("failed");
     expect(status.error).toContain("stopped unexpectedly");
+    // Status only reads
+    expect(JSON.parse(fs.readFileSync(path.join(folder, "job.json"), "utf8")).state).toBe("running");
+    // And a new start replaces the dead job
+    const restarted = startRender(id, () => 4243, started + 2 * 60_000);
+    expect(restarted.state).toBe("running");
+    expect(restarted.jobId).not.toBe(status.jobId);
   });
 
-  it("reports a renderer that couldn't start, and stops one that runs past the deadline", () => {
+  it("reports a renderer that couldn't start", () => {
     const { id } = createLesson("t");
     const job = startRender(id, () => undefined);
     expect(job.state).toBe("failed");
     expect(job.error).toContain("couldn't start");
-
-    const slow = createLesson("slow");
-    const started = Date.now();
-    startRender(slow.id, () => process.pid, started);
-    const stopped: number[] = [];
-    // Still within the limit: left running
-    expect(renderStatus(slow.id, started + 60_000, pid => stopped.push(pid)).state).toBe("running");
-    // Past it: stopped and reported (our own pid stands in for the renderer, so the stop is captured, not sent)
-    const late = renderStatus(slow.id, started + 31 * 60 * 1000, pid => stopped.push(pid));
-    expect(late.state).toBe("failed");
-    expect(late.error).toContain("longer than 30 minutes");
-    expect(stopped).toEqual([process.pid]);
   });
 
-  it("allows one render at a time", () => {
+  it("allows one render at a time, across apps", () => {
     const a = createLesson("a");
     const b = createLesson("b");
-    startRender(a.id, () => process.pid);
-    expect(() => startRender(b.id, () => process.pid)).toThrow("still rendering");
+    startRender(a.id, () => 4242);
+    expect(() => startRender(b.id, () => 4242)).toThrow("still rendering");
+  });
+
+  it("waits for another app's start, and clears a lock left by one that died", () => {
+    const { id } = createLesson("t");
+    const lock = path.join(home, "Downloads", "amicooked", "Lessons", ".render.lock");
+    fs.writeFileSync(lock, "");
+    expect(() => startRender(id, () => 4242)).toThrow("Another render is starting");
+    const old = new Date(Date.now() - 60_000);
+    fs.utimesSync(lock, old, old);
+    expect(startRender(id, () => 4242).state).toBe("running");
+    expect(fs.existsSync(lock)).toBe(false);
   });
 });
 
-describe("the render child", () => {
+/** A stand-in renderer child that prints a result or exits on cue. */
+function fakeChild() {
+  const child = new EventEmitter() as EventEmitter & { pid: number; exitCode: number | null; signalCode: null; stdout: PassThrough };
+  Object.assign(child, { pid: 4242, exitCode: null, signalCode: null, stdout: new PassThrough() });
+  const exit = (code: number, output?: object) => {
+    if (output) child.stdout.write(JSON.stringify(output) + "\n");
+    child.stdout.end();
+    child.exitCode = code;
+    setImmediate(() => child.emit("close", code));
+  };
+  return { child, exit };
+}
+
+describe("the render supervisor", () => {
+  const ready = async () => ({ state: "ready" }) as never;
+
+  it("records the renderer's result", async () => {
+    const { id, folder } = createLesson("t");
+    const job = startRender(id, () => 4242);
+    const { child, exit } = fakeChild();
+    const done = renderLessonCommand(id, job.jobId, { prepare: ready, work: () => (setImmediate(() => exit(0, { output: "lesson.mp4", slides: 2 })), child as never) });
+    expect(await done).toBe(0);
+    const saved = JSON.parse(fs.readFileSync(path.join(folder, "job.json"), "utf8"));
+    expect(saved).toMatchObject({ state: "done", output: "lesson.mp4", slides: 2 });
+    expect(renderStatus(id).state).toBe("done");
+  });
+
   it("fetches the narrated slide tools when missing, and reports a failure to do so", async () => {
     const { id, folder } = createLesson("t");
-    const job = startRender(id, () => process.pid);
+    const job = startRender(id, () => 4242);
     const prepare = vi.fn(async () => { throw new Error("Couldn't download the voice model."); });
-    expect(await renderLessonCommand(id, job.jobId, prepare as never)).toBe(1);
+    const work = vi.fn();
+    expect(await renderLessonCommand(id, job.jobId, { prepare: prepare as never, work })).toBe(1);
     expect(prepare).toHaveBeenCalledWith(expect.any(Function), true);
+    expect(work).not.toHaveBeenCalled();
     const saved = JSON.parse(fs.readFileSync(path.join(folder, "job.json"), "utf8"));
     expect(saved.state).toBe("failed");
     expect(saved.error).toContain("voice model");
   });
 
+  it("stops its own renderer at the deadline", async () => {
+    const { id } = createLesson("slow");
+    const job = startRender(id, () => 4242, Date.now() - RENDER_LIMIT_MS + 100);
+    const { child } = fakeChild();
+    const stopped: number[] = [];
+    expect(await renderLessonCommand(id, job.jobId, { prepare: ready, work: () => child as never, stop: pid => stopped.push(pid) })).toBe(1);
+    expect(stopped).toEqual([4242]);
+    expect(renderStatus(id).error).toContain("longer than 30 minutes");
+  });
+
+  it("reports a renderer that fails", async () => {
+    const { id } = createLesson("t");
+    const job = startRender(id, () => 4242);
+    const { child, exit } = fakeChild();
+    expect(await renderLessonCommand(id, job.jobId, { prepare: ready, work: () => (setImmediate(() => exit(3)), child as never) })).toBe(1);
+    expect(renderStatus(id).error).toContain("exit code 3");
+  });
+
   it("ignores a stale or unknown job", async () => {
     const { id } = createLesson("t");
-    startRender(id, () => process.pid);
-    expect(await renderLessonCommand(id, "not-the-job", vi.fn() as never)).toBe(1);
+    startRender(id, () => 4242);
+    expect(await renderLessonCommand(id, "not-the-job", { work: vi.fn() })).toBe(1);
+  });
+});
+
+describe("the renderer", () => {
+  it("checks every SVG again before rendering", () => {
+    const { id, folder } = createLesson("t");
+    fs.writeFileSync(path.join(folder, "slide.svg"), '<svg><image href="/etc/hosts"/></svg>');
+    expect(() => renderLessonWork(id)).toThrow("slide.svg");
+    expect(() => checkLessonFiles(folder)).toThrow("SVG files can only link");
   });
 });
