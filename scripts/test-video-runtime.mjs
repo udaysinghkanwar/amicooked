@@ -214,6 +214,13 @@ try {
           writeFileSync(path.join(slideProject, narration), `This is slide number ${index + 1}.`);
           return { image, narration };
         });
+        writeFileSync(path.join(slideProject, "marker.svg"),
+          '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><circle cx="32" cy="32" r="30" fill="#ff2200"/></svg>');
+        storyboard[0].overlays = [{ image: "marker.svg", keyframes: [
+          { at: 0, x: 64, y: 64 },
+          { at: 0.25, x: 64, y: 64 },
+          { at: 0.75, x: 400, y: 64 },
+        ] }];
         writeFileSync(path.join(slideProject, "slides.json"), JSON.stringify(storyboard));
         const rendered = JSON.parse(execFileSync(command, [...prefix, "video", "render-slides",
           "--project", slideProject, "--scratch", scratch], {
@@ -224,6 +231,20 @@ try {
         const slideStreams = JSON.parse(cli("video", "run", "ffprobe", "--",
           "-v", "error", "-show_entries", "stream=codec_type", "-of", "json", rendered.output)).streams;
         assert.deepEqual(slideStreams.map(stream => stream.codec_type).sort(), ["audio", "video"]);
+        const isMarker = (time, x) => {
+          const rgb = execFileSync(command, [...prefix, "video", "run", "ffmpeg", ...context, "--",
+            "-v", "error", "-ss", time, "-i", rendered.output, "-vf", `crop=2:2:${x}:94`,
+            "-frames:v", "1", "-pix_fmt", "rgb24", "-f", "rawvideo", "-"], {
+            env: restrictedEnv, cwd: home, timeout: 90_000,
+          });
+          assert.equal(rgb.length, 12);
+          return rgb[0] > 180 && rgb[1] < 100;
+        };
+        // Inspect the marker at two positions within the first slide. Slide cuts cannot pass this.
+        assert(isMarker("0.1", 94));
+        assert(!isMarker("0.1", 430));
+        assert(!isMarker("0.9", 94));
+        assert(isMarker("0.9", 430));
       }
       const probe = JSON.parse(fromOutside("video", "probe", ...context));
       assert.equal(probe.ok, true, JSON.stringify(probe));
