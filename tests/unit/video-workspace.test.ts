@@ -22,7 +22,8 @@ it("follows links with the portable resolver, as the native one does", () => {
   const link = path.join(dir, "link");
   fs.symlinkSync(real, link, "junction");
   expect(realPath(link, { native: fail("EPERM"), portable: fs.realpathSync })).toBe(real);
-  expect(videoProject(link)).toBe(real);
+  // The native resolver also expands Windows short names (like RUNNER~1), so compare with its own answer
+  expect(videoProject(link)).toBe(fs.realpathSync.native(real));
   fs.rmSync(dir, { recursive: true, force: true });
 });
 
