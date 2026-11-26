@@ -5,6 +5,7 @@ import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { createServer } from "../../src/server.js";
 import { VERSION } from "../../src/version.js";
 import { serverInstructions } from "../../src/instructions.js";
+import * as video from "../../src/video/runtime.js";
 import * as updater from "../../src/cli/autoUpdate.js";
 
 async function connect() {
@@ -20,7 +21,7 @@ describe("server", () => {
     const { tools } = await (await connect()).listTools();
     expect(tools.map((t) => t.name)).toEqual([
       "am_i_cooked", "get_my_courses", "get_my_grades", "get_upcoming_due_dates", "get_announcements",
-      "get_assignments", "get_course_content", "download_file", "read_file", "get_feature_guide",
+      "get_assignments", "get_course_content", "download_file", "read_file", "get_feature_guide", "get_lecture_video_workflow",
     ]);
     expect(tools.every((t) => t.annotations?.readOnlyHint)).toBe(true);
   });
@@ -33,6 +34,31 @@ describe("server", () => {
     expect(guide.isError).not.toBe(true);
     expect(JSON.stringify(guide.content)).toContain("Automatic patch updates");
     await client.close();
+  });
+
+  it.each([
+    ["ready", "Use the managed HyperFrames"],
+    ["previous", "Run amicooked video prepare"],
+    ["missing", "Run amicooked video prepare"],
+    ["unsupported", "Offer source-linked notes"],
+  ] as const)("returns a discoverable lecture-video workflow when tools are %s", async (state, nextStep) => {
+    const status = vi.spyOn(video, "videoStatus").mockReturnValue({ state, target: "fixture" });
+    const client = await connect();
+    try {
+      const tool = (await client.listTools()).tools.find(t => t.name === "get_lecture_video_workflow");
+      expect(tool?.description).toMatch(/lecture video.*narrated lesson/);
+      expect(client.getInstructions()?.split("\n").slice(0, 3).join("\n")).toContain("get_lecture_video_workflow");
+      const result = await client.callTool({ name: "get_lecture_video_workflow", arguments: {} });
+      expect(result.isError).not.toBe(true);
+      const data = JSON.parse((result.content as { text: string }[])[0].text);
+      expect(data.videoTools).toEqual({ state, target: "fixture" });
+      expect(data.instructions).toBe(readFileSync("skill/references/lecture-videos.md", "utf8"));
+      expect(data.nextStep).toContain(nextStep);
+      expect(data.execution).toContain("computer running Am I Cooked");
+    } finally {
+      status.mockRestore();
+      await client.close();
+    }
   });
 
   it("limits local update probes across connections without blocking tools", async () => {

@@ -54,6 +54,11 @@ try {
     assert.equal(data.instructions, fs.readFileSync(path.join(skill, feature.guide), "utf8"));
     assert.ok(data.instructions.length > 0);
   }
+  assert.match(client.getInstructions(), /get_lecture_video_workflow/);
+  const workflow = await client.callTool({ name: "get_lecture_video_workflow", arguments: {} });
+  const video = JSON.parse(workflow.content[0].text);
+  assert.equal(video.instructions, fs.readFileSync(path.join(skill, "references/lecture-videos.md"), "utf8"));
+  assert.ok(["missing", "unsupported"].includes(video.videoTools.state));
   await client.close(); client = null;
 
   if (binary) {

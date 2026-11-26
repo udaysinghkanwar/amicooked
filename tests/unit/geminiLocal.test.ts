@@ -68,7 +68,7 @@ describe("authenticated loopback HTTP", () => {
     const server = createRemoteServer({ publicUrl: url, localToken: state.token });
     await new Promise<void>((r) => server.listen(port, "127.0.0.1", r));
     try {
-      expect(await checkMcp(localConnection(local))).toBe(10);
+      expect(await checkMcp(localConnection(local))).toBe(11);
       expect((await fetch(url + "/mcp", { method: "POST" })).status).toBe(401);
       expect((await fetch(url + "/mcp", { method: "POST", headers: { Authorization: "Bearer wrong" } })).status).toBe(401);
       expect((await fetch(url + "/mcp", { method: "POST", headers: { Authorization: `Bearer ${state.token}`, Origin: "https://untrusted.example" } })).status).toBe(403);

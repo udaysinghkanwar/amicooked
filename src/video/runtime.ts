@@ -51,7 +51,7 @@ function loadReady(): Ready | undefined {
 
 export function videoStatus() {
   const record = loadReady();
-  const state = !target ? "unsupported"
+  const state: "unsupported" | "ready" | "previous" | "missing" = !target ? "unsupported"
     : record ? (record.identity === identity ? "ready" : "previous")
     : "missing";
   return { state, target: targetName };

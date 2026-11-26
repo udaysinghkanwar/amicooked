@@ -5,6 +5,8 @@ import { mkdtempSync, mkdirSync, existsSync, readFileSync, rmSync, writeFileSync
 import { createHash } from "node:crypto";
 import os from "node:os";
 import path from "node:path";
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 
 // The ordinary local suite stays offline. The existing GitHub matrix runs the full acceptance test.
 if (process.argv.includes("--ci") && process.env.GITHUB_ACTIONS !== "true") process.exit(0);
@@ -119,6 +121,18 @@ try {
       });
       assert.equal(readFileSync(marker, "utf8"), first);
     }
+    writeFileSync(path.join(data, "automatic-update.json"), JSON.stringify({ lastAttempt: Date.now() }));
+    const client = new Client({ name: "video-workflow-acceptance", version: "1" });
+    try {
+      await client.connect(new StdioClientTransport({ command, args: [...prefix, "mcp"], cwd: project, env, stderr: "ignore" }));
+      const result = await client.callTool({ name: "get_lecture_video_workflow", arguments: {} });
+      assert.notEqual(result.isError, true);
+      const workflow = JSON.parse(result.content[0].text);
+      assert.equal(workflow.videoTools.state, "ready");
+      assert.match(workflow.nextStep, /managed HyperFrames renderer, Kokoro narration and FFmpeg/);
+    } finally {
+      await client.close();
+    }
     cli("video", "run", "hyperframes", "--", "init", "scaffold", "--non-interactive", "--skip-skills");
     assert(existsSync(path.join(project, "scaffold", "index.html")));
     writeFileSync(path.join(project, "narration.txt"), "A place in a Petri net can hold a token.");
@@ -143,7 +157,7 @@ try {
       cli("uninstall", "--purge");
       assert.equal(existsSync(data), false);
     }
-    console.log(`${process.platform}-${process.arch} ${channel}: automatic preparation, narration, full MP4 decode and reinstall passed.`);
+    console.log(`${process.platform}-${process.arch} ${channel}: automatic preparation, MCP workflow readiness, narration, full MP4 decode and reinstall passed.`);
   }
 } finally {
   server.kill();

@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { existsSync, readFileSync, mkdtempSync, mkdirSync, writeFileSync, rmSync, readdirSync } from "fs";
 import * as os from "os";
 import * as path from "path";
+import { FEATURES } from "../../src/features.js";
 import { serverInstructions } from "../../src/instructions.js";
 import { SKILL_MD, SKILL_FILES } from "../../src/skill.js";
 import { skillBundleIs } from "../../src/clients/skillFiles.js";
@@ -20,6 +21,16 @@ describe("skill", () => {
     const guide = readFileSync("skill/references/lecture-videos.md", "utf8");
     expect(SKILL_MD).not.toContain(guide);
     expect(serverInstructions()).not.toContain(guide);
+  });
+
+  it("routes every shipped feature from the catalog in both the skill and MCP instructions", () => {
+    for (const feature of FEATURES) {
+      expect(SKILL_MD).toContain(`[${feature.name}](${feature.guide})`);
+      expect(SKILL_FILES[feature.guide]).toBeTruthy();
+      expect(SKILL_MD).toContain(feature.requests);
+      expect(serverInstructions()).toContain(feature.requests);
+      if (feature.mcpTool) expect(SKILL_MD).toContain(feature.mcpTool);
+    }
   });
 
   it("serves the same install scripts the repo ships", () => {

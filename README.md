@@ -107,7 +107,7 @@ node dist/cli.js setup
 npm run stats        # downloads, setups, manual/automatic upgrades, repo traffic
 ```
 
-`skill/` is the single source for the agent skill and its on-demand references; `npm run sync:skill` embeds the full folder in `src/skill.ts` and copies it (and `install/`) into `site/`. npm packages and standalone binaries carry the same files, so installs do not fetch loose skill files from `main`. To add a feature, add its reference and an entry in `src/features.ts`, then sync, test and release them together.
+`skill/` contains the agent skill and its on-demand references. `npm run sync:skill` updates the skill router from `src/feature-catalog.json`, embeds the full folder in `src/skill.ts`, and copies the skill and installers into `site/`. npm packages and standalone binaries carry the same files, so installs do not fetch loose skill files from `main`. To add a feature, add its reference and an entry in `src/feature-catalog.json`, then sync, test and release them together.
 
 `npm run stats` retains existing counters and adds upgrade totals, manual/automatic counts and version transitions. Counters are best effort, not unique-user counts or proof that a running session reloaded. GitHub checksum downloads include native installers and updaters. CSV upgrade columns are appended, preserving historical rows.
 
