@@ -24,7 +24,7 @@
   "setup": {
     "name": "Setup",
     "description": "Connect your school and AI apps.",
-    "requests": "setting up Am I Cooked, connecting an AI app, or signing in to Brightspace",
+    "requests": "setting up or troubleshooting Am I Cooked, connecting an AI app, or signing in to Brightspace",
     "requires": "Local command access and Chrome or Edge.",
     "guide": "references/setup.md"
   }
