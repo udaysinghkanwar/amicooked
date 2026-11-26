@@ -3,6 +3,7 @@ import { readFileSync } from "fs";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { createServer } from "../../src/server.js";
+import { FEATURES } from "../../src/features.js";
 import { VERSION } from "../../src/version.js";
 import { serverInstructions } from "../../src/instructions.js";
 import * as video from "../../src/video/runtime.js";
@@ -24,6 +25,10 @@ describe("server", () => {
       "get_assignments", "get_course_content", "download_file", "read_file", "get_feature_guide", "get_lecture_video_workflow",
     ]);
     expect(tools.every((t) => t.annotations?.readOnlyHint)).toBe(true);
+    for (const feature of FEATURES) {
+      if (feature.mcpTool) expect(tools.some(tool => tool.name === feature.mcpTool)).toBe(true);
+    }
+    expect(tools.find(tool => tool.name === "get_feature_guide")?.description).toContain("lecture videos");
   });
 
   it("lets an MCP-only client discover features and read their bundled references", async () => {
