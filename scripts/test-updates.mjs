@@ -22,10 +22,10 @@ let client;
 try {
   fs.mkdirSync(env.AMICOOKED_HOME, { recursive: true });
   fs.writeFileSync(path.join(env.AMICOOKED_HOME, "config.json"), JSON.stringify({ version: 1, browser: "chrome", filesDir: path.join(root, "downloads") }));
-  fs.writeFileSync(path.join(env.AMICOOKED_HOME, "token.json"), "keep this session");
   const skill = path.join(root, "other-ai/skills/amicooked");
   const setupArgs = ["setup", "--school", "mcmaster", "--clients", "none", "--skill-dir", skill, "--no-login", "--yes", "--skip-video-deps"];
   run(...setupArgs);
+  fs.writeFileSync(path.join(env.AMICOOKED_HOME, "token.json"), "keep this session");
   run(...setupArgs); // Repeated setup is idempotent.
   assert.equal(JSON.parse(run("auto-update", "status", "--json")).enabled, Boolean(binary));
   if (binary) {

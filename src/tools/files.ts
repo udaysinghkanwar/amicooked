@@ -64,16 +64,20 @@ async function locateTopic(orgUnitId: number, fileUrl: string): Promise<{ module
 
 /** GET a D2L file with the session cookies; retries once with a fresh login if the session expired. */
 async function fetchD2L(url: string, headers: Record<string, string>): Promise<Response> {
+  const schoolOrigin = `https://${getSchool().host}`;
   for (let attempt = 0; attempt < 2; attempt++) {
-    let target = url;
+    let target = new URL(url);
     let res: Response | null = null;
     for (let hop = 0; hop < 5; hop++) {
-      res = await fetch(target, { headers: { ...headers, Cookie: await getD2LCookies() }, redirect: "manual" });
+      const requestHeaders = new Headers(headers);
+      if (target.origin === schoolOrigin) requestHeaders.set("Cookie", await getD2LCookies());
+      res = await fetch(target, { headers: requestHeaders, redirect: "manual" });
       const location = res.headers.get("location");
       if (res.status < 300 || res.status >= 400 || res.status === 304 || !location) break;
-      target = new URL(location, target).toString();
+      await res.body?.cancel();
+      target = new URL(location, target);
     }
-    if (res && new URL(target).pathname.startsWith("/d2l/login")) {
+    if (res && target.origin === schoolOrigin && target.pathname.startsWith("/d2l/login")) {
       clearTokenCache();
       continue;
     }

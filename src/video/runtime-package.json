@@ -4,5 +4,10 @@
   "dependencies": {
     "hyperframes": "0.9.93",
     "kokoro-js": "1.2.1"
+  },
+  "overrides": {
+    "@huggingface/transformers": {
+      "sharp": "0.35.5"
+    }
   }
 }

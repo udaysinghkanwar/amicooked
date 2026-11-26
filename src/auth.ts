@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import { canShowWindow, openProfile, type Tab } from "./browser.js";
-import { getSchool, paths, writePrivateFile, type School } from "./config.js";
+import { getConfig, getSchool, paths, writePrivateFile, type School } from "./config.js";
+import { API_VERSIONS } from "./schools.js";
 
 export interface Session {
   token: string;
@@ -21,10 +22,12 @@ export class LoginPendingError extends Error {
 const EXPIRY_MARGIN_MS = 3 * 60 * 1000;
 const SILENT_TIMEOUT_MS = 15000;
 const INTERACTIVE_TIMEOUT_MS = 5 * 60 * 1000;
+const COOKIE_SESSION_MS = 30 * 60 * 1000;
 /** How long a tool call waits for an interactive login; MCP clients give up around 60s. */
 export const IN_CALL_WAIT_MS = 40000;
 
-let session: Session | null = null;
+type SavedSession = Session & { schoolHost?: string };
+let session: SavedSession | null = null;
 
 /**
  * Expiry time of a D2L access token. They're JWTs that live about an hour,
@@ -40,12 +43,13 @@ export function tokenExpiry(token: string): number {
   return Date.now() + 50 * 60 * 1000;
 }
 
-function isFresh(s: Session | null): s is Session {
-  return !!s && Date.now() < s.expiresAt - EXPIRY_MARGIN_MS;
+function isFresh(s: SavedSession | null): s is SavedSession {
+  return !!s && Date.now() < s.expiresAt - EXPIRY_MARGIN_MS &&
+    (s.schoolHost === undefined || s.schoolHost === getConfig().school?.host);
 }
 
 /** A token another Am I Cooked process (Claude Desktop, the ChatGPT service) already saved. */
-function readSavedSession(): Session | null {
+function readSavedSession(): SavedSession | null {
   try {
     return JSON.parse(fs.readFileSync(paths().token, "utf8"));
   } catch {
@@ -53,50 +57,83 @@ function readSavedSession(): Session | null {
   }
 }
 
-function saveSession(s: Session): void {
-  session = s;
-  writePrivateFile(paths().token, JSON.stringify(s));
+function saveSession(s: Session, school: School): void {
+  session = { ...s, schoolHost: school.host };
+  writePrivateFile(paths().token, JSON.stringify(session));
 }
 
-function isSignedIn(url: string, school: School): boolean {
+function isBrightspacePage(url: string, origin: string): boolean {
   try {
     const u = new URL(url);
-    return u.host === school.host && u.pathname.startsWith("/d2l/") && !u.pathname.startsWith("/d2l/login");
+    return u.origin === origin && u.pathname.startsWith("/d2l/") &&
+      !u.pathname.startsWith("/d2l/login") && !u.pathname.startsWith("/d2l/lp/auth/");
   } catch {
     return false;
   }
 }
 
-/**
- * Watch one login attempt in `tab`, which opened on the school's login page: wait until
- * the browser is signed in to D2L and a page has made an authenticated API call.
- */
+export const WHOAMI_PATH = `/d2l/api/lp/${API_VERSIONS.lp}/users/whoami`;
+
+type ApiHeaders = { Authorization: string } | { Cookie: string };
+
+async function verifySession(origin: string, headers: ApiHeaders): Promise<boolean> {
+  try {
+    const response = await fetch(origin + WHOAMI_PATH, {
+      headers,
+      redirect: "manual",
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!response.ok) {
+      await response.body?.cancel();
+      return false;
+    }
+    const user = await response.json();
+    return typeof user?.Identifier === "string" && user.Identifier.length > 0;
+  } catch {
+    return false;
+  }
+}
+
+/** Verify school access even when the dashboard never sends a Bearer request. */
 async function captureSession(tab: Tab, school: School, timeoutMs: number): Promise<Session | null> {
+  const origin = `https://${school.host}`;
   let token = "";
+  let checkedToken = "";
+  let nextCookieCheck = 0;
   tab.onRequest((url, headers) => {
     const auth = headers["Authorization"] ?? headers["authorization"];
-    if (url.includes("/d2l/api/") && auth?.startsWith("Bearer ")) token = auth.slice(7);
+    if (url.startsWith(origin + "/d2l/api/") && auth?.startsWith("Bearer ")) token = auth.slice(7);
   });
+  await tab.goto(school.loginUrl ?? origin + "/d2l/home");
 
   const deadline = Date.now() + timeoutMs;
-  let visitedHome = false;
-  while (Date.now() < deadline && !tab.isClosed() && !token) {
+  while (Date.now() < deadline && !tab.isClosed()) {
     const url = await tab.url().catch(() => "");
-    if (isSignedIn(url, school) && !visitedHome) {
-      // The home page's widgets call the API with a Bearer token we can capture
-      visitedHome = true;
-      if (!new URL(url).pathname.startsWith("/d2l/home")) await tab.goto(`https://${school.host}/d2l/home`).catch(() => {});
+    if (isBrightspacePage(url, origin)) {
+      if (token && token !== checkedToken) {
+        checkedToken = token;
+        const expiresAt = tokenExpiry(checkedToken);
+        if (expiresAt > Date.now() + EXPIRY_MARGIN_MS &&
+            await verifySession(origin, { Authorization: `Bearer ${checkedToken}` })) {
+          const cookies = await tab.cookieHeader(origin).catch(() => "");
+          return { token: checkedToken, expiresAt, cookies };
+        }
+      }
+      if (Date.now() >= nextCookieCheck) {
+        const cookies = await tab.cookieHeader(origin).catch(() => "");
+        if (cookies && await verifySession(origin, { Cookie: cookies })) {
+          return { token: "", expiresAt: Date.now() + COOKIE_SESSION_MS, cookies };
+        }
+        nextCookieCheck = Date.now() + 3000;
+      }
     }
     await new Promise((resolve) => setTimeout(resolve, 500));
   }
-  if (!token) return null;
-  return { token, expiresAt: tokenExpiry(token), cookies: await tab.cookieHeader(`https://${school.host}`) };
+  return null;
 }
 
-const startUrl = (school: School) => school.loginUrl ?? `https://${school.host}/d2l/home`;
-
 async function attempt(school: School, headless: boolean, timeoutMs: number): Promise<Session | null> {
-  const profile = await openProfile(headless, startUrl(school));
+  const profile = await openProfile(headless, "about:blank");
   try {
     return await captureSession(profile.tab, school, timeoutMs);
   } finally {
@@ -125,8 +162,8 @@ export function login(): Promise<Session> {
     interactiveInFlight = driver
       .interactive(school)
       .then((s) => {
-        if (!s) throw new Error("Login timed out. Run `amicooked login` to try again.");
-        saveSession(s);
+        if (!s) throw new Error("Could not verify your Brightspace login. Rerun setup and finish signing in in the browser it opens. If you can already see your courses and setup still stops here, report your school and this message.");
+        saveSession(s, school);
         return s;
       })
       .finally(() => {
@@ -139,10 +176,11 @@ export function login(): Promise<Session> {
 /** Log in without showing anything, using the saved browser profile. */
 async function silentLogin(): Promise<Session | null> {
   if (!silentInFlight) {
+    const school = getSchool();
     silentInFlight = driver
-      .silent(getSchool())
+      .silent(school)
       .then((s) => {
-        if (s) saveSession(s);
+        if (s) saveSession(s, school);
         return s;
       })
       .finally(() => {
@@ -167,8 +205,9 @@ async function getSession(): Promise<Session> {
   return Promise.race([pending, timeout]);
 }
 
-export async function getToken(): Promise<string> {
-  return (await getSession()).token;
+export async function getApiHeaders(): Promise<ApiHeaders> {
+  const { token, cookies } = await getSession();
+  return token ? { Authorization: `Bearer ${token}` } : { Cookie: cookies };
 }
 
 /** Cookie header for fetching D2L files directly. */

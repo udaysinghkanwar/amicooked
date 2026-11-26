@@ -1,6 +1,6 @@
 import { toolGuide } from "../instructions.js";
 import { z } from "zod";
-import { getToken } from "../auth.js";
+import { getApiHeaders } from "../auth.js";
 import { client, D2LApiError } from "../client.js";
 import { currentCourses, listCourses, matchCourses, type Course } from "../courseResolver.js";
 import { getSchool } from "../config.js";
@@ -390,7 +390,7 @@ export function courseStatus(signals: Signal[]): CourseStatus {
 
 export async function amICooked(args: { daysAhead?: number; overdueDaysBack?: number; announcementsDays?: number; courses?: string[] }) {
   // Log in once up front so a fan-out over every course doesn't race to open login windows
-  await getToken();
+  await getApiHeaders();
   const w: Window = {
     now: Date.now(),
     daysAhead: args.daysAhead ?? 7,
