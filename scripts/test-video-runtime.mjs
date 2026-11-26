@@ -231,6 +231,17 @@ try {
         const slideStreams = JSON.parse(cli("video", "run", "ffprobe", "--",
           "-v", "error", "-show_entries", "stream=codec_type", "-of", "json", rendered.output)).streams;
         assert.deepEqual(slideStreams.map(stream => stream.codec_type).sort(), ["audio", "video"]);
+        const durationOf = file => Number(cli("video", "run", "ffprobe", "--",
+          "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", file));
+        let narrationDuration = 0;
+        for (const [index, slide] of storyboard.entries()) {
+          const audio = path.join(slideProject, `duration-reference-${index}.wav`);
+          cli("video", "run", "voice", "--", path.join(slideProject, slide.narration), audio);
+          narrationDuration += durationOf(audio);
+        }
+        assert(Math.abs(durationOf(rendered.output) - narrationDuration) < 0.15,
+          "Slide video should stay within a few frames of its combined narration length.");
+
         const isMarker = (time, x) => {
           const rgb = execFileSync(command, [...prefix, "video", "run", "ffmpeg", ...context, "--",
             "-v", "error", "-ss", time, "-i", rendered.output, "-vf", `crop=2:2:${x}:94`,
