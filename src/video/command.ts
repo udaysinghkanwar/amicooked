@@ -5,6 +5,7 @@ import { log } from "@clack/prompts";
 import { isNpxRuntime } from "../clients/self.js";
 import { getConfig } from "../config.js";
 import { getVideoTools, prepareVideo, probeVideo, videoEnvironment, videoStatus } from "./runtime.js";
+import { renderSlides } from "./slides.js";
 import { videoEntry, videoProject, videoScratch } from "./workspace.js";
 
 const workspaceOptions = { project: { type: "string" }, scratch: { type: "string" } } as const;
@@ -41,6 +42,11 @@ export async function videoCommand([action = "status", ...args]: string[]) {
       console.log(JSON.stringify(result));
       return result.ok ? 0 : 1;
     }
+    case "render-slides": {
+      const { values } = parseArgs({ args, options: workspaceOptions });
+      console.log(JSON.stringify(renderSlides(values.project, values.scratch)));
+      return 0;
+    }
     case "run": {
       const separator = args.indexOf("--");
       const { positionals: [tool, ...extra], values } = parseArgs({
@@ -65,6 +71,6 @@ export async function videoCommand([action = "status", ...args]: string[]) {
       return result.status ?? 1;
     }
     default:
-      throw new Error("Use amicooked video status, prepare, probe, or run.");
+      throw new Error("Use amicooked video status, prepare, probe, render-slides, or run.");
   }
 }

@@ -15,7 +15,7 @@ Do this first, before choosing the lesson, asking questions or requesting folder
 
 **Fallback when you can't render:** say so in one sentence, then offer (a) source-linked notes and a scene-by-scene storyboard of the lesson now, and (b) the way to get the MP4: open Claude Code, Codex or the ChatGPT desktop app on the Am I Cooked computer and ask it to "make a lecture video" for the same lecture.
 
-The host needs local command execution, file access and permission to open a browser. MCP access alone, a chat subscription, or installing this skill does not provide those capabilities. If missing, offer source-linked notes/storyboard and explain which capability is needed for an MP4. Never claim an export was produced when only a script exists.
+The host needs local command execution and file access. The animated HyperFrames workflow also needs permission to open a browser. MCP access alone, a chat subscription, or installing this skill does not provide those capabilities. If missing, offer source-linked notes/storyboard and explain which capability is needed for an MP4. Never claim an export was produced when only a script exists.
 
 Start with `get_lecture_video_workflow` when available. Its status describes the installation, and its `launcher` gives the executable, base arguments and Am I Cooked home on that computer. On the same computer, if the shell cannot find `amicooked`, use that command with its arguments and environment instead of reinstalling. In PowerShell, invoke a quoted executable path with `&`. If setup used npx, `npx -y amicooked@0` is also an option.
 
@@ -27,9 +27,39 @@ Create a project inside a folder this AI session is allowed to read and write. I
 amicooked video probe --project "<absolute project folder>"
 ```
 
-The probe synthesizes a short local recording, runs the browser check, renders a tiny MP4 and decodes it. Proceed only when it returns `ok: true`. If the session cannot write to its temporary directory, create an authorized scratch folder outside the project and pass `--scratch "<absolute scratch folder>"` to the probe and every subsequent `video run` command, before the `--` separator. Do not reinstall because a ready installation failed this probe. Use its failing stage and path to request the missing capability, and preserve existing lesson files. A session without authorized local command, browser or file access can offer a source-linked lesson plan and help the student switch to a suitable local client.
+The probe synthesizes a short local recording, runs the browser check, renders a tiny MP4 and decodes it. Continue with HyperFrames when it returns `ok: true`. If the session cannot write to its temporary directory, create an authorized scratch folder outside the project and pass `--scratch "<absolute scratch folder>"` to the probe and every subsequent `video run` command, before the `--` separator. Do not reinstall because a ready installation failed this probe. Use its failing stage and path to request the missing capability, and preserve existing lesson files. A session without authorized local command, browser or file access can offer a source-linked lesson plan and help the student switch to a suitable local client.
 
-Then read the renderer's composition rules:
+### Render animated slides when the browser preview is unavailable
+
+If the probe reports `reason: "local-preview-blocked"` in ChatGPT Work or another local AI session, stay in the same session and use the installed narration and video tools directly. This path needs permission to read the installed tools, run local commands, and write to the project and scratch folders.
+
+1. Use course sources to design one visual per explanation step. Save each visual as an SVG, PNG or JPEG in the project. Use a 16:9 canvas, large text, diagrams, and progressive reveals across slides. Save its spoken narration in a separate UTF-8 text file.
+2. Save an ordered array in `slides.json` using project-relative paths. For example:
+
+   ```json
+   [
+     {
+       "image": "root-on-the-plane.svg",
+       "narration": "root-on-the-plane.txt",
+       "overlays": [{
+         "image": "point.svg",
+         "keyframes": [
+           { "at": 0, "x": 768, "y": 344 },
+           { "at": 1, "x": 725, "y": 241 },
+           { "at": 2, "x": 624, "y": 198 }
+         ]
+       }]
+     },
+     { "image": "worked-example.svg", "narration": "worked-example.txt" }
+   ]
+   ```
+
+   Use transparent SVGs or PNGs to animate a point on a graph, a token on a diagram, or a highlight over an equation. Each overlay appears at its first keyframe, moves smoothly between positions, and holds at the last. Times are seconds from the start of that slide's narration. Positions are pixels from the top-left of the 1280×720 canvas. A single keyframe reveals an element at the specified time. Add waypoints for curved paths.
+
+3. Run `amicooked video render-slides --project "<absolute project folder>"`. Add `--scratch "<absolute writable scratch folder>"` if needed. Am I Cooked narrates each slide, matches its duration to the audio, and verifies the finished `lesson.mp4`.
+4. Share the MP4 and the source references. If file or process access is blocked, preserve the prepared slides and narration and report the capability needed to finish.
+
+For the HyperFrames workflow, read the renderer's composition rules:
 
 ```sh
 amicooked video run hyperframes -- init "lesson" --non-interactive --skip-skills
