@@ -40,15 +40,14 @@ describe("schools", () => {
     expect(fetchImpl).not.toHaveBeenCalled();
   });
 
-  it("keeps universities, public boards and Catholic boards distinct", () => {
+  it("keeps only the universities, TDSB and Peel as presets", () => {
+    expect(PRESETS.map((s) => s.id)).toEqual(["mcmaster", "waterloo", "western", "queens", "guelph", "laurier", "tmu",
+      "uottawa", "carleton", "brock", "windsor", "laurentian", "lakehead", "tdsb", "pdsb"]);
     expect(findPreset("waterloo")?.host).toBe("learn.uwaterloo.ca");
-    expect(findPreset("wrdsb")?.host).toBe("wrdsb.elearningontario.ca");
-    expect(findPreset("wcdsb")?.host).toBe("wcdsb.elearningontario.ca");
-    expect(findPreset("welcdsb")?.host).toBe("welcdsb.elearningontario.ca");
     expect(findPreset("lakehead")?.host).toBe("mycourselink.lakeheadu.ca");
-    expect(findPreset("Lakehead DSB")?.host).toBe("lhbe.elearningontario.ca");
-    expect(findPreset("scdsb")?.host).toBe("scdsb.elearningontario.ca");
-    expect(findPreset("Sudbury CDSB")?.host).toBe("srcdsb.elearningontario.ca");
+    expect(findPreset("Toronto DSB")?.host).toBe("tdsb.elearningontario.ca");
+    expect(findPreset("Peel DSB")?.host).toBe("pdsb.elearningontario.ca");
+    expect(findPreset("wrdsb")).toBeUndefined();
     expect(findPreset("Toronto")).toBeUndefined();
     expect(findPreset("York")).toBeUndefined();
     expect(findPreset("Peel")).toBeUndefined();
