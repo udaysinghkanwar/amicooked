@@ -19,7 +19,7 @@ Do this first, before choosing the lesson, asking questions or requesting folder
 **Lesson tools (no shell needed):** Am I Cooked renders narrated slides on the student's computer from text you write through its tools.
 
 1. `create_video_lesson` with a short title. It returns a `lessonId` and the files to write.
-2. `write_video_lesson_file` for each file: one self-contained 1280×720 SVG per explanation step, a UTF-8 `.txt` narration per slide, and `slides.json` in the format shown under "Render animated slides" below. SVGs may only link to their own `#ids` or embedded `data:image` values.
+2. `write_video_lesson_file` for each file: one self-contained 1280×720 SVG per explanation step, a UTF-8 `.txt` narration per slide, and `slides.json` in the format shown under "Render animated slides" below. Style SVGs with attributes like `fill`, `stroke` and `font-size`, not `style` rules, and link only to their own `#ids` or embedded `data:image` values. Am I Cooked stores a cleaned copy.
 3. `start_video_render`, then call `get_video_render` every 20 to 30 seconds until it is `done` or `failed`. The first render can take a few minutes while the voice and video tools download.
 4. When done, give the student the MP4 path on their computer. If they want richer motion or transitions, offer to rerender the same lesson with HyperFrames from a local Codex, Claude Code, or Antigravity CLI session where the browser probe passes. On failure, report the `error`, fix the lesson files and call `start_video_render` again. To change a finished video, create a new lesson.
 

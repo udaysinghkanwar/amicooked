@@ -23,7 +23,7 @@ export const createVideoLesson: Tool = {
       format: lesson.format,
       write: [
         "slides.json: an ordered array of { image, narration, overlays? } with paths relative to the lesson",
-        "image: a self-contained .svg slide (1280x720, large text; links only to its own #ids or embedded data:image)",
+        "image: a self-contained .svg slide (1280x720, large text). Style with attributes like fill and stroke, not style rules; link only to its own #ids or embedded data:image",
         "narration: a UTF-8 .txt file with what the voice says for that slide",
         "overlays (optional): [{ image: \"point.svg\", keyframes: [{ at: seconds, x, y }, ...] }] to move a marker during the narration",
       ],
