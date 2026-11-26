@@ -18,13 +18,19 @@ async function connect() {
 }
 
 describe("server", () => {
-  it("lists read-only course tools and bundled feature guides", async () => {
+  it("lists read-only course tools, bundled feature guides and the lesson tools", async () => {
     const { tools } = await (await connect()).listTools();
     expect(tools.map((t) => t.name)).toEqual([
       "am_i_cooked", "get_my_courses", "get_my_grades", "get_upcoming_due_dates", "get_announcements",
       "get_assignments", "get_course_content", "download_file", "read_file", "get_feature_guide", "get_lecture_video_workflow",
+      "create_video_lesson", "write_video_lesson_file", "start_video_render", "get_video_render",
     ]);
-    expect(tools.every((t) => t.annotations?.readOnlyHint)).toBe(true);
+    // Only the lesson tools write, and only inside a lesson folder; nothing writes to Brightspace
+    const writers = ["create_video_lesson", "write_video_lesson_file", "start_video_render"];
+    for (const tool of tools) {
+      expect(tool.annotations?.readOnlyHint, tool.name).toBe(!writers.includes(tool.name));
+      expect(tool.annotations?.openWorldHint, tool.name).toBe(false);
+    }
     for (const feature of FEATURES) {
       if (feature.mcpTool) expect(tools.some(tool => tool.name === feature.mcpTool)).toBe(true);
     }
