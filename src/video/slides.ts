@@ -37,6 +37,24 @@ function asset(project: string, name: string, extensions: string[]): string {
   return file;
 }
 
+export function readSlideStoryboard(project: string) {
+  const storyboard = slides.parse(JSON.parse(fs.readFileSync(asset(project, "slides.json", [".json"]), "utf8")));
+  return storyboard.map(({ image, narration, overlays }) => ({
+    image: asset(project, image, imageTypes),
+    narration: asset(project, narration, [".txt"]),
+    overlays: overlays.map(layer => ({ ...layer, image: asset(project, layer.image, imageTypes) })),
+  }));
+}
+
+export function narrateSlide(tools: SlideTools, narration: string, speech: string, env: NodeJS.ProcessEnv, work: string): number {
+  runTool(tools.node, [tools.voice, tools.model, narration, speech], env, work);
+  const duration = Number(runTool(tools.ffprobe, [
+    "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", speech,
+  ], env, work));
+  if (!Number.isFinite(duration) || duration <= 0) throw new Error("The slide has no measurable narration.");
+  return duration;
+}
+
 // Resolve Sharp from the managed renderer dependencies. Reading the image as a buffer
 // also keeps SVG rendering independent of the input file's location.
 const rasterize = `
@@ -55,12 +73,7 @@ export function renderSlides(directory?: string, scratchDirectory?: string, prep
   const project = videoProject(directory);
   const output = path.join(project, "lesson.mp4");
   if (fs.existsSync(output)) throw new Error("Move the existing lesson.mp4 before rendering again.");
-  const storyboard = slides.parse(JSON.parse(fs.readFileSync(asset(project, "slides.json", [".json"]), "utf8")));
-  const scenes = storyboard.map(({ image, narration, overlays }) => ({
-    image: asset(project, image, imageTypes),
-    narration: asset(project, narration, [".txt"]),
-    overlays: overlays.map(layer => ({ ...layer, image: asset(project, layer.image, imageTypes) })),
-  }));
+  const scenes = readSlideStoryboard(project);
   const tools = preparedTools ?? getSlideTools();
   const scratch = videoScratch(project, scratchDirectory);
   const env = videoEnvironment(tools, scratch);
@@ -72,7 +85,7 @@ export function renderSlides(directory?: string, scratchDirectory?: string, prep
       const speech = path.join(work, "voice.wav");
       const segment = `slide-${index + 1}.mp4`;
       runTool(tools.node, ["-e", rasterize, tools.voice, image, frame], env, work);
-      runTool(tools.node, [tools.voice, tools.model, narration, speech], env, work);
+      const duration = narrateSlide(tools, narration, speech, env, work);
       const layers = overlays.map(({ image, keyframes }, i) => {
         const file = path.join(work, `overlay-${i}.png`);
         runTool(tools.node, ["-e", rasterize, tools.voice, image, file, "overlay"], env, work);
@@ -89,7 +102,7 @@ export function renderSlides(directory?: string, scratchDirectory?: string, prep
         "-protocol_whitelist", "file,pipe", "-f", "wav", "-i", speech,
         ...video, "-map", `${layers.length + 1}:a`,
         "-c:v", "libx264", "-preset", "fast", "-pix_fmt", "yuv420p",
-        "-c:a", "aac", "-ar", "48000", "-ac", "1", "-shortest", segment,
+        "-c:a", "aac", "-ar", "48000", "-ac", "1", "-t", String(duration), segment,
       ], env, work);
       return segment;
     });

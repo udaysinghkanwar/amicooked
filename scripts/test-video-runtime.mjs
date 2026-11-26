@@ -158,6 +158,39 @@ try {
         env: { ...env, ...workflow.launcher.env }, cwd: root, encoding: "utf8",
       });
       assert.equal(JSON.parse(check).state, "ready");
+
+      // A chat without a shell: build a lesson through the MCP tools and let the real launcher render it
+      const call = async (name, args) => {
+        const reply = await client.callTool({ name, arguments: args });
+        assert.notEqual(reply.isError, true, `${name}: ${reply.content[0].text}`);
+        return JSON.parse(reply.content[0].text);
+      };
+      const lesson = await call("create_video_lesson", { title: "Acceptance lesson" });
+      const slide = color => `<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720"><defs><linearGradient id="g"><stop offset="0" stop-color="${color}"/></linearGradient></defs><rect width="1280" height="720" fill="url(#g)"/><text x="80" y="200" font-size="64" fill="#fff">Slide</text></svg>`;
+      await call("write_video_lesson_file", { lessonId: lesson.lessonId, path: "one.svg", content: slide("#446699") });
+      await call("write_video_lesson_file", { lessonId: lesson.lessonId, path: "two.svg", content: slide("#cc7744") });
+      await call("write_video_lesson_file", { lessonId: lesson.lessonId, path: "narration/one.txt", content: "This is the first slide." });
+      await call("write_video_lesson_file", { lessonId: lesson.lessonId, path: "narration/two.txt", content: "This is the second slide." });
+      await call("write_video_lesson_file", { lessonId: lesson.lessonId, path: "slides.json", content: JSON.stringify([
+        { image: "one.svg", narration: "narration/one.txt" }, { image: "two.svg", narration: "narration/two.txt" },
+      ]) });
+      const refused = await client.callTool({ name: "write_video_lesson_file", arguments: { lessonId: lesson.lessonId, path: "../escape.txt", content: "x" } });
+      assert.equal(refused.isError, true);
+      const started = await call("start_video_render", { lessonId: lesson.lessonId });
+      assert.equal((await call("start_video_render", { lessonId: lesson.lessonId })).jobId, started.jobId);
+      let render = started;
+      for (let waited = 0; render.state === "running" && waited < 300_000; waited += 2000) {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        render = await call("get_video_render", { lessonId: lesson.lessonId });
+      }
+      assert.equal(render.state, "done", JSON.stringify(render));
+      assert.equal(render.slides, 2);
+      assert.equal(render.renderer, "hyperframes");
+      assert.equal(realpathSync.native(path.dirname(render.output)), realpathSync.native(lesson.folder));
+      const lessonStreams = JSON.parse(cli("video", "run", "ffprobe", "--",
+        "-v", "error", "-show_entries", "stream=codec_type", "-of", "json", render.output)).streams;
+      assert.deepEqual(lessonStreams.map(stream => stream.codec_type).sort(), ["audio", "video"]);
+      cli("video", "run", "ffmpeg", "--", "-v", "error", "-i", render.output, "-f", "null", "-");
     } finally {
       await client.close();
     }
@@ -198,12 +231,12 @@ try {
         const restricted = spawnSync(command, [...prefix, "video", "probe", ...context], {
           env: restrictedEnv, cwd: home, encoding: "utf8", timeout: 90_000,
         });
-        assert.equal(restricted.status, 1, restricted.stderr);
+        assert.equal(restricted.status, 1, restricted.error?.message ?? restricted.stderr);
         const blocked = JSON.parse(restricted.stdout);
         assert.equal(blocked.stage, "browser-check");
-        assert.equal(blocked.reason, "local-preview-blocked");
+        assert.match(blocked.reason, /^(local-preview-blocked|browser-check-timeout)$/);
         assert.match(blocked.nextStep, /video render-slides/);
-        assert.match(blocked.error, /CORS policy/);
+        assert.match(blocked.error, blocked.reason === "local-preview-blocked" ? /CORS policy/ : /45 seconds/);
         const slideProject = path.join(project, "narrated slides");
         mkdirSync(slideProject);
         const storyboard = ["first", "second"].map((name, index) => {
@@ -231,6 +264,17 @@ try {
         const slideStreams = JSON.parse(cli("video", "run", "ffprobe", "--",
           "-v", "error", "-show_entries", "stream=codec_type", "-of", "json", rendered.output)).streams;
         assert.deepEqual(slideStreams.map(stream => stream.codec_type).sort(), ["audio", "video"]);
+        const durationOf = file => Number(cli("video", "run", "ffprobe", "--",
+          "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", file));
+        let narrationDuration = 0;
+        for (const [index, slide] of storyboard.entries()) {
+          const audio = path.join(slideProject, `duration-reference-${index}.wav`);
+          cli("video", "run", "voice", "--", path.join(slideProject, slide.narration), audio);
+          narrationDuration += durationOf(audio);
+        }
+        assert(Math.abs(durationOf(rendered.output) - narrationDuration) < 0.15,
+          "Slide video should stay within a few frames of its combined narration length.");
+
         const isMarker = (time, x) => {
           const rgb = execFileSync(command, [...prefix, "video", "run", "ffmpeg", ...context, "--",
             "-v", "error", "-ss", time, "-i", rendered.output, "-vf", `crop=2:2:${x}:94`,

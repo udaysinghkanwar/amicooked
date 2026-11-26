@@ -57,8 +57,10 @@ The AI session needs local command and file access and permission to launch the 
 | `read_file` | Read a file you already downloaded |
 | `get_feature_guide` | List shipped features or read a bundled guide |
 | `get_lecture_video_workflow` | Get the video guide, check the installation and locate the local launcher |
+| `create_video_lesson`, `write_video_lesson_file` | For chats without a shell: build a slide lesson (SVG slides, narration text) in your `Lessons` folder |
+| `start_video_render`, `get_video_render` | Render that lesson to an MP4 on your computer and check on it. Lesson tools write only inside `Lessons` |
 
-Every tool is read-only. Course tools take a code like `"3BB4"`.
+Course tools are read-only and take a code like `"3BB4"`.
 
 ## Schools
 
@@ -125,7 +127,7 @@ For source checkouts, update your branch with `git pull --ff-only`, `npm ci` and
 
 ## Not affiliated
 
-Am I Cooked is an independent project. It isn't affiliated with or endorsed by D2L Corporation or any university. Brightspace is a trademark of D2L Corporation. It only reads your own data; check your school's policies before using it.
+Am I Cooked is an independent project. It isn't affiliated with or endorsed by D2L Corporation or any university. Brightspace is a trademark of D2L Corporation. It only reads your own Brightspace data; check your school's policies before using it.
 
 ## Credits
 

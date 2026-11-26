@@ -292,7 +292,7 @@ async function configureClients(clients: ClientId[]): Promise<Outcome[]> {
         if (!configured) throw new Error("Gemini did not accept the connection. Rerun setup.");
         const tools = await checkMcp(configured);
         installGeminiSkill();
-        p.log.success(`Gemini: MCP handshake and ${tools} read-only tools verified.`);
+        p.log.success(`Gemini: MCP handshake and ${tools} tools verified.`);
         const reopen = windows ? "Start a new Antigravity CLI session" : "Reopen Gemini or start a new Antigravity CLI session";
         outcomes.push({ app: "Gemini", ready: false, connected: true, next: `set up. ${reopen}, then ask: am I cooked?` });
       } catch (error) {

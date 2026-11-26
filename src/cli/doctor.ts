@@ -14,7 +14,7 @@ export async function doctorCommand(live = false): Promise<number> {
       connection = launch;
     }
     const tools = await checkMcp(connection, live);
-    console.log(`Gemini: MCP handshake, usage instructions and ${tools} read-only tools verified${live ? "; school access verified" : ""}.`);
+    console.log(`Gemini: MCP handshake, usage instructions and ${tools} tools verified${live ? "; school access verified" : ""}.`);
     console.log("Reload Gemini/Antigravity and ask 'am I cooked?' to verify the host/account too.");
     return 0;
   } catch (error) {

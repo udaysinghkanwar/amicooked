@@ -6,6 +6,7 @@ import { isNpxRuntime } from "../clients/self.js";
 import { getConfig } from "../config.js";
 import { getSlideTools, getVideoTools, prepareVideo, probeVideo, videoEnvironment, videoStatus } from "./runtime.js";
 import { renderSlides } from "./slides.js";
+import { renderLessonCommand, renderLessonWork } from "./jobs.js";
 import { videoEntry, videoProject, videoScratch } from "./workspace.js";
 
 const workspaceOptions = { project: { type: "string" }, scratch: { type: "string" } } as const;
@@ -47,6 +48,16 @@ export async function videoCommand([action = "status", ...args]: string[]) {
       const { values } = parseArgs({ args, options: workspaceOptions });
       console.log(JSON.stringify(renderSlides(values.project, values.scratch)));
       return 0;
+    }
+    case "render-lesson": {
+      // Hidden: start_video_render runs this as a child process for a lesson an AI app built through MCP
+      const { values } = parseArgs({ args, options: { lesson: { type: "string" }, job: { type: "string" } } });
+      return renderLessonCommand(values.lesson ?? "", values.job ?? "");
+    }
+    case "render-lesson-work": {
+      // Hidden: the renderer child of render-lesson
+      const { values } = parseArgs({ args, options: { lesson: { type: "string" } } });
+      return renderLessonWork(values.lesson ?? "");
     }
     case "run": {
       const separator = args.indexOf("--");
