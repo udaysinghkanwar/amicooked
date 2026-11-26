@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto";
 import * as fs from "node:fs";
 import path from "node:path";
 import { getConfig } from "../config.js";
-import { svgProblem } from "./svg.js";
+import { sanitizeSvg, svgProblem } from "./svg.js";
 import { realPath } from "./workspace.js";
 
 // Lessons an AI app builds through Am I Cooked's tools (#21), for chats with no shell on the student's computer.
@@ -64,7 +64,7 @@ export function unsafeContent(file: string, content: string): string | null {
   return path.extname(file).toLowerCase() === ".svg" ? svgProblem(content) : null;
 }
 
-/** Every SVG in a lesson, checked again just before rendering in case it changed on disk since it was written. */
+/** Every SVG in a lesson, checked again and rewritten from its checked markup just before rendering. */
 export function checkLessonFiles(folder: string) {
   const walk = (dir: string) => {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -72,8 +72,9 @@ export function checkLessonFiles(folder: string) {
       if (entry.isSymbolicLink()) throw new Error(`${path.relative(folder, full)} is a link; lessons can only hold regular files.`);
       if (entry.isDirectory()) walk(full);
       else if (path.extname(entry.name).toLowerCase() === ".svg") {
-        const problem = svgProblem(fs.readFileSync(full, "utf8"));
-        if (problem) throw new Error(`${path.relative(folder, full)}: ${problem}`);
+        const checked = sanitizeSvg(fs.readFileSync(full, "utf8"));
+        if (checked.problem !== undefined) throw new Error(`${path.relative(folder, full)}: ${checked.problem}`);
+        fs.writeFileSync(full, checked.markup, "utf8");
       }
     }
   };
@@ -129,8 +130,13 @@ export function writeLessonFile(id: string, relative: string, content: string): 
   }
   const bytes = Buffer.byteLength(content, "utf8");
   if (bytes > LIMITS.fileBytes) throw new Error(`${name} is too large (limit ${LIMITS.fileBytes / 1024 / 1024} MB per file).`);
-  const problem = unsafeContent(name, content);
-  if (problem) throw new Error(problem);
+  // SVGs are stored as the markup rebuilt from their checked tree, never as sent
+  let stored = content;
+  if (ext === ".svg") {
+    const checked = sanitizeSvg(content);
+    if (checked.problem !== undefined) throw new Error(checked.problem);
+    stored = checked.markup;
+  }
 
   const target = path.join(lessonFolder(lesson, parts.slice(0, -1)), parts[parts.length - 1]);
   let existing = 0;
@@ -142,8 +148,8 @@ export function writeLessonFile(id: string, relative: string, content: string): 
     if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
   }
   const size = lessonSize(lesson.folder);
-  if (size.bytes - existing + bytes > LIMITS.lessonBytes) throw new Error(`The lesson is full (limit ${LIMITS.lessonBytes / 1024 / 1024} MB).`);
+  if (size.bytes - existing + Buffer.byteLength(stored, "utf8") > LIMITS.lessonBytes) throw new Error(`The lesson is full (limit ${LIMITS.lessonBytes / 1024 / 1024} MB).`);
   if (!existing && size.files + 1 > LIMITS.files) throw new Error(`The lesson has too many files (limit ${LIMITS.files}).`);
-  fs.writeFileSync(target, content, "utf8");
-  return { path: name, bytes };
+  fs.writeFileSync(target, stored, "utf8");
+  return { path: name, bytes: Buffer.byteLength(stored, "utf8") };
 }
