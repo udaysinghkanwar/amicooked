@@ -7,6 +7,7 @@ import { platformDownloads, targets, voiceModel, voiceModelMirror, type VideoTar
 import manifest from "./runtime-package.json" with { type: "json" };
 import npmLock from "./runtime-lock.json" with { type: "json" };
 import { voiceScript } from "./voice.js";
+import { videoProject, videoScratch } from "./workspace.js";
 
 const targetName = `${process.platform}-${process.arch}`;
 const target = Object.hasOwn(targets, targetName) ? targetName as VideoTarget : undefined;
@@ -57,43 +58,83 @@ export function videoStatus() {
   return { state, target: targetName };
 }
 
-export function videoEnvironment(tools: Tools): NodeJS.ProcessEnv {
+export function videoEnvironment(tools: Tools, scratch?: ReturnType<typeof videoScratch>): NodeJS.ProcessEnv {
   return {
     ...process.env,
     PATH: [path.dirname(tools.node), path.dirname(tools.ffmpeg), path.dirname(tools.ffprobe), process.env.PATH].join(path.delimiter),
     HYPERFRAMES_BROWSER_PATH: tools.browser,
     HYPERFRAMES_FFMPEG_PATH: tools.ffmpeg,
     HYPERFRAMES_FFPROBE_PATH: tools.ffprobe,
-    HYPERFRAMES_CACHE_DIR: path.join(root(), "hyperframes-cache"),
+    HYPERFRAMES_CACHE_DIR: scratch?.cache ?? path.join(root(), "hyperframes-cache"),
+    ...(scratch && {
+      HYPERFRAMES_FONT_CACHE_DIR: path.join(scratch.cache, "fonts"),
+      HYPERFRAMES_EXTRACT_CACHE_DIR: path.join(scratch.cache, "extract"),
+      TMPDIR: scratch.temp, TMP: scratch.temp, TEMP: scratch.temp,
+    }),
     HF_HUB_OFFLINE: "1",
     DO_NOT_TRACK: "1",
   };
 }
 
-function smokeTest(tools: Tools) {
-  const work = fs.mkdtempSync(path.join(root(), "pending-"));
-  const env = videoEnvironment(tools);
-  try {
-    const text = path.join(work, "narration.txt");
-    const audio = path.join(work, "voice.wav");
-    const video = path.join(work, "smoke.mp4");
-    fs.writeFileSync(text, "Video tools are ready.");
-    runTool(tools.node, [tools.voice, tools.model, text, audio], env, work);
-    const duration = Number(runTool(tools.ffprobe, ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", audio], env));
-    if (!Number.isFinite(duration) || duration <= 0) throw new Error("The narration test produced no audio.");
-    fs.writeFileSync(path.join(work, "index.html"), `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Video setup check</title></head>
+function smokeTest(tools: Tools, work: string, env: NodeJS.ProcessEnv, stage?: (step: string) => void) {
+  stage?.("narration");
+  const text = path.join(work, "narration.txt");
+  const audio = path.join(work, "voice.wav");
+  const video = path.join(work, "smoke.mp4");
+  fs.writeFileSync(text, "Video tools are ready.");
+  runTool(tools.node, [tools.voice, tools.model, text, audio], env, work);
+  const duration = Number(runTool(tools.ffprobe, ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", audio], env));
+  if (!Number.isFinite(duration) || duration <= 0) throw new Error("The narration test produced no audio.");
+  stage?.("output");
+  fs.writeFileSync(path.join(work, "index.html"), `<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Video setup check</title></head>
 <body style="margin:0;background:#16232c;color:#fff"><div id="main" data-no-timeline data-composition-id="main" data-width="640" data-height="360" data-duration="${duration + 0.3}">
 <h1 style="margin:60px">Am I Cooked video setup</h1>
 <audio id="voice" class="clip" data-start="0" data-duration="${duration}" data-track-index="1" src="voice.wav"></audio>
 </div></body></html>`);
-    runTool(tools.node, [tools.hyperframes, "render", "--quality", "draft", "--workers", "1", "--no-best-effort", "--output", video], env, work);
-    const streams = JSON.parse(runTool(tools.ffprobe, ["-v", "error", "-show_entries", "stream=codec_type", "-of", "json", video], env)).streams as { codec_type: string }[];
-    if (!["audio", "video"].every(type => streams.some(stream => stream.codec_type === type))) {
-      throw new Error("The test render did not contain audio and video.");
+  if (stage) {
+    stage("browser-check");
+    const report = JSON.parse(runTool(tools.node, [tools.hyperframes, "check", "--json"], env, work));
+    if (report.ok !== true || report.browserSkipped !== false) {
+      throw new Error(report.runtime?.findings?.[0]?.message ?? "HyperFrames did not complete the browser check.");
     }
-    runTool(tools.ffmpeg, ["-v", "error", "-xerror", "-i", video, "-f", "null", "-"], env);
+  }
+  stage?.("render");
+  runTool(tools.node, [tools.hyperframes, "render", "--quality", "draft", "--workers", "1", "--no-best-effort", "--output", video], env, work);
+  stage?.("verify");
+  const streams = JSON.parse(runTool(tools.ffprobe, ["-v", "error", "-show_entries", "stream=codec_type", "-of", "json", video], env)).streams as { codec_type: string }[];
+  if (!["audio", "video"].every(type => streams.some(stream => stream.codec_type === type))) {
+    throw new Error("The test render did not contain audio and video.");
+  }
+  runTool(tools.ffmpeg, ["-v", "error", "-xerror", "-i", video, "-f", "null", "-"], env);
+}
+
+export function probeVideo(directory?: string, scratchDirectory?: string) {
+  let project: string | undefined;
+  let work: string | undefined;
+  let stage = "installation";
+  const steps: string[] = [];
+  try {
+    const tools = getVideoTools();
+    steps.push(stage);
+    stage = "project";
+    project = videoProject(directory);
+    work = fs.mkdtempSync(path.join(project, ".amicooked-probe-"));
+    steps.push(stage);
+    stage = "scratch";
+    const scratch = videoScratch(project, scratchDirectory);
+    smokeTest(tools, work, videoEnvironment(tools, scratch), step => {
+      steps.push(stage);
+      stage = step;
+    });
+    steps.push(stage);
+    return { ok: true, project, scratch: scratch.cache, steps };
+  } catch (error) {
+    const nextStep = stage === "installation" ? "Run video prepare in the local installer environment, then retry the probe." :
+      "Use a local project and scratch folder this session can write, and confirm it can launch the managed browser and bind a local preview port. If the client blocks those capabilities, connect an approved local workspace or use a local client with those capabilities.";
+    return { ok: false, project, steps, stage, error: error instanceof Error ? error.message : String(error),
+      nextStep };
   } finally {
-    fs.rmSync(work, { recursive: true, force: true });
+    if (work) fs.rmSync(work, { recursive: true, force: true, maxRetries: 3 });
   }
 }
 
@@ -158,7 +199,9 @@ export async function prepareVideo(log: (message: string) => void = console.erro
       voice,
     };
     log("Testing a narrated video render…");
-    smokeTest(tools);
+    const work = fs.mkdtempSync(path.join(root(), "pending-"));
+    try { smokeTest(tools, work, videoEnvironment(tools)); }
+    finally { fs.rmSync(work, { recursive: true, force: true }); }
     writePrivateFile(marker(), JSON.stringify({ schema, target, identity, tools } satisfies Ready) + "\n");
     return videoStatus();
   } finally {
