@@ -295,5 +295,5 @@ try {
   }
 } finally {
   server.kill();
-  rmSync(root, { recursive: true, force: true });
+  rmSync(root, { recursive: true, force: true, maxRetries: 3 });
 }
