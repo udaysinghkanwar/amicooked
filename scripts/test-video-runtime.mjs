@@ -74,9 +74,10 @@ try {
       assert.notEqual(readFileSync(voice, "utf8"), current);
       olderRecipe = () => writeFileSync(voice, current);
     }
-    const cli = (...args) => execFileSync(command, [...prefix, ...args], {
+    const run = (...args) => execFileSync(command, args, {
       env, cwd: project, encoding: "utf8", timeout: 900_000, stdio: ["ignore", "pipe", "inherit"],
     }).trim();
+    const cli = (...args) => run(...prefix, ...args);
     assert.equal(JSON.parse(cli("video", "status")).state, "missing");
     if (channel === "npm") {
       cli(...setup, "--skip-video-deps");
@@ -85,9 +86,28 @@ try {
       assert.equal(existsSync(path.join(data, "video")), false);
       assert.match(cli("features", "lecture-videos"), /run `amicooked video prepare` yourself/);
     }
-    const output = channel === "npm" ? cli(...setup, "--with-video-deps") : cli(...setup);
+    // Keep every actual download except Hugging Face. Require all four files from the public backup.
+    const blockHuggingFace = `data:text/javascript,${encodeURIComponent(`
+      import assert from "node:assert/strict";
+      const originalFetch = globalThis.fetch;
+      const mirrored = new Set();
+      globalThis.fetch = (input, options) => {
+        const url = new URL(input);
+        if (url.hostname === "huggingface.co") return Promise.resolve(new Response(null, { status: 403 }));
+        if (url.hostname === "github.com" && url.pathname.includes("/releases/download/kokoro-82m-")) {
+          mirrored.add(url.pathname.split("/").at(-1));
+        }
+        return originalFetch(input, options);
+      };
+      process.on("exit", () => {
+        assert.deepEqual([...mirrored].sort(), ["config.json", "model_quantized.onnx", "tokenizer.json", "tokenizer_config.json"]);
+        console.log("Downloaded all four pinned Kokoro assets with Hugging Face blocked.");
+      });
+    `)}`;
+    const output = channel === "npm" ? run("--import", blockHuggingFace, ...prefix, ...setup, "--with-video-deps") : cli(...setup);
     assert.match(output, /Testing a narrated video render/);
     assert.match(output, /Lecture video tools are ready/);
+    if (channel === "npm") console.log(output.split("\n").at(-1));
     assert.equal(JSON.parse(cli("video", "status")).state, "ready");
     for (const tool of ["ffmpeg", "ffprobe"]) {
       assert.match(cli("video", "run", tool, "--", "-version"), new RegExp(`^${tool} version 9[.]1(?:\\D|$)`));

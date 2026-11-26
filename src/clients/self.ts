@@ -21,6 +21,10 @@ export function currentRuntime(): Runtime {
   return { execPath: process.execPath, argv: process.argv, platform: process.platform, isCompiled };
 }
 
+export function isNpxRuntime(rt: Runtime = currentRuntime()): boolean {
+  return /[\\/]_npx[\\/]/.test(rt.argv[1] ?? "");
+}
+
 /** Source checkouts are managed by Git, not the release updater. */
 export function installationChannel(rt: Runtime = currentRuntime()): "native" | "npm" | null {
   if (rt.isCompiled) return "native";
@@ -38,8 +42,7 @@ export function selfCommand(extraArgs: string[], rt: Runtime = currentRuntime())
   if (rt.isCompiled) return { command: rt.execPath, args: extraArgs };
 
   const script = rt.argv[1] ?? "";
-  const viaNpx = /[\\/]_npx[\\/]/.test(script);
-  if (!viaNpx) return { command: rt.execPath, args: [script, ...extraArgs] };
+  if (!isNpxRuntime(rt)) return { command: rt.execPath, args: [script, ...extraArgs] };
 
   const pkg = ["-y", "amicooked@0", ...extraArgs];
   if (rt.platform === "win32") return { command: "cmd", args: ["/c", "npx", ...pkg] };

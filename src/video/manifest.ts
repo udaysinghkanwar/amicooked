@@ -31,6 +31,7 @@ export type VideoTarget = keyof typeof targets;
 export interface Download {
   url: string;
   sha256: string;
+  mirrors?: readonly string[];
 }
 
 // Release archives and SHA-256 checksums from the builders linked by FFmpeg
@@ -80,6 +81,7 @@ export function platformDownloads(target: VideoTarget) {
 }
 
 const kokoro = "https://huggingface.co/onnx-community/Kokoro-82M-v1.0-ONNX/resolve/1939ad2a8e416c0acfeecc08a694d14ef25f2231";
+export const voiceModelMirror = "https://github.com/udaysinghkanwar/amicooked/releases/download/kokoro-82m-1939ad2";
 export const voiceModel: Record<string, Download> = Object.fromEntries(Object.entries({
   "onnx/model_quantized.onnx": "fbae9257e1e05ffc727e951ef9b9c98418e6d79f1c9b6b13bd59f5c9028a1478",
   "config.json": "df34b4f930b23447cd4dc410fabfb42eb3f24e803e6c3f97d618fb359380a36f",

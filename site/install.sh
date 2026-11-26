@@ -30,7 +30,7 @@ if [ -n "${AMICOOKED_CLIENTS:-}" ]; then
 fi
 
 say() { printf '%s\n' "$*"; }
-fail() { printf 'amicooked: %s\n' "$*" >&2; exit 1; }
+fail() { say "Am I Cooked: $*"; exit 1; }
 
 case "$(uname -s)" in
   Darwin) os=darwin ;;
@@ -61,8 +61,10 @@ say "Downloading Am I Cooked ($os-$arch)..."
 # A download that stalls (under 10 KB/s for 30 seconds) is dropped and retried, so a dead connection
 # can't leave the installer waiting forever
 fetch() { curl -fsSL --retry 3 --retry-delay 2 --speed-limit 10240 --speed-time 30 "$1" -o "$2"; }
-fetch "$base/$asset" "$tmp/$asset" || fail "download failed from $base/$asset. Check your connection and try again."
-fetch "$base/SHA256SUMS" "$tmp/SHA256SUMS" || fail "couldn't download checksums"
+fetch "$base/$asset" "$tmp/$asset" 2>"$tmp/download-error" ||
+  fail "Could not download Am I Cooked from $base. $(tail -n 1 "$tmp/download-error") Check your connection to GitHub and rerun the installer."
+fetch "$base/SHA256SUMS" "$tmp/SHA256SUMS" 2>"$tmp/download-error" ||
+  fail "Could not verify the download because SHA256SUMS could not be fetched. $(tail -n 1 "$tmp/download-error") Check your connection and rerun the installer."
 
 expected="$(grep " $asset\$" "$tmp/SHA256SUMS" | cut -d' ' -f1)"
 if command -v sha256sum >/dev/null 2>&1; then
@@ -70,11 +72,12 @@ if command -v sha256sum >/dev/null 2>&1; then
 else
   actual="$(shasum -a 256 "$tmp/$asset" | cut -d' ' -f1)"
 fi
-[ -n "$expected" ] && [ "$expected" = "$actual" ] || fail "checksum mismatch; the download may be corrupted. Try again."
+[ -n "$expected" ] && [ "$expected" = "$actual" ] ||
+  fail "Checksum mismatch. The download was rejected. Rerun the installer to download a fresh copy."
 
-mkdir -p "$INSTALL_DIR"
-mv "$tmp/$asset" "$INSTALL_DIR/amicooked"
-chmod +x "$INSTALL_DIR/amicooked"
+if ! { mkdir -p "$INSTALL_DIR" && chmod +x "$tmp/$asset" && mv "$tmp/$asset" "$INSTALL_DIR/amicooked"; } 2>"$tmp/install-error"; then
+  fail "Could not install to $INSTALL_DIR. $(tail -n 1 "$tmp/install-error") Check that the folder is writable and rerun the installer."
+fi
 say "Installed to $INSTALL_DIR/amicooked"
 
 # Put it on PATH for future terminals
