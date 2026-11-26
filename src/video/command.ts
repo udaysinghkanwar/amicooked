@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { parseArgs, stripVTControlCharacters, styleText } from "node:util";
+import { parseArgs, stripVTControlCharacters } from "node:util";
 import path from "node:path";
 import { log } from "@clack/prompts";
 import { isNpxRuntime } from "../clients/self.js";
@@ -20,7 +20,7 @@ export async function prepareVideoSafely({ force = false, humanOutput = false } 
   const print = humanOutput ? console.log : console.error;
   try {
     await prepareVideo(print);
-    if (humanOutput) log.success(styleText("green", "Lecture video tools are ready."));
+    if (humanOutput) log.success("Lecture video tools are ready.");
     else print("Lecture video tools are ready.");
     return true;
   } catch (error) {

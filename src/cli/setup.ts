@@ -318,6 +318,26 @@ export function finishMessage(outcomes: Outcome[]): { steps: string | null; outr
   return { steps, outro: outcomes.some((o) => o.ready) ? "You're set." : "Almost there. Do the step above." };
 }
 
+function setupText(color: "green" | "blue", text: string): string {
+  return process.stdout.isTTY && process.env.NO_COLOR === undefined && process.env.TERM !== "dumb"
+    ? styleText(color, text) : text;
+}
+
+export function setupPromptNotes(connected: boolean, signedIn: boolean, videoReady: boolean): { title: string; text: string }[] {
+  if (!connected) return [];
+  const notes = [{ title: "Try asking your AI", text: [
+    "Am I cooked?",
+    "Help me get started on the assignment that's due soonest.",
+    "Which of my classes am I doing best in?",
+    "Help me review for my next exam with a 10-question quiz on the main topics.",
+  ].join("\n") }];
+  if (signedIn && videoReady) notes.push({ title: "Try asking for a lecture video", text: [
+    "Create lecture videos for the three most recent lectures in one of my courses.",
+    "Create a review video for my next exam with lots of practice questions.",
+  ].join("\n") });
+  return notes;
+}
+
 async function firstRoast(): Promise<void> {
   const spin = p.spinner();
   spin.start("Checking whether you're cooked");
@@ -358,7 +378,7 @@ export async function setup(options: SetupOptions): Promise<number> {
       const courses = await listCourses();
       const signedIn = me.FirstName ? `Signed in as ${me.FirstName}.` : "Signed in.";
       const found = `Found ${courses.length} course${courses.length === 1 ? "" : "s"}.`;
-      p.log.success(styleText("green", `${school.lmsName} is connected. ${signedIn} ${found}`));
+      p.log.success(setupText("green", `${school.lmsName} is connected. ${signedIn} ${found}`));
     }
 
     if (getConfig().uninstalled) writeConfig({ uninstalled: undefined });
@@ -378,20 +398,10 @@ export async function setup(options: SetupOptions): Promise<number> {
 
     const { steps, outro } = finishMessage(outcomes);
     if (steps) p.note(steps, "Next");
-    if (connected && options.login !== false) {
-      p.note([
-        "Am I cooked?",
-        "Help me get started on the assignment that's due soonest.",
-        "Which of my classes am I doing best in?",
-        "Help me review for my next exam with a 10-question quiz on the main topics.",
-      ].join("\n"), styleText("blue", "Try asking your AI"));
-    }
     await reported;
-    if (await prepareVideoSafely({ humanOutput: true })) {
-      p.note([
-        "Create lecture videos for the three most recent lectures in [course].",
-        "Create a review video for my next exam with lots of practice questions.",
-      ].join("\n"), styleText("blue", "Try asking for a lecture video"));
+    const videoReady = await prepareVideoSafely({ humanOutput: true });
+    for (const note of setupPromptNotes(connected, options.login !== false, videoReady)) {
+      p.note(note.text, setupText("blue", note.title));
     }
     p.outro(outro);
     return outcomes.some((o) => o.failed) ? 1 : 0;

@@ -1,6 +1,6 @@
 # Setup and client verification
 
-Setup runs on the student's computer. If the current chat cannot run local commands, give the student the installer for their OS to run in Terminal or PowerShell. The installer asks for their school and which AI apps to connect.
+Setup runs on the student's computer. If the current chat cannot run local commands, give the student the installer for their OS to run in Terminal or PowerShell. The installer asks for their school and which AI apps to connect. If local execution is unavailable or blocked, explain why and suggest a coding AI with local access, such as Claude Code, Codex or Antigravity CLI. Include a copyable handoff with the exact next command, completed steps and error, without secrets. Only report success after verification.
 
 | Platform | Installer |
 |---|---|

@@ -107,7 +107,8 @@ try {
     `)}`;
     const output = channel === "npm" ? run("--import", blockHuggingFace, ...prefix, ...setup, "--with-video-deps") : cli(...setup);
     assert.match(output, /Testing a narrated video render/);
-    assert.match(output, /Lecture video tools are ready[\s\S]*Try asking for a lecture video/);
+    assert.match(output, /Lecture video tools are ready/);
+    assert.doesNotMatch(output, /Try asking (?:your AI|for a lecture video)/);
     if (channel === "npm") console.log(output.split("\n").at(-1));
     assert.equal(JSON.parse(cli("video", "status")).state, "ready");
     for (const tool of ["ffmpeg", "ffprobe"]) {
