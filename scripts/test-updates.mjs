@@ -45,7 +45,8 @@ try {
   client = new Client({ name: "update-smoke-test", version: "1" });
   await client.connect(new StdioClientTransport({ command, args: [...args, "mcp"], env }));
   const list = await client.listTools();
-  assert.ok(list.tools.every(t => t.annotations?.readOnlyHint));
+  const writers = new Set(["create_video_lesson", "write_video_lesson_file", "start_video_render"]);
+  assert.ok(list.tools.every(t => t.annotations?.readOnlyHint === !writers.has(t.name)));
   const catalogue = JSON.parse(run("features", "--json")).features;
   for (const feature of catalogue) {
     const guide = await client.callTool({ name: "get_feature_guide", arguments: { feature: feature.id } });

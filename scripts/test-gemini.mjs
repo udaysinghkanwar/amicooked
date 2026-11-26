@@ -44,7 +44,7 @@ try {
   assert(ready, "Local HTTP service did not become ready");
   assert.equal(installGeminiHttp(connection, home), "added");
   assert.equal(installGeminiHttp(connection, home), "unchanged");
-  assert.equal(await checkMcp(geminiEntry(home)), 11);
+  assert.equal(await checkMcp(geminiEntry(home)), 15);
   const client = new Client({ name: "gemini-http-discovery", version: "1" });
   await client.connect(new StreamableHTTPClientTransport(new URL(connection.url), {
     requestInit: { headers: connection.headers },
@@ -57,7 +57,7 @@ try {
   } finally {
     await client.close();
   }
-  assert.match(run(["doctor"]), /11 read-only tools/);
+  assert.match(run(["doctor"]), /15 tools verified/);
   assert.equal(existsSync(path.join(home, ".claude")), false);
   assert.equal(existsSync(path.join(home, ".codex")), false);
   run(["uninstall"]);
