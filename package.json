@@ -52,6 +52,7 @@
   "dependencies": {
     "@clack/prompts": "^1.8.1",
     "@modelcontextprotocol/sdk": "1.32.2",
+    "@xmldom/xmldom": "^0.8.15",
     "jszip": "^3.10.1",
     "mammoth": "^1.11.0",
     "unpdf": "^1.9.1",
