@@ -246,6 +246,10 @@ h1 {
 .reply-list { margin: 0; padding-left: 1.5em; display: flex; flex-direction: column; gap: 6px; }
 .reply-list li { padding-left: 4px; }
 .reply-list li::marker { color: var(--faint); }
+/* A rendered file, shown the way chat apps show an attachment */
+.file { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--ink); font-weight: 500; }
+.file svg { width: 20px; height: 20px; flex: none; color: #A78BFA; }
+.file span { text-decoration: underline dotted var(--faint); text-underline-offset: 4px; }
 .bullets { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 .bullets li { position: relative; padding-left: 18px; }
 .bullets li::before { content: ""; position: absolute; left: 2px; top: 0.75em; width: 6px; height: 1.5px; background: var(--faint); }

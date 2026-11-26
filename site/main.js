@@ -186,6 +186,13 @@ const EXCHANGES = [
     without: "i don’t have them 😭 but trust me it’s important, the prof said so",
   },
   {
+    q: "make a video of the week 7 lecture",
+    tools: ["get_course_content", "start_video_render"], note: "Week7-Graphs.pdf",
+    file: "Week7-Graphs-Lecture.mp4",
+    lead: "4-minute narrated recap.", text: "BFS, Dijkstra and the shortest-path example from your slides, with the path traced step by step.",
+    without: "i can’t open your slides 😭 here’s the video tho: you, rereading them at 2x speed at 3am 💀",
+  },
+  {
     q: "what’s on the midterm?",
     tools: ["get_announcements"], note: "2XB3",
     text: "Chapters 4 to 7, 90 minutes, no calculators. That’s from Friday’s announcement.",
@@ -277,6 +284,11 @@ function buildTool(ex) {
 // The answer as chat text, with every word and line hidden until it streams in
 function buildAnswer(ex, mode) {
   const answer = el("div", "answer");
+  if (mode === "with" && ex.file) {
+    const file = el("p", "file line");
+    file.append(svgUse("i-video"), el("span", "", ex.file));
+    answer.append(file);
+  }
   if (mode === "without") {
     const p = el("p", "answer-text");
     p.append(words(ex.without));
@@ -374,6 +386,12 @@ async function play(index, mode, id) {
   thread.append(answer);
   await nextFrame();
 
+  // A finished file (the rendered video) lands first, like an attachment
+  const file = answer.querySelector(".file");
+  if (file) {
+    file.classList.add("is-in");
+    await sleep(240, id);
+  }
   // The bold verdict leads and gets a beat to itself, then the rest of the sentence streams
   const lead = answer.querySelector("strong.w");
   if (lead) {
@@ -382,7 +400,7 @@ async function play(index, mode, id) {
   }
   await stream([...answer.querySelectorAll(".w:not(strong)")], id);
   // List items arrive as whole lines, slightly overlapping
-  const lines = [...answer.querySelectorAll(".line")];
+  const lines = [...answer.querySelectorAll(".line:not(.file)")];
   if (lines.length) await sleep(60, id);
   for (const line of lines) {
     line.classList.add("is-in");
