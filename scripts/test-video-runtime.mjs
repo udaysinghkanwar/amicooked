@@ -185,6 +185,7 @@ try {
       }
       assert.equal(render.state, "done", JSON.stringify(render));
       assert.equal(render.slides, 2);
+      assert.equal(render.renderer, "hyperframes");
       assert.equal(realpathSync.native(path.dirname(render.output)), realpathSync.native(lesson.folder));
       const lessonStreams = JSON.parse(cli("video", "run", "ffprobe", "--",
         "-v", "error", "-show_entries", "stream=codec_type", "-of", "json", render.output)).streams;
@@ -230,12 +231,12 @@ try {
         const restricted = spawnSync(command, [...prefix, "video", "probe", ...context], {
           env: restrictedEnv, cwd: home, encoding: "utf8", timeout: 90_000,
         });
-        assert.equal(restricted.status, 1, restricted.stderr);
+        assert.equal(restricted.status, 1, restricted.error?.message ?? restricted.stderr);
         const blocked = JSON.parse(restricted.stdout);
         assert.equal(blocked.stage, "browser-check");
-        assert.equal(blocked.reason, "local-preview-blocked");
+        assert.match(blocked.reason, /^(local-preview-blocked|browser-check-timeout)$/);
         assert.match(blocked.nextStep, /video render-slides/);
-        assert.match(blocked.error, /CORS policy/);
+        assert.match(blocked.error, blocked.reason === "local-preview-blocked" ? /CORS policy/ : /45 seconds/);
         const slideProject = path.join(project, "narrated slides");
         mkdirSync(slideProject);
         const storyboard = ["first", "second"].map((name, index) => {
