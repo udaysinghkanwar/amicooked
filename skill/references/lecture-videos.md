@@ -32,7 +32,7 @@ The probe synthesizes a short local recording, runs the browser check, renders a
 
 ### Render animated slides when the browser preview is unavailable
 
-If the probe reports `reason: "local-preview-blocked"` or `reason: "slides-ready"` in ChatGPT Work or another local AI session, stay in the same session and use the installed narration and video tools directly. This path needs permission to read the installed tools, run local commands, and write to the project and scratch folders.
+If the probe reports `local-preview-blocked`, `browser-check-timeout`, or `slides-ready` in ChatGPT Work or another local AI session, stay in the same session and use the installed narration and video tools directly. This path needs permission to read the installed tools, run local commands, and write to the project and scratch folders.
 
 1. Use course sources to design one visual per explanation step. Save each visual as an SVG, PNG or JPEG in the project. Use a 16:9 canvas, large text, diagrams, and progressive reveals across slides. Save its spoken narration in a separate UTF-8 text file.
 2. Save an ordered array in `slides.json` using project-relative paths. For example:
