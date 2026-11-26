@@ -246,10 +246,18 @@ h1 {
 .reply-list { margin: 0; padding-left: 1.5em; display: flex; flex-direction: column; gap: 6px; }
 .reply-list li { padding-left: 4px; }
 .reply-list li::marker { color: var(--faint); }
-/* A rendered file, shown the way chat apps show an attachment */
-.file { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--ink); font-weight: 500; }
-.file svg { width: 20px; height: 20px; flex: none; color: #A78BFA; }
-.file span { text-decoration: underline dotted var(--faint); text-underline-offset: 4px; }
+/* A rendered video, shown the way chat apps show an attachment: thumbnail, play button, length, file name */
+.video { margin: 0; display: flex; flex-direction: column; gap: 8px; width: min(100%, 300px); }
+.video-frame { position: relative; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; border: 1px solid var(--rule-strong); background: linear-gradient(160deg, #1F1A2E, #141110 70%); }
+.video-slide { position: absolute; inset: 0; width: 100%; height: 100%; }
+.video-slide .edges path { stroke: #4A4253; stroke-width: 2; fill: none; }
+.video-slide .route { stroke: var(--warming); stroke-width: 3; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.video-slide .nodes circle { fill: #2A2438; stroke: #8E80B8; stroke-width: 2; }
+.video-title { position: absolute; top: 9px; left: 11px; font-size: 0.6875rem; font-weight: 600; color: var(--soft); letter-spacing: 0.01em; }
+.video-length { position: absolute; right: 8px; bottom: 8px; padding: 1px 6px; border-radius: 5px; background: rgba(0, 0, 0, 0.6); color: var(--ink); font-size: 0.6875rem; font-variant-numeric: tabular-nums; }
+.video-play { position: absolute; top: 50%; left: 50%; width: 44px; height: 44px; margin: -22px 0 0 -22px; display: grid; place-items: center; border-radius: 50%; background: rgba(14, 12, 11, 0.55); border: 1px solid rgba(244, 241, 236, 0.25); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); color: var(--ink); }
+.video-play svg { width: 18px; height: 18px; margin-left: 2px; }
+.video figcaption { font-size: 0.8125rem; color: var(--muted); }
 .bullets { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 .bullets li { position: relative; padding-left: 18px; }
 .bullets li::before { content: ""; position: absolute; left: 2px; top: 0.75em; width: 6px; height: 1.5px; background: var(--faint); }

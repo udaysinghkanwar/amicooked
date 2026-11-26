@@ -188,7 +188,7 @@ const EXCHANGES = [
   {
     q: "make a video of the week 7 lecture",
     tools: ["get_course_content", "start_video_render"], note: "Week7-Graphs.pdf",
-    file: "Week7-Graphs-Lecture.mp4",
+    video: { file: "Week7-Graphs-Lecture.mp4", title: "Week 7 · Graphs", length: "4:02" },
     lead: "4-minute narrated recap.", text: "BFS, Dijkstra and the shortest-path example from your slides, with the path traced step by step.",
     without: "can’t see your course 💔 the only video i can make is you panicking in 4k",
   },
@@ -281,14 +281,28 @@ function buildTool(ex) {
   return tool;
 }
 
+// A rendered lecture video as a chat attachment: a slide-like thumbnail with a play button, length and file name
+function buildVideo({ file, title, length }) {
+  const card = el("figure", "file video line");
+  const frame = el("div", "video-frame");
+  // The thumbnail is a frame from the lesson: a small weighted graph with the shortest path traced
+  frame.innerHTML = `<svg class="video-slide" viewBox="0 0 320 180" aria-hidden="true">
+    <g class="edges"><path d="M60 120L130 145M110 58L130 145M130 145L265 125"/></g>
+    <path class="route" d="M60 120L110 58L215 58L265 125"/>
+    <g class="nodes"><circle cx="60" cy="120" r="9"/><circle cx="110" cy="58" r="9"/><circle cx="130" cy="145" r="9"/><circle cx="215" cy="58" r="9"/><circle cx="265" cy="125" r="9"/></g>
+  </svg>`;
+  frame.append(el("span", "video-title", title), el("span", "video-length", length));
+  const play = el("span", "video-play");
+  play.append(svgUse("i-play"));
+  frame.append(play);
+  card.append(frame, el("figcaption", "", file));
+  return card;
+}
+
 // The answer as chat text, with every word and line hidden until it streams in
 function buildAnswer(ex, mode) {
   const answer = el("div", "answer");
-  if (mode === "with" && ex.file) {
-    const file = el("p", "file line");
-    file.append(svgUse("i-video"), el("span", "", ex.file));
-    answer.append(file);
-  }
+  if (mode === "with" && ex.video) answer.append(buildVideo(ex.video));
   if (mode === "without") {
     const p = el("p", "answer-text");
     p.append(words(ex.without));
