@@ -5,6 +5,7 @@ import { chmodSync, mkdtempSync, mkdirSync, existsSync, readdirSync, readFileSyn
 import { createHash } from "node:crypto";
 import os from "node:os";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 
@@ -187,6 +188,23 @@ try {
       });
       assert.equal(denied.status, 1);
       assert.equal(JSON.parse(denied.stdout).stage, "scratch");
+      if (channel === "npm") {
+        const denyListener = path.join(home, "deny-http-listen.cjs");
+        writeFileSync(denyListener, `require("node:http").Server.prototype.listen = function () {
+          queueMicrotask(() => this.emit("error", Object.assign(new Error("listen EPERM"), { code: "EPERM" })));
+          return this;
+        };`);
+        const restricted = spawnSync(command, [...prefix, "video", "probe", ...context], {
+          env: { ...env, NODE_OPTIONS: `--import=${pathToFileURL(denyListener).href}` },
+          cwd: home, encoding: "utf8", timeout: 90_000,
+        });
+        assert.equal(restricted.status, 1, restricted.stderr);
+        const blocked = JSON.parse(restricted.stdout);
+        assert.equal(blocked.stage, "browser-check");
+        assert.equal(blocked.reason, "local-preview-blocked");
+        assert.match(blocked.nextStep, /Codex → This computer/);
+        assert.match(blocked.error, /CORS policy/);
+      }
       const probe = JSON.parse(fromOutside("video", "probe", ...context));
       assert.equal(probe.ok, true, JSON.stringify(probe));
       assert(probe.steps.includes("browser-check"));

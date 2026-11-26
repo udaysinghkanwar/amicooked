@@ -29,6 +29,8 @@ amicooked video probe --project "<absolute project folder>"
 
 The probe synthesizes a short local recording, runs the browser check, renders a tiny MP4 and decodes it. Proceed only when it returns `ok: true`. If the session cannot write to its temporary directory, create an authorized scratch folder outside the project and pass `--scratch "<absolute scratch folder>"` to the probe and every subsequent `video run` command, before the `--` separator. Do not reinstall because a ready installation failed this probe. Use its failing stage and path to request the missing capability, and preserve existing lesson files. A session without authorized local command, browser or file access can offer a source-linked lesson plan and help the student switch to a suitable local client.
 
+If the probe reports `reason: "local-preview-blocked"`, the video tools are installed and the browser could not load its local narration in this session. In ChatGPT Work, use the course tools to gather the sources and save any narration or drafts in an approved local project folder. Open that same folder in ChatGPT desktop under **Codex → This computer**, or continue in your own Terminal. Run the same probe there before rendering. A connected course tool or folder alone does not give the renderer the required local permissions.
+
 Then read the renderer's composition rules:
 
 ```sh

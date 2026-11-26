@@ -77,6 +77,8 @@ export function videoEnvironment(tools: Tools, scratch?: ReturnType<typeof video
   };
 }
 
+class LocalPreviewBlockedError extends Error {}
+
 function smokeTest(tools: Tools, work: string, env: NodeJS.ProcessEnv, stage?: (step: string) => void) {
   stage?.("narration");
   const text = path.join(work, "narration.txt");
@@ -102,7 +104,13 @@ function smokeTest(tools: Tools, work: string, env: NodeJS.ProcessEnv, stage?: (
     try { report = JSON.parse(result.stdout); }
     catch { throw new Error(result.stderr.trim().split("\n").at(-1) || "HyperFrames returned no browser check report."); }
     if (result.status !== 0 || report.ok !== true || report.browserSkipped !== false) {
-      const errors = [...report.runtime?.findings ?? [], ...report.layout?.findings ?? []];
+      const runtimeFindings = report.runtime?.findings ?? [];
+      // This synthetic origin is used by HyperFrames when it cannot open its local server.
+      const blockedAudio = runtimeFindings.find((finding: { code?: string; message?: string }) =>
+        finding.code === "console_error" &&
+        /^Access to audio at 'http:\/\/hyperframes-\d+\.localhost\/.*' from origin 'null' has been blocked by CORS policy/.test(finding.message ?? ""));
+      if (blockedAudio) throw new LocalPreviewBlockedError(blockedAudio.message);
+      const errors = [...runtimeFindings, ...report.layout?.findings ?? []];
       const finding = errors.find(item => item.severity === "error") ?? errors[0];
       throw new Error(finding?.message ?? "HyperFrames did not complete the browser check.");
     }
@@ -138,6 +146,10 @@ export function probeVideo(directory?: string, scratchDirectory?: string) {
     steps.push(stage);
     return { ok: true, project, scratch: scratch.cache, steps };
   } catch (error) {
+    if (error instanceof LocalPreviewBlockedError) {
+      return { ok: false, project, steps, stage, reason: "local-preview-blocked", error: error.message,
+        nextStep: "The video tools are installed, but the browser could not load local narration through the preview fallback. Keep your work in the project folder and rerun video probe there from your own Terminal or an approved local AI session. In ChatGPT desktop, open Codex → This computer and select the same folder." };
+    }
     const nextStep = stage === "installation" ? "Run video prepare in the local installer environment, then retry the probe." :
       "Use a local project and scratch folder this session can write, and confirm it can launch the managed browser and bind a local preview port. If the client blocks those capabilities, connect an approved local workspace or use a local client with those capabilities.";
     return { ok: false, project, steps, stage, error: error instanceof Error ? error.message : String(error),
