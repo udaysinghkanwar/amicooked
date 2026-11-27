@@ -85,7 +85,7 @@ updateToggle.addEventListener("click", event => {
 });
 
 // Alternative setup methods stay separate from the primary OS instructions.
-const otherWays = [...document.querySelectorAll('.other-ways [aria-controls]')];
+const otherWays = [...document.querySelectorAll('[data-setup-method]')];
 otherWays.forEach((button) => button.addEventListener('click', () => {
   const opening = button.getAttribute('aria-expanded') !== 'true';
   otherWays.forEach((item) => {
@@ -93,7 +93,21 @@ otherWays.forEach((button) => button.addEventListener('click', () => {
     item.setAttribute('aria-expanded', String(active));
     document.getElementById(item.getAttribute('aria-controls')).hidden = !active;
   });
+  if (opening && button.getAttribute('aria-controls') === 'agent-panel') {
+    otherSetup.hidden = true;
+    otherSetupToggle.setAttribute('aria-expanded', 'false');
+  }
 }));
+const otherSetup = document.getElementById('other-setup-panel');
+const otherSetupToggle = document.getElementById('other-setup-toggle');
+otherSetupToggle.addEventListener('click', () => {
+  otherSetup.hidden = !otherSetup.hidden;
+  otherSetupToggle.setAttribute('aria-expanded', String(!otherSetup.hidden));
+  if (!otherSetup.hidden) {
+    document.getElementById('agent-panel').hidden = true;
+    document.querySelector('[aria-controls="agent-panel"]').setAttribute('aria-expanded', 'false');
+  }
+});
 
 // ---- The agent prompt: one line until asked for in full ----
 

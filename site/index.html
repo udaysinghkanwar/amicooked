@@ -24,10 +24,10 @@
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./styles.css?v=35">
+  <link rel="stylesheet" href="./styles.css?v=36">
   <link rel="alternate" type="text/markdown" href="./SKILL.md" title="Setup instructions for AI agents">
   <script>document.documentElement.classList.replace("no-js", "js");</script>
-  <script src="./main.js?v=29" defer></script>
+  <script src="./main.js?v=30" defer></script>
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -57,7 +57,6 @@
           <button class="text-button js-only" id="mobile-install-toggle" type="button" aria-expanded="false" aria-controls="computer-install" aria-label="View computer install instructions">Install</button>
         </div>
         <p class="handoff-status mobile-copy" id="handoff-status" role="status" aria-live="polite"></p>
-        <p class="trust setup-trust"><span class="desktop-copy">Free <span aria-hidden="true">·</span> </span>Your password stays with your school.</p>
         <details class="install-details" id="computer-install" open>
           <summary>View computer install instructions</summary>
           <div class="install-options">
@@ -93,10 +92,12 @@
           <li><p class="step-title">Choose your school and AI app</p><p class="step-hint">Follow setup to sign in on your school’s page. Then ask your connected AI: “am I cooked?”</p></li>
         </ol>
 
-        <details class="setup-extras">
-          <summary>Other ways to install or update</summary>
-          <div class="setup-extras-content">
-        <p class="other-ways"><button type="button" class="text-button" aria-controls="agent-panel" aria-expanded="false">Coding agent</button> <span aria-hidden="true">·</span> <button type="button" class="text-button" aria-controls="npm-panel" aria-expanded="false">Use npm</button></p>
+        <div class="setup-links">
+          <span>Free</span><span aria-hidden="true">·</span>
+          <span>Your login stays with you</span><span aria-hidden="true">·</span>
+          <button type="button" class="text-button js-only" data-setup-method aria-controls="agent-panel" aria-expanded="false">Coding agent auto-install prompt</button><span aria-hidden="true" class="js-only">·</span>
+          <button type="button" class="text-button js-only" id="other-setup-toggle" aria-controls="other-setup-panel" aria-expanded="false">Other ways to install or update</button>
+        </div>
         <div class="tab-panel" id="agent-panel" hidden>
           <div class="cmd cmd-prompt">
             <code id="agent-prompt">Help me install Am I Cooked. Never ask for my school password. Ask whether I use Mac or Windows if unknown.
@@ -121,6 +122,9 @@ Guide: https://<span data-domain>amicooked-mcp.vercel.app</span>/references/setu
           </div>
           <p class="panel-hint">Paste it into your agent. <button type="button" class="text-button js-only" id="prompt-toggle" aria-controls="agent-prompt agent-prompt-update" aria-expanded="false">Show full prompt</button></p>
         </div>
+        <div class="setup-extras" id="other-setup-panel" hidden>
+          <div class="setup-extras-content">
+            <p class="other-ways"><button type="button" class="text-button" data-setup-method aria-controls="npm-panel" aria-expanded="false">Use npm</button></p>
         <div class="tab-panel" id="npm-panel" hidden>
           <div class="cmd">
             <code id="cmd-npm">npx -y amicooked@0 setup</code>
@@ -136,7 +140,7 @@ Guide: https://<span data-domain>amicooked-mcp.vercel.app</span>/references/setu
           <span id="update-help" hidden><span aria-hidden="true">·</span> Reload your AI app after updating. <a href="./references/updates.md">update guide</a></span>
         </p>
           </div>
-        </details>
+        </div>
           </div>
         </details>
 
