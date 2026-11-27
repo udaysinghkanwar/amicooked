@@ -35,12 +35,14 @@
   --rule: #2A2522;
   --rule-strong: #3A332F;
 
-  /* Heat. Colour on this page only ever means heat. */
-  --raw: #6E9E87;
+  /* Heat labels retain their meaning; warm accents also identify the brand and primary actions. */
+  --accent: #F3A36A;
+  --accent-ink: #21130B;
+  --raw: #8FBFA6;
   --warming: #E3A93B;
   --toasty: #E57A35;
-  --cooked: #D2442A;
-  --welldone: #7A5C50;
+  --cooked: #F0705A;
+  --welldone: #DFA3C8;
   --heat-gradient: linear-gradient(90deg, var(--raw) 0%, var(--raw) 8%, var(--warming) 25%, var(--toasty) 45%, var(--cooked) 66%, var(--welldone) 90%, var(--welldone) 100%);
 
   --display: "Archivo", "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
@@ -338,4 +340,107 @@ h1 {
   .w, .line, .pop, .thread.is-leaving > *, .tool svg, .icon-button svg { filter: none !important; transform: none !important; }
   .with-toggle::before { transition: none; }
   .icon-button:active, .segmented button:active, .with-toggle:active { transform: none; }
+}
+
+/* Mobile preview: preserve the desktop structure and styling. */
+.mobile-copy, .mobile-handoff, .mobile-title-break, .mobile-utilities { display: none; }
+.install-details { display: contents; }
+.install-options { display: flex; flex-direction: column; gap: 14px; align-items: center; width: 100%; }
+.install-details > summary { display: none; }
+@media (max-width: 600px) {
+  .desktop-copy { display: none; }
+  .mobile-copy { display: inline; }
+  .mobile-title-break { display: block; }
+  .hero { padding-block: 36px 28px; }
+  .eyebrow { margin-bottom: 16px; font-size: 0.75rem; }
+  h1 { font-size: clamp(2rem, 10vw, 3.5rem); }
+  .lede { margin-top: 18px; font-size: 1.0625rem; max-width: 30ch; }
+  .get { margin-top: 28px; gap: 8px; }
+  .mobile-handoff { display: block; width: 100%; text-align: center; }
+  .mobile-handoff h2 { margin: 0; font: 700 1rem/1.4 var(--sans); }
+  .mobile-handoff p { font-size: 0.875rem; line-height: 1.5; color: var(--muted); max-width: 36ch; margin-inline: auto; }
+  .handoff-actions { display: flex; flex-direction: column; gap: 2px; margin-top: 18px; }
+  .handoff-actions button { width: 100%; min-height: 48px; padding: 11px 16px; border-radius: 10px; font: 700 0.875rem/1.3 var(--sans); cursor: pointer; }
+  .handoff-primary { background: var(--ink); color: var(--bg); border: 1px solid var(--ink); }
+  .handoff-secondary { background: var(--raised); color: var(--ink); border: 1px solid var(--rule-strong); }
+  .handoff-actions button[hidden] { display: none; }
+  .handoff-actions button:only-child, .handoff-actions button:first-child[hidden] + button { width: 100%; background: var(--ink); color: var(--bg); }
+  .get > .handoff-status { margin: 0; max-width: 36ch; color: var(--muted); font-size: 0.8125rem; line-height: 1.5; text-align: center; }
+  .handoff-status:empty { display: none; }
+  .mobile-utilities { display: flex; align-items: center; justify-content: center; gap: 4px; width: 100%; white-space: nowrap; font-size: 0.75rem; color: var(--muted); }
+  .mobile-utilities > .utility-text { padding-inline: 3px; }
+  .mobile-utilities button { min-height: 44px; padding: 0 3px; border: 0; background: none; color: var(--soft); font: inherit; text-decoration: underline; text-underline-offset: 0.2em; cursor: pointer; }
+  .mobile-utilities [hidden] { display: none; }
+  .install-details { display: block; width: 100%; }
+  .install-details > summary { display: list-item; width: fit-content; margin-inline: auto; padding: 8px 0; font-size: 0.8125rem; color: var(--soft); cursor: pointer; }
+  .js .install-details > summary { display: none; }
+  .install-details:not([open]) > .install-options { display: none; }
+  .install-options { display: flex; flex-direction: column; gap: 12px; align-items: center; padding-top: 10px; }
+  .install-options > .cmd, .install-options > .tab-panel { width: 100%; }
+  .get .trust { margin-top: 0; font-size: 0.75rem; }
+  .get > .panel-hint { display: none; }
+  .showcase { padding-bottom: 34px; }
+  .window { border-radius: 14px; }
+  .window-bar { padding: 8px 10px 8px 14px; gap: 8px; }
+  .window .dots, .composer, .tool { display: none; }
+  .window-title { display: inline; font-size: 0.75rem; }
+  .with-toggle > span { padding: 6px 9px; }
+  .with-on { font-size: 0; }
+  .with-on::after { content: "With"; font-size: 0.8125rem; }
+  .window-body { display: flex; flex-direction: column; }
+  .rail { display: block; min-width: 0; padding: 8px; border-right: 0; border-bottom: 1px solid var(--rule); }
+  .rail-title { display: none; }
+  .rail-progress { display: block; }
+  .rail ul { display: flex; overflow-x: auto; gap: 4px; margin: 0; scrollbar-width: thin; }
+  .rail li { flex: none; }
+  .rail button { min-height: 40px; width: auto; padding: 8px 10px; font-size: 0.75rem; white-space: nowrap; }
+  .chat { padding: 14px; }
+  .thread { min-height: 0; gap: 12px; }
+  .msg-user { font-size: 0.9375rem; }
+  .answer { font-size: 0.9375rem; gap: 10px; }
+  .reply-list { padding-left: 20px; }
+  .reply-list li { margin-top: 6px; }
+  .workflows { padding-bottom: 32px; }
+  .workflows h2 { margin-bottom: 16px; }
+  .workflow-grid { gap: 10px; }
+  .workflow-grid li { gap: 7px; padding: 16px; }
+  .workflow-grid h3 { font-size: 1rem; }
+  .workflow-grid p { font-size: 0.875rem; }
+  .workflow-grid .workflow-prompt { display: none; }
+  .steps { gap: 18px; padding-block: 22px; }
+  .steps li { font-size: 1rem; }
+  .promises { gap: 16px; padding-top: 22px; font-size: 0.875rem; }
+  .band { padding-bottom: 30px; }
+  .site-footer { padding-block: 24px; font-size: 0.75rem; }
+  .site-footer .agent-note { display: none; }
+}
+
+/* Restore warm brand colour without changing the desktop layout. */
+a { text-decoration-color: rgba(243, 163, 106, 0.5); }
+a:hover { color: var(--accent); text-decoration-color: currentColor; }
+.hero::before { background: radial-gradient(closest-side, rgba(229, 122, 53, 0.2), transparent); }
+h1 { background: linear-gradient(110deg, var(--ink) 20%, #F5C39A 65%, var(--accent)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.eyebrow { border-color: rgba(243, 163, 106, 0.35); color: #F5C39A; background: rgba(229, 122, 53, 0.045); }
+.segmented [aria-selected="true"], .segmented [aria-pressed="true"] { color: var(--accent-ink); background: var(--accent); }
+.icon-button:hover { color: var(--accent); }
+.window { border-color: rgba(243, 163, 106, 0.22); }
+.dots span:nth-child(1) { background: #DF7868; }
+.dots span:nth-child(2) { background: #DDB45E; }
+.dots span:nth-child(3) { background: #83AC90; }
+.rail button[aria-current="true"] { background: rgba(229, 122, 53, 0.12); color: #F5C39A; }
+.rail-progress { background: var(--accent); }
+.workflow-grid li { border-color: rgba(243, 163, 106, 0.2); }
+.workflow-grid h3 { color: #F5C39A; }
+.answer[data-heat="raw"] .answer-text > strong { color: var(--raw); }
+.answer[data-heat="warming-up"] .answer-text > strong { color: var(--warming); }
+.answer[data-heat="toasty"] .answer-text > strong { color: var(--toasty); }
+.answer[data-heat="cooked"] .answer-text > strong { color: var(--cooked); }
+.answer[data-heat="well-done"] .answer-text > strong { color: var(--welldone); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+@media (max-width: 600px) {
+  .handoff-primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .handoff-actions button:only-child, .handoff-actions button:first-child[hidden] + button { background: var(--accent); color: var(--accent-ink); }
+}
+@media (forced-colors: active) {
+  h1 { background: none; color: CanvasText; }
 }

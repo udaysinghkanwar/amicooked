@@ -2,6 +2,7 @@
 const DOMAIN = document.documentElement.dataset.siteDomain || "amicooked-mcp.vercel.app";
 document.querySelectorAll("[data-domain]").forEach((el) => { el.textContent = DOMAIN; });
 
+const compactScreen = matchMedia("(max-width: 600px)");
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const live = document.getElementById("live");
 
@@ -107,9 +108,86 @@ for (const { button: btn, setup, update } of commandBoxes) {
   });
 }
 
+// Save the public setup link; this does not subscribe anyone or send mail.
+const installDetails = document.querySelector('.install-details');
+const setupLink = `https://${DOMAIN}/#install`;
+const handoffStatus = document.getElementById('handoff-status');
+let handoffStatusTimer;
+let handoffAction = 0;
+function resetHandoffStatus() {
+  clearTimeout(handoffStatusTimer);
+  handoffStatus.textContent = '';
+  return ++handoffAction;
+}
+function showHandoffStatus(action, message, success = false) {
+  if (action !== handoffAction) return;
+  clearTimeout(handoffStatusTimer);
+  handoffStatus.textContent = message;
+  if (success) handoffStatusTimer = setTimeout(() => {
+    if (action === handoffAction) handoffStatus.textContent = '';
+  }, 10000);
+}
+const shareSetup = document.getElementById('share-setup');
+const setupShareData = {title: 'Am I Cooked', text: 'Set up Am I Cooked on your computer.', url: setupLink};
+function canShareSetupLink() {
+  if (!isSecureContext || typeof navigator.share !== 'function') return false;
+  try {
+    // Older Safari versions can share links even without canShare().
+    return typeof navigator.canShare !== 'function' || navigator.canShare(setupShareData);
+  } catch {
+    return false;
+  }
+}
+let sharePending = false;
+shareSetup.hidden = !canShareSetupLink();
+const copySetup = document.getElementById('copy-setup');
+copySetup.textContent = 'Copy Setup Link';
+if (shareSetup.hidden) {
+  document.querySelector('.handoff-actions').append(copySetup);
+  document.querySelector('.utility-copy-separator').hidden = true;
+}
+const mobileInstallToggle = document.getElementById('mobile-install-toggle');
+const syncInstallToggle = () => mobileInstallToggle.setAttribute('aria-expanded', String(installDetails.open));
+mobileInstallToggle.addEventListener('click', () => {
+  resetHandoffStatus();
+  installDetails.open = !installDetails.open;
+  syncInstallToggle();
+});
+installDetails.addEventListener('toggle', syncInstallToggle);
+shareSetup.addEventListener('click', async () => {
+  if (sharePending) return;
+  const action = resetHandoffStatus();
+  sharePending = true;
+  shareSetup.disabled = true;
+  try {
+    // Keep this call synchronous with the tap: iOS/Android require transient user activation.
+    await navigator.share(setupShareData);
+    showHandoffStatus(action, 'Setup link shared. Open it on your computer to get started.', true);
+  } catch (error) {
+    if (error?.name !== 'AbortError') showHandoffStatus(action, 'Couldn’t share the link. Try Copy Setup Link instead.');
+  } finally {
+    sharePending = false;
+    shareSetup.disabled = false;
+  }
+});
+copySetup.addEventListener('click', async () => {
+  const action = resetHandoffStatus();
+  const copied = await copy(setupLink);
+  showHandoffStatus(action, copied
+    ? 'Link copied. Send it to your computer and setup from there.'
+    : `Copy this link: ${setupLink}`, copied);
+});
+installDetails.open = !compactScreen.matches;
+syncInstallToggle();
+compactScreen.addEventListener('change', () => {
+  installDetails.open = !compactScreen.matches;
+  setPaused(reducedMotion);
+  reserveHeight();
+  restart(current);
+});
+
 // ---- The conversation replay ----
-// Replies are written the way an AI actually answers in chat: plain text, bold, lists. No coloured
-// widgets, because Claude and ChatGPT render the tool's data as text.
+// Replies stay as chat text. A colour accent on verdicts reinforces the written heat label.
 // Verdicts follow the am_i_cooked tool's real scoring (src/tools/cooked.ts) and the skill's answer style:
 // +2 per overdue item, +1 per item due within 72h, +3/+2/+1 for a lowest grade under 50/60/70.
 // Bands: raw 0-1, warming up 2-3, toasty 4-5, cooked 6-7, well done 8-10.
@@ -228,7 +306,6 @@ let current = 0;
 let withTool = true;
 let run = 0; // bumps on every jump; anything still running for an older run stops
 let paused = reducedMotion; // no autoplay for people who asked for less motion
-let hovering = false;
 let focused = false;
 let visible = false;
 
@@ -302,6 +379,8 @@ function buildVideo({ file, title, length }) {
 // The answer as chat text, with every word and line hidden until it streams in
 function buildAnswer(ex, mode) {
   const answer = el("div", "answer");
+  const heat = ex.lead?.match(/^(Raw|Warming up|Toasty|Cooked|Well done)\b/i)?.[1];
+  if (mode === "with" && heat) answer.dataset.heat = heat.toLowerCase().replace(/ /g, "-");
   if (mode === "with" && ex.video) answer.append(buildVideo(ex.video));
   if (mode === "without") {
     const p = el("p", "answer-text");
@@ -377,7 +456,7 @@ async function stream(nodes, id, first = 46, last = 22) {
 async function play(index, mode, id) {
   const ex = pickVariant(EXCHANGES[index]);
   await clearThread(id);
-  await typeQuestion(ex.q, id);
+  if (!compactScreen.matches) await typeQuestion(ex.q, id);
 
   const bubble = el("p", "msg-user pop", ex.q);
   thread.append(bubble);
@@ -389,7 +468,7 @@ async function play(index, mode, id) {
     tool.classList.add("is-running");
     thread.append(tool);
     show(tool);
-    await sleep(900, id);
+    await sleep(compactScreen.matches ? 180 : 900, id);
     tool.classList.replace("is-running", "is-done");
     await sleep(140, id);
   } else {
@@ -422,10 +501,10 @@ async function play(index, mode, id) {
   }
 }
 
-const held = () => paused || hovering || focused || !visible;
+const held = () => paused || focused || !visible || document.hidden;
 
 // Wait on the finished answer. The rail line is a WAAPI animation (compositor, not per-frame style writes)
-// that doubles as the timer: it pauses while anyone is reading or interacting.
+// that doubles as the timer: pause explicitly, for keyboard focus, or while offscreen.
 async function hold(id) {
   // Verdicts carry more to read, so they stay up longer
   const ex = EXCHANGES[current];
@@ -445,12 +524,22 @@ function markRail(index) {
     if (i === index) { b.setAttribute("aria-current", "true"); b.append(railProgress); }
     else b.removeAttribute("aria-current");
   });
+  if (compactScreen.matches) {
+    const list = railButtons[index].closest("ul");
+    const item = railButtons[index].getBoundingClientRect();
+    const viewport = list.getBoundingClientRect();
+    if (item.left < viewport.left || item.right > viewport.right) {
+      list.scrollTo({ left: list.scrollLeft + item.left - viewport.left - (viewport.width - item.width) / 2,
+        behavior: reducedMotion ? "auto" : "smooth" });
+    }
+  }
 }
 
 async function loop(id) {
   try {
     for (;;) {
       await hold(id);
+      if (id !== run) throw CANCEL;
       current = (current + 1) % EXCHANGES.length;
       markRail(current);
       await play(current, withTool ? "with" : "without", id);
@@ -469,7 +558,7 @@ function restart(index) {
   composerText.textContent = "";
   composer.classList.remove("has-text");
   const mode = withTool ? "with" : "without";
-  if (reducedMotion) {
+  if (reducedMotion || compactScreen.matches) {
     const ex = pickVariant(EXCHANGES[index]);
     renderFinal(ex, mode);
     loop(id);
@@ -480,6 +569,7 @@ function restart(index) {
 
 // Reserve the tallest exchange's height so the window never jumps between them
 function reserveHeight() {
+  if (compactScreen.matches) { thread.style.removeProperty("--thread-h"); return; }
   const probe = thread.cloneNode(false);
   probe.removeAttribute("id");
   Object.assign(probe.style, { position: "absolute", visibility: "hidden", width: `${thread.clientWidth}px`, minHeight: "0" });
@@ -519,9 +609,9 @@ function setPaused(value) {
 }
 playButton.addEventListener("click", () => setPaused(!paused));
 
-win.addEventListener("pointerenter", () => { hovering = true; });
-win.addEventListener("pointerleave", () => { hovering = false; });
-win.addEventListener("focusin", () => { focused = true; });
+// A mouse click should not leave the carousel paused indefinitely. Keyboard navigation still pauses it.
+win.addEventListener("pointerdown", () => { focused = false; });
+win.addEventListener("focusin", (e) => { focused = e.target.matches(":focus-visible"); });
 win.addEventListener("focusout", (e) => { if (!win.contains(e.relatedTarget)) focused = false; });
 
 // The window now sits in the hero, so the first question waits for its entrance to land before typing
@@ -540,6 +630,7 @@ new IntersectionObserver(([entry]) => {
 setPaused(paused);
 placePill();
 thread.replaceChildren();
+if (compactScreen.matches) { started = true; restart(0); }
 reserveHeight();
 document.fonts.ready.then(() => { reserveHeight(); placePill(); });
 let resizeTimer;

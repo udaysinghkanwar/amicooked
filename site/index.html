@@ -24,10 +24,10 @@
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./styles.css?v=23">
+  <link rel="stylesheet" href="./styles.css?v=31">
   <link rel="alternate" type="text/markdown" href="./SKILL.md" title="Setup instructions for AI agents">
   <script>document.documentElement.classList.replace("no-js", "js");</script>
-  <script src="./main.js?v=20" defer></script>
+  <script src="./main.js?v=28" defer></script>
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -36,11 +36,30 @@
   <main id="main">
     <section class="hero wrap" aria-labelledby="hero-title">
       <p class="eyebrow enter enter-1">For students on D2L Brightspace</p>
-      <h1 id="hero-title" class="enter enter-1">Am I cooked?</h1>
-      <p class="lede enter enter-2">Ask Claude, ChatGPT or Gemini. It reads your grades and deadlines, then tells you straight.</p>
+      <h1 id="hero-title" class="enter enter-1">Am I<span class="mobile-title-break"></span> cooked?</h1>
+      <p class="lede enter enter-2"><span class="desktop-copy">Ask Claude, ChatGPT or Gemini. It reads your grades, deadlines and slides, then tells you straight.</span><span class="mobile-copy">Ask Claude, ChatGPT or Gemini.<br>It knows your grades, deadlines and slides.</span></p>
 
       <!-- One box, three ways in: the command for your computer, or a prompt for your AI agent -->
-      <div class="get enter enter-3">
+      <div class="get enter enter-3" id="install">
+        <div class="mobile-handoff">
+          <h2>Get uncooked. Install on your computer.</h2>
+          <div class="handoff-actions js-only">
+            <button class="handoff-primary" id="share-setup" type="button" hidden>Share setup link</button>
+          </div>
+        </div>
+        <div class="mobile-utilities">
+          <span class="utility-text">Free</span>
+          <span aria-hidden="true">·</span>
+          <span class="utility-text">Secure</span>
+          <span class="utility-copy-separator js-only" aria-hidden="true">·</span>
+          <button class="handoff-secondary js-only" id="copy-setup" type="button">Copy Setup Link</button>
+          <span class="js-only" aria-hidden="true">·</span>
+          <button class="text-button js-only" id="mobile-install-toggle" type="button" aria-expanded="false" aria-controls="computer-install" aria-label="View computer install instructions">Install</button>
+        </div>
+        <p class="handoff-status mobile-copy" id="handoff-status" role="status" aria-live="polite"></p>
+        <details class="install-details" id="computer-install" open>
+          <summary>View computer install instructions</summary>
+          <div class="install-options">
         <h2 class="sr-only" id="command-title">Install</h2>
         <div class="segmented" role="tablist" aria-labelledby="command-title">
           <button type="button" role="tab" id="os-agent" aria-controls="os-agent-panel" aria-selected="false" tabindex="-1">AI agent</button>
@@ -92,7 +111,9 @@ If this chat can't install locally or setup fails because of this environment, e
           </div>
           <p class="panel-hint">Paste it into the Claude, ChatGPT or Gemini desktop app. <button type="button" class="text-button js-only" id="prompt-toggle" aria-controls="agent-prompt agent-prompt-update" aria-expanded="false">Show full prompt</button></p>
         </div>
-        <p class="trust">Free <span aria-hidden="true">·</span> open source <span aria-hidden="true">·</span> your login stays on your laptop <span aria-hidden="true">·</span> <a href="https://github.com/udaysinghkanwar/amicooked/blob/main/install/install.sh">view install script</a></p>
+          </div>
+        </details>
+        <p class="trust desktop-copy"><span>Free <span aria-hidden="true">·</span> open source <span aria-hidden="true">·</span> your login stays on your laptop <span aria-hidden="true">·</span> <a href="https://github.com/udaysinghkanwar/amicooked/blob/main/install/install.sh">view install script</a></span></p>
         <p class="panel-hint">
           <span id="update-question">Already have Am I Cooked?</span> <a id="update-toggle" href="./references/updates.md">View update commands</a>
           <span id="update-help" hidden><span aria-hidden="true">·</span> Reload your AI app after updating. <a href="./references/updates.md">update guide</a></span>
@@ -120,12 +141,12 @@ If this chat can't install locally or setup fails because of this environment, e
             <nav class="rail" aria-label="Example questions">
               <p class="rail-title">Chats</p>
               <ul>
-                <li><button type="button" data-ex="0" aria-current="true">am i cooked?<span class="rail-progress" aria-hidden="true"></span></button></li>
-                <li><button type="button" data-ex="1">did I submit lab 4?</button></li>
-                <li><button type="button" data-ex="2">summarize the week 7 slides</button></li>
-                <li><button type="button" data-ex="3">make a video of the week 7 lecture</button></li>
-                <li><button type="button" data-ex="4">what’s on the midterm?</button></li>
-                <li><button type="button" data-ex="5">how bad is finals week?</button></li>
+                <li><button type="button" data-ex="0" aria-current="true"><span class="desktop-copy">am i cooked?</span><span class="mobile-copy">Overview</span><span class="rail-progress" aria-hidden="true"></span></button></li>
+                <li><button type="button" data-ex="1"><span class="desktop-copy">did I submit lab 4?</span><span class="mobile-copy">Submissions</span></button></li>
+                <li><button type="button" data-ex="2"><span class="desktop-copy">summarize the week 7 slides</span><span class="mobile-copy">Slides</span></button></li>
+                <li><button type="button" data-ex="3"><span class="desktop-copy">make a video of the week 7 lecture</span><span class="mobile-copy">Video</span></button></li>
+                <li><button type="button" data-ex="4"><span class="desktop-copy">what’s on the midterm?</span><span class="mobile-copy">Midterm</span></button></li>
+                <li><button type="button" data-ex="5"><span class="desktop-copy">how bad is finals week?</span><span class="mobile-copy">Finals</span></button></li>
               </ul>
             </nav>
 
@@ -159,12 +180,12 @@ If this chat can't install locally or setup fails because of this environment, e
       <ul class="workflow-grid">
         <li>
           <h3>Get a game plan</h3>
-          <p>See your grades, deadlines, and missing submissions across courses. Start with the work that matters most.</p>
+          <p><span class="desktop-copy">See your grades, deadlines, and missing submissions across courses. Start with the work that matters most.</span><span class="mobile-copy">See grades, deadlines and missing work. Know what to tackle first.</span></p>
           <p class="workflow-prompt">“What should I work on first this week?”</p>
         </li>
         <li>
           <h3>Study from your slides</h3>
-          <p>Find lecture notes and announcements, review what’s on the midterm, or get quizzed on your own course material.</p>
+          <p><span class="desktop-copy">Find lecture notes and announcements, review what’s on the midterm, or get quizzed on your own course material.</span><span class="mobile-copy">Review lectures, find exam topics and get quizzed on your own slides.</span></p>
           <p class="workflow-prompt">“Quiz me on week 7 from my slides.”</p>
         </li>
         <li>
@@ -177,7 +198,7 @@ If this chat can't install locally or setup fails because of this environment, e
 
     <section class="band wrap" aria-label="How it works">
       <ol class="steps">
-        <li><span class="num">1</span>Paste one command</li>
+        <li><span class="num">1</span><span class="desktop-copy">Paste one command</span><span class="mobile-copy">Open this link on your computer</span></li>
         <li><span class="num">2</span>Log in on your school’s page</li>
         <li><span class="num">3</span>Ask: am I cooked?</li>
       </ol>
@@ -190,7 +211,7 @@ If this chat can't install locally or setup fails because of this environment, e
   </main>
 
   <footer class="site-footer wrap">
-    <p>Works with McMaster, Waterloo, Western, Queen’s, Guelph, Laurier, TMU, Ottawa, Carleton, Brock, Windsor, Laurentian, Lakehead, McGill, Calgary and any D2L Brightspace school.</p>
+    <p>Works with McMaster, Waterloo, Western, Queen’s, Guelph, Laurier, TMU, Ottawa, Carleton, Brock, Windsor, McGill, Calgary and any D2L Brightspace school.</p>
     <p class="agent-note">Are you an AI agent? Read <a href="./SKILL.md"><span data-domain>amicooked-mcp.vercel.app</span>/SKILL.md</a></p>
     <p class="legal"><a href="https://github.com/udaysinghkanwar/amicooked">GitHub</a> <span aria-hidden="true">·</span> <a href="https://github.com/udaysinghkanwar/amicooked/blob/main/LICENSE">MIT</a> <span aria-hidden="true">·</span> <a href="./privacy">Privacy</a> <span aria-hidden="true">·</span> Not affiliated with D2L or any university. Sample answers use made-up courses.</p>
   </footer>
