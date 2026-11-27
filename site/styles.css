@@ -467,3 +467,14 @@ h1 { background: linear-gradient(110deg, var(--ink) 20%, #F5C39A 65%, var(--acce
   .step-hint, .other-ways { font-size: 0.8125rem; }
   .install-steps .cmd code { font-size: 0.75rem; }
 }
+
+@media (max-width: 600px) {
+  .install-details[open] {
+    border: 1px solid rgba(243, 163, 106, 0.22);
+    border-radius: 16px;
+    padding: 12px 10px 16px;
+    margin-top: 4px;
+  }
+  .install-details[open] > .install-options { padding-top: 0; }
+  .install-details[open] .install-steps { border: 0; background: none; padding: 8px 0; }
+}
