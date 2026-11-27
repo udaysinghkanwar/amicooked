@@ -100,6 +100,16 @@ export async function askForEmail(school: { host: string }, options: AskOptions)
     }
   };
 
+  const reportFailure = (anonymous: boolean) => {
+    options.say(anonymous
+      ? "Couldn't confirm your anonymous signup."
+      : "Couldn't confirm your subscription to email updates.");
+    options.say("Am I Cooked is installed and configured. Follow any app reopening steps above.");
+    options.say(anonymous
+      ? "Run amicooked setup later to retry."
+      : "Run amicooked setup later to retry subscribing to email updates.");
+  };
+
   while (true) {
     const answer = parseEmailAnswer(await options.prompt(PROMPT));
     if ("skip" in answer) {
@@ -127,8 +137,7 @@ export async function askForEmail(school: { host: string }, options: AskOptions)
           options.say("Continuing without email updates.");
           return "anonymous";
         }
-        options.say("Couldn't confirm your anonymous signup was saved. Setup can still finish.");
-        options.say("Run amicooked setup later to retry.");
+        reportFailure(true);
         return "failed";
       }
       if (await submitSignup(answer.email, options)) {
@@ -136,12 +145,10 @@ export async function askForEmail(school: { host: string }, options: AskOptions)
         options.say("Saved. Thanks!");
         return "saved";
       }
-      options.say("Couldn't confirm your email was saved. Setup can still finish.");
-      options.say("Run amicooked setup later to retry.");
+      reportFailure(false);
       return "failed";
     } catch {
-      options.say("Couldn't save your signup right now. Setup can still finish.");
-      options.say("Run amicooked setup later to retry.");
+      reportFailure("anonymous" in answer);
       return "failed";
     } finally {
       try { release?.(); } catch { /* optional signup cleanup must not fail installation */ }

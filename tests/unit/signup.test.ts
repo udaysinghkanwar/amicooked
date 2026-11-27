@@ -149,6 +149,21 @@ describe("CLI signup", () => {
     expect(prompt).not.toHaveBeenCalled();
   });
 
+  it.each([
+    ["me@mail.com", "Couldn't confirm your subscription to email updates.", "Run amicooked setup later to retry subscribing to email updates."],
+    ["N/A", "Couldn't confirm your anonymous signup.", "Run amicooked setup later to retry."],
+  ])("explains that optional signup failure leaves installation configured (%s)", async (answer, problem, retry) => {
+    const say = vi.fn();
+    const fetchImpl = (async () => new Response(null, { status: 502 })) as typeof fetch;
+    expect(await askForEmail({ host: "learn.uwaterloo.ca" }, { prompt: async () => answer, say, fetchImpl })).toBe("failed");
+    expect(say.mock.calls.map(([message]) => message)).toEqual([
+      problem,
+      "Am I Cooked is installed and configured. Follow any app reopening steps above.",
+      retry,
+    ]);
+    expect(fs.existsSync(path.join(home, "signup-asked"))).toBe(false);
+  });
+
   it("re-asks after invalid entries, records N/A separately and remembers acknowledgement", async () => {
     const answers = ["oops", "", "N/A"];
     const prompt = vi.fn(async () => answers.shift());
