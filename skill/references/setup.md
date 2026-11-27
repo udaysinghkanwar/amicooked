@@ -2,12 +2,13 @@
 
 Setup runs on the student's computer. Start with the normal Mac/Linux or Windows installer below, unchanged. Ask for their operating system if it is unknown. Never ask for their school password, cookies or tokens.
 
-If this chat cannot run commands on their computer, give a short manual handoff:
-1. Open Terminal (Mac: press ⌘ Space and search Terminal) or PowerShell (Windows: search PowerShell in Start).
-2. Paste the matching installer below and press Enter. Choose the school and AI app, then sign in only on the school's page.
-3. Follow setup's printed next step, reopen the connected AI app if requested, and ask “am I cooked?” there. Use the current chat only if it is the connected app.
+If this chat cannot run commands on the student's own computer, do not install into a hosted sandbox, container or temporary AI environment. Do not infer the student's OS from that environment. Ask for their OS if unknown, then say “You can still install it yourself:” and give only the matching manual instructions:
 
-Do not stop at explaining that local access is unavailable. Give the exact command and those steps. A coding AI with local access, such as Claude Code or Codex, is optional; the manual installer is the primary handoff. Do not add installer flags, environment overrides or custom commands for a routine install. If the normal installer fails, use its actual error to troubleshoot and offer npm only when Node.js 22+ is available. Only report success after the connected app can read the student's courses.
+1. Explain how to open Terminal on Mac (⌘ Space, type Terminal, press Return) or PowerShell on Windows (Windows key, type PowerShell, press Enter). On Linux, use their terminal.
+2. Put the exact matching installer from the table below in its own copyable fenced code block, not just a guide link or a reference to “the command above.” Tell them to paste it into that window and press Enter, then choose their school and AI app and sign in on the school's page.
+3. Follow setup's printed next step, reopen the selected AI app if requested, and ask “am I cooked?” there. Use the current chat only if it is the connected app.
+
+Do not stop at explaining that local access is unavailable. A coding AI with local access, such as Claude Code or Codex, may be mentioned only after the manual steps. Do not add installer flags, environment overrides or custom commands for a routine install. If the normal installer fails, use its actual error to troubleshoot and offer npm only when Node.js 22+ is available. Do not claim installation is complete from instructions alone or a sandbox install; verify that the connected app can read the student's courses.
 
 | Platform | Installer |
 |---|---|
@@ -15,7 +16,7 @@ Do not stop at explaining that local access is unavailable. Give the exact comma
 | Windows (PowerShell) | `irm https://amicooked-mcp.vercel.app/install.ps1 \| iex` |
 | Node.js 22+ | `npx -y amicooked@0 setup` |
 
-If you can run commands on the student’s computer, run the normal installer and guide them through its school/app prompts and browser sign-in. Use the advanced flow below only when unattended configuration is explicitly requested or interactive setup cannot be used.
+If you can run commands on the student’s computer, run the normal installer and guide them through its school/app prompts and browser sign-in. Use the advanced flow below only when the student explicitly requests unattended configuration and execution is on their own computer. An unavailable interactive picker in a hosted chat is a reason to give the manual instructions above, not to use this advanced flow.
 
 ## Advanced unattended configuration
 

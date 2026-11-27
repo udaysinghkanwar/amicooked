@@ -98,20 +98,18 @@
         </div>
         <div class="tab-panel" id="agent-panel" hidden>
           <div class="cmd cmd-prompt">
-            <code id="agent-prompt">Help me install Am I Cooked. Never ask for my school password. Ask whether I use Mac or Windows if unknown.
+            <code id="agent-prompt">Help me install Am I Cooked on my own computer. Never ask for my school password. First ask whether my computer is Mac or Windows if I have not said; do not infer my OS from your sandbox.
 
-Use the matching command unchanged:
-Mac/Linux — Terminal: curl -fsSL https://<span data-domain>amicooked-mcp.vercel.app</span>/install.sh | sh
-Windows — PowerShell: irm https://<span data-domain>amicooked-mcp.vercel.app</span>/install.ps1 | iex
+Use only the matching installer, unchanged:
+Mac/Linux (Terminal): curl -fsSL https://<span data-domain>amicooked-mcp.vercel.app</span>/install.sh | sh
+Windows (PowerShell): irm https://<span data-domain>amicooked-mcp.vercel.app</span>/install.ps1 | iex
 
-If you cannot run commands on my computer, give me three simple steps:
-1. Open Terminal (Mac: ⌘ Space, search Terminal) or PowerShell (Windows: search in Start).
-2. Paste the matching command and press Enter. Choose my school and AI app; sign in only on my school’s page.
-3. Follow setup’s next step, reopen the connected AI app if asked, then ask “am I cooked?” there. Use this chat only if connected.
+If you cannot run commands on MY computer, do not try installing in a hosted sandbox or stop at “I can’t.” Say “You can still install it yourself:” and give these steps for my OS:
+1. Open Terminal on Mac (press ⌘ Space, type Terminal, press Return) or PowerShell on Windows (press Windows, type PowerShell, press Enter). Show only my OS’s instructions.
+2. Show my exact installer above in its own copyable code block. Tell me to paste it into that window and press Enter, choose my school and AI app, and sign in on my school’s page.
+3. Follow setup’s next step, reopen the selected AI app if requested, and ask “am I cooked?” there. Use this chat only if it is connected.
 
-If you have local access, run that installer and help with the same steps. Do not add flags or invent commands. Only confirm success after the connected app reads my courses.
-
-Claude Code or Codex with local access is an optional alternative. If installation fails, troubleshoot the actual error; offer npx -y amicooked@0 setup only with Node.js 22+.
+If you can run commands on my computer, run the normal installer and guide the same steps. Do not add flags, environment variables or custom commands. If it fails, ask for the error without passwords/tokens; offer npx -y amicooked@0 setup only if Node.js 22+ is installed. Mention Claude Code or Codex as optional help only AFTER giving the manual steps. Never claim success from a sandbox install or from instructions alone; verify course access in the connected AI.
 Guide: https://<span data-domain>amicooked-mcp.vercel.app</span>/references/setup.md</code>
             <button class="icon-button" type="button" data-copy="agent-prompt" aria-label="Copy the setup prompt for your coding agent">
               <svg class="i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i-check" aria-hidden="true"><use href="#i-check"/></svg>
