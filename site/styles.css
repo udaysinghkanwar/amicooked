@@ -378,14 +378,15 @@ h1 {
   .showcase { padding-bottom: 34px; }
   .window { border-radius: 14px; }
   .window-bar { padding: 8px 10px 8px 14px; gap: 8px; }
-  .window .dots, .window .play, .composer, .tool { display: none; }
+  .window .dots, .composer, .tool { display: none; }
   .window-title { display: inline; font-size: 0.75rem; }
   .with-toggle > span { padding: 6px 9px; }
   .with-on { font-size: 0; }
   .with-on::after { content: "With"; font-size: 0.8125rem; }
   .window-body { display: flex; flex-direction: column; }
   .rail { display: block; min-width: 0; padding: 8px; border-right: 0; border-bottom: 1px solid var(--rule); }
-  .rail-title, .rail-progress { display: none; }
+  .rail-title { display: none; }
+  .rail-progress { display: block; }
   .rail ul { display: flex; overflow-x: auto; gap: 4px; margin: 0; scrollbar-width: thin; }
   .rail li { flex: none; }
   .rail button { min-height: 40px; width: auto; padding: 8px 10px; font-size: 0.75rem; white-space: nowrap; }

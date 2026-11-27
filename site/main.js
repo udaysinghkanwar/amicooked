@@ -132,7 +132,7 @@ copySetup.addEventListener('click', async () => {
 installDetails.open = !compactScreen.matches;
 compactScreen.addEventListener('change', () => {
   installDetails.open = !compactScreen.matches;
-  setPaused(reducedMotion || compactScreen.matches);
+  setPaused(reducedMotion);
   reserveHeight();
   restart(current);
 });
@@ -256,8 +256,7 @@ const CANCEL = Symbol("cancel");
 let current = 0;
 let withTool = true;
 let run = 0; // bumps on every jump; anything still running for an older run stops
-let paused = reducedMotion || compactScreen.matches; // no autoplay for people who asked for less motion
-let hovering = false;
+let paused = reducedMotion; // no autoplay for people who asked for less motion
 let focused = false;
 let visible = false;
 
@@ -408,7 +407,7 @@ async function stream(nodes, id, first = 46, last = 22) {
 async function play(index, mode, id) {
   const ex = pickVariant(EXCHANGES[index]);
   await clearThread(id);
-  await typeQuestion(ex.q, id);
+  if (!compactScreen.matches) await typeQuestion(ex.q, id);
 
   const bubble = el("p", "msg-user pop", ex.q);
   thread.append(bubble);
@@ -420,7 +419,7 @@ async function play(index, mode, id) {
     tool.classList.add("is-running");
     thread.append(tool);
     show(tool);
-    await sleep(900, id);
+    await sleep(compactScreen.matches ? 180 : 900, id);
     tool.classList.replace("is-running", "is-done");
     await sleep(140, id);
   } else {
@@ -453,10 +452,10 @@ async function play(index, mode, id) {
   }
 }
 
-const held = () => paused || hovering || focused || !visible;
+const held = () => paused || focused || !visible || document.hidden;
 
 // Wait on the finished answer. The rail line is a WAAPI animation (compositor, not per-frame style writes)
-// that doubles as the timer: it pauses while anyone is reading or interacting.
+// that doubles as the timer: pause explicitly, for keyboard focus, or while offscreen.
 async function hold(id) {
   // Verdicts carry more to read, so they stay up longer
   const ex = EXCHANGES[current];
@@ -476,12 +475,22 @@ function markRail(index) {
     if (i === index) { b.setAttribute("aria-current", "true"); b.append(railProgress); }
     else b.removeAttribute("aria-current");
   });
+  if (compactScreen.matches) {
+    const list = railButtons[index].closest("ul");
+    const item = railButtons[index].getBoundingClientRect();
+    const viewport = list.getBoundingClientRect();
+    if (item.left < viewport.left || item.right > viewport.right) {
+      list.scrollTo({ left: list.scrollLeft + item.left - viewport.left - (viewport.width - item.width) / 2,
+        behavior: reducedMotion ? "auto" : "smooth" });
+    }
+  }
 }
 
 async function loop(id) {
   try {
     for (;;) {
       await hold(id);
+      if (id !== run) throw CANCEL;
       current = (current + 1) % EXCHANGES.length;
       markRail(current);
       await play(current, withTool ? "with" : "without", id);
@@ -503,7 +512,7 @@ function restart(index) {
   if (reducedMotion || compactScreen.matches) {
     const ex = pickVariant(EXCHANGES[index]);
     renderFinal(ex, mode);
-    if (!compactScreen.matches) loop(id);
+    loop(id);
     return;
   }
   play(index, mode, id).then(() => loop(id), (e) => { if (e !== CANCEL) throw e; });
@@ -551,9 +560,9 @@ function setPaused(value) {
 }
 playButton.addEventListener("click", () => setPaused(!paused));
 
-win.addEventListener("pointerenter", () => { hovering = true; });
-win.addEventListener("pointerleave", () => { hovering = false; });
-win.addEventListener("focusin", () => { focused = true; });
+// A mouse click should not leave the carousel paused indefinitely. Keyboard navigation still pauses it.
+win.addEventListener("pointerdown", () => { focused = false; });
+win.addEventListener("focusin", (e) => { focused = e.target.matches(":focus-visible"); });
 win.addEventListener("focusout", (e) => { if (!win.contains(e.relatedTarget)) focused = false; });
 
 // The window now sits in the hero, so the first question waits for its entrance to land before typing
