@@ -2,6 +2,7 @@
 const DOMAIN = document.documentElement.dataset.siteDomain || "amicooked-mcp.vercel.app";
 document.querySelectorAll("[data-domain]").forEach((el) => { el.textContent = DOMAIN; });
 
+const compactScreen = matchMedia("(max-width: 600px)");
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const live = document.getElementById("live");
 
@@ -107,9 +108,35 @@ for (const { button: btn, setup, update } of commandBoxes) {
   });
 }
 
+// Save the public setup link; this does not subscribe anyone or send mail.
+const installDetails = document.querySelector('.install-details');
+const setupLink = `https://${DOMAIN}/#install`;
+const handoffStatus = document.getElementById('handoff-status');
+const shareSetup = document.getElementById('share-setup');
+shareSetup.hidden = typeof navigator.share !== 'function';
+shareSetup.addEventListener('click', async () => {
+  handoffStatus.textContent = '';
+  try {
+    await navigator.share({title: 'Am I Cooked', text: 'Set up Am I Cooked on your computer.', url: setupLink});
+  } catch (error) {
+    if (error.name !== 'AbortError') handoffStatus.textContent = 'Sharing is unavailable. Try Copy setup link instead.';
+  }
+});
+document.getElementById('copy-setup').addEventListener('click', async () => {
+  handoffStatus.textContent = await copy(setupLink)
+    ? 'Link copied. Send it to yourself or save it for your computer.'
+    : `Copy this link: ${setupLink}`;
+});
+installDetails.open = !compactScreen.matches;
+compactScreen.addEventListener('change', () => {
+  installDetails.open = !compactScreen.matches;
+  setPaused(reducedMotion || compactScreen.matches);
+  reserveHeight();
+  restart(current);
+});
+
 // ---- The conversation replay ----
-// Replies are written the way an AI actually answers in chat: plain text, bold, lists. No coloured
-// widgets, because Claude and ChatGPT render the tool's data as text.
+// Replies stay as chat text. A colour accent on verdicts reinforces the written heat label.
 // Verdicts follow the am_i_cooked tool's real scoring (src/tools/cooked.ts) and the skill's answer style:
 // +2 per overdue item, +1 per item due within 72h, +3/+2/+1 for a lowest grade under 50/60/70.
 // Bands: raw 0-1, warming up 2-3, toasty 4-5, cooked 6-7, well done 8-10.
@@ -227,7 +254,7 @@ const CANCEL = Symbol("cancel");
 let current = 0;
 let withTool = true;
 let run = 0; // bumps on every jump; anything still running for an older run stops
-let paused = reducedMotion; // no autoplay for people who asked for less motion
+let paused = reducedMotion || compactScreen.matches; // no autoplay for people who asked for less motion
 let hovering = false;
 let focused = false;
 let visible = false;
@@ -302,6 +329,8 @@ function buildVideo({ file, title, length }) {
 // The answer as chat text, with every word and line hidden until it streams in
 function buildAnswer(ex, mode) {
   const answer = el("div", "answer");
+  const heat = ex.lead?.match(/^(Raw|Warming up|Toasty|Cooked|Well done)\b/i)?.[1];
+  if (mode === "with" && heat) answer.dataset.heat = heat.toLowerCase().replace(/ /g, "-");
   if (mode === "with" && ex.video) answer.append(buildVideo(ex.video));
   if (mode === "without") {
     const p = el("p", "answer-text");
@@ -469,10 +498,10 @@ function restart(index) {
   composerText.textContent = "";
   composer.classList.remove("has-text");
   const mode = withTool ? "with" : "without";
-  if (reducedMotion) {
+  if (reducedMotion || compactScreen.matches) {
     const ex = pickVariant(EXCHANGES[index]);
     renderFinal(ex, mode);
-    loop(id);
+    if (!compactScreen.matches) loop(id);
     return;
   }
   play(index, mode, id).then(() => loop(id), (e) => { if (e !== CANCEL) throw e; });
@@ -480,6 +509,7 @@ function restart(index) {
 
 // Reserve the tallest exchange's height so the window never jumps between them
 function reserveHeight() {
+  if (compactScreen.matches) { thread.style.removeProperty("--thread-h"); return; }
   const probe = thread.cloneNode(false);
   probe.removeAttribute("id");
   Object.assign(probe.style, { position: "absolute", visibility: "hidden", width: `${thread.clientWidth}px`, minHeight: "0" });
@@ -540,6 +570,7 @@ new IntersectionObserver(([entry]) => {
 setPaused(paused);
 placePill();
 thread.replaceChildren();
+if (compactScreen.matches) { started = true; restart(0); }
 reserveHeight();
 document.fonts.ready.then(() => { reserveHeight(); placePill(); });
 let resizeTimer;
