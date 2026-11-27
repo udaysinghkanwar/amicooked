@@ -296,7 +296,7 @@ h1 {
 /* Band: how it works */
 
 .workflows { padding-bottom: clamp(52px, 7vw, 88px); }
-.workflows h2, .privacy-band h2 {
+.workflows h2 {
   margin-bottom: 24px; font-family: var(--display); font-weight: 900; font-stretch: 125%;
   font-size: clamp(1.75rem, 4vw, 2.75rem); line-height: 1.1; letter-spacing: -0.03em;
 }
@@ -402,7 +402,7 @@ h1 {
   .reply-list { padding-left: 20px; }
   .reply-list li { margin-top: 6px; }
   .workflows { padding-bottom: 32px; }
-  .workflows h2, .privacy-band h2 { margin-bottom: 16px; }
+  .workflows h2 { margin-bottom: 16px; }
   .workflow-grid { gap: 10px; }
   .workflow-grid li { gap: 7px; padding: 16px; }
   .workflow-grid h3 { font-size: 1rem; }
@@ -516,4 +516,24 @@ h1 { background: linear-gradient(110deg, var(--ink) 20%, #F5C39A 65%, var(--acce
 @media (max-width: 600px) {
   .privacy-band { padding-bottom: 32px; }
   .privacy-band .promises { gap: 20px; }
+}
+
+/* A quieter trust section, visually separate from the feature cards. */
+.privacy-band {
+  padding-top: 32px;
+  border-top: 1px solid var(--rule);
+  margin-top: 16px;
+}
+.privacy-band h2 {
+  margin-bottom: 28px;
+  font-family: var(--sans);
+  font-size: clamp(1.125rem, 2vw, 1.5rem);
+  line-height: 1.35;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: #F5C39A;
+}
+@media (max-width: 600px) {
+  .privacy-band { margin-top: 16px; padding-top: 26px; }
+  .privacy-band h2 { margin-bottom: 24px; }
 }
