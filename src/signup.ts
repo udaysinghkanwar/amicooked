@@ -107,7 +107,7 @@ export async function askForEmail(school: { host: string }, options: AskOptions)
     options.say("Am I Cooked is installed and configured. Follow any app reopening steps above.");
     options.say(anonymous
       ? "Run amicooked setup later to retry."
-      : "Run amicooked setup later to retry subscribing to email updates.");
+      : 'Run "amicooked setup" later to retry subscribing to email updates.');
   };
 
   while (true) {

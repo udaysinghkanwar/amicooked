@@ -150,7 +150,7 @@ describe("CLI signup", () => {
   });
 
   it.each([
-    ["me@mail.com", "Couldn't confirm your subscription to email updates.", "Run amicooked setup later to retry subscribing to email updates."],
+    ["me@mail.com", "Couldn't confirm your subscription to email updates.", 'Run "amicooked setup" later to retry subscribing to email updates.'],
     ["N/A", "Couldn't confirm your anonymous signup.", "Run amicooked setup later to retry."],
   ])("explains that optional signup failure leaves installation configured (%s)", async (answer, problem, retry) => {
     const say = vi.fn();
