@@ -460,7 +460,7 @@ async function stream(nodes, id, first = 46, last = 22) {
 async function play(index, mode, id) {
   const ex = pickVariant(EXCHANGES[index]);
   await clearThread(id);
-  if (!compactScreen.matches) await typeQuestion(ex.q, id);
+  await typeQuestion(ex.q, id);
 
   const bubble = el("p", "msg-user pop", ex.q);
   thread.append(bubble);
@@ -562,7 +562,7 @@ function restart(index) {
   composerText.textContent = "";
   composer.classList.remove("has-text");
   const mode = withTool ? "with" : "without";
-  if (reducedMotion || compactScreen.matches) {
+  if (reducedMotion) {
     const ex = pickVariant(EXCHANGES[index]);
     renderFinal(ex, mode);
     loop(id);
@@ -634,7 +634,6 @@ new IntersectionObserver(([entry]) => {
 setPaused(paused);
 placePill();
 thread.replaceChildren();
-if (compactScreen.matches) { started = true; restart(0); }
 reserveHeight();
 document.fonts.ready.then(() => { reserveHeight(); placePill(); });
 let resizeTimer;

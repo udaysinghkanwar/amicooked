@@ -383,7 +383,7 @@ h1 {
   .showcase { padding-bottom: 34px; }
   .window { border-radius: 14px; }
   .window-bar { padding: 8px 10px 8px 14px; gap: 8px; }
-  .window .dots, .composer, .tool { display: none; }
+  .window .dots, .tool { display: none; }
   .window-title { display: inline; font-size: 0.75rem; }
   .with-toggle > span { padding: 6px 9px; }
   .with-on { font-size: 0; }
@@ -569,4 +569,10 @@ h1 { background: linear-gradient(110deg, var(--ink) 20%, #F5C39A 65%, var(--acce
 @media (max-width: 600px) {
   .setup-links { flex-direction: column; gap: 0; }
   .setup-links button { min-height: 44px; }
+}
+
+@media (max-width: 600px) {
+  .composer { margin-top: 12px; min-height: 42px; padding-left: 12px; font-size: 0.8125rem; border-radius: 10px; }
+  .composer-text { min-width: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .composer-send { flex: none; }
 }
