@@ -365,7 +365,7 @@ h1 {
   .handoff-secondary { background: var(--raised); color: var(--ink); border: 1px solid var(--rule-strong); }
   .handoff-actions button[hidden] { display: none; }
   .handoff-actions button:only-child, .handoff-actions button:first-child[hidden] + button { width: 100%; background: var(--ink); color: var(--bg); }
-  .mobile-handoff .handoff-status { margin-top: 8px; }
+  .get > .handoff-status { margin: 0; max-width: 36ch; color: var(--muted); font-size: 0.8125rem; line-height: 1.5; text-align: center; }
   .handoff-status:empty { display: none; }
   .mobile-utilities { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; white-space: nowrap; font-size: 0.75rem; color: var(--muted); }
   .mobile-utilities button { min-height: 44px; padding: 0 5px; border: 0; background: none; color: var(--soft); font: inherit; text-decoration: underline; text-underline-offset: 0.2em; cursor: pointer; }

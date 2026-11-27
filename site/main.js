@@ -137,7 +137,7 @@ shareSetup.addEventListener('click', async () => {
 });
 copySetup.addEventListener('click', async () => {
   handoffStatus.textContent = await copy(setupLink)
-    ? 'Link copied. Send it to yourself or save it for your computer.'
+    ? 'Link copied. Send it to your computer and setup from there.'
     : `Copy this link: ${setupLink}`;
 });
 installDetails.open = !compactScreen.matches;
