@@ -485,7 +485,7 @@ h1 { background: linear-gradient(110deg, var(--ink) 20%, #F5C39A 65%, var(--acce
 .setup-extras-content > .panel-hint { margin: 0; }
 .site-footer { gap: 14px; }
 .creator-credit { color: var(--soft); }
-.creator-links { display: block; margin-top: 6px; }
+.creator-links { display: inline; margin-left: 6px; }
 .heart { color: var(--accent); }
 .footer-links { display: flex; flex-wrap: wrap; gap: 10px 20px; }
 .project-details { color: var(--muted); max-width: 75ch; }
