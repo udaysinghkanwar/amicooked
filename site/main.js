@@ -115,13 +115,24 @@ const handoffStatus = document.getElementById('handoff-status');
 const shareSetup = document.getElementById('share-setup');
 shareSetup.hidden = typeof navigator.share !== 'function';
 const copySetup = document.getElementById('copy-setup');
-copySetup.textContent = shareSetup.hidden ? 'Copy setup link' : 'Copy link instead';
+copySetup.textContent = 'Copy Setup Link';
+if (shareSetup.hidden) {
+  document.querySelector('.handoff-actions').append(copySetup);
+  document.querySelector('.utility-copy-separator').hidden = true;
+}
+const mobileInstallToggle = document.getElementById('mobile-install-toggle');
+const syncInstallToggle = () => mobileInstallToggle.setAttribute('aria-expanded', String(installDetails.open));
+mobileInstallToggle.addEventListener('click', () => {
+  installDetails.open = !installDetails.open;
+  syncInstallToggle();
+});
+installDetails.addEventListener('toggle', syncInstallToggle);
 shareSetup.addEventListener('click', async () => {
   handoffStatus.textContent = '';
   try {
     await navigator.share({title: 'Am I Cooked', text: 'Set up Am I Cooked on your computer.', url: setupLink});
   } catch (error) {
-    if (error.name !== 'AbortError') handoffStatus.textContent = 'Sharing is unavailable. Use Copy link instead below.';
+    if (error.name !== 'AbortError') handoffStatus.textContent = 'Sharing is unavailable. Use Copy Setup Link below.';
   }
 });
 copySetup.addEventListener('click', async () => {
@@ -130,6 +141,7 @@ copySetup.addEventListener('click', async () => {
     : `Copy this link: ${setupLink}`;
 });
 installDetails.open = !compactScreen.matches;
+syncInstallToggle();
 compactScreen.addEventListener('change', () => {
   installDetails.open = !compactScreen.matches;
   setPaused(reducedMotion);

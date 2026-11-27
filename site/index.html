@@ -24,10 +24,10 @@
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./styles.css?v=27">
+  <link rel="stylesheet" href="./styles.css?v=28">
   <link rel="alternate" type="text/markdown" href="./SKILL.md" title="Setup instructions for AI agents">
   <script>document.documentElement.classList.replace("no-js", "js");</script>
-  <script src="./main.js?v=23" defer></script>
+  <script src="./main.js?v=24" defer></script>
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -42,15 +42,20 @@
       <!-- One box, three ways in: the command for your computer, or a prompt for your AI agent -->
       <div class="get enter enter-3" id="install">
         <div class="mobile-handoff">
-          <h2>Get uncooked on your computer.</h2>
-          <p>Install on your Mac or Windows computer.</p>
+          <h2>Get uncooked. Install on your computer.</h2>
           <div class="handoff-actions js-only">
             <button class="handoff-primary" id="share-setup" type="button" hidden>Share setup link</button>
-            <button class="handoff-secondary" id="copy-setup" type="button">Copy link instead</button>
           </div>
           <p class="handoff-status" id="handoff-status" role="status" aria-live="polite"></p>
         </div>
-        <details class="install-details" open>
+        <div class="mobile-utilities">
+          <span>Free <span aria-hidden="true">·</span> Secure</span>
+          <span class="utility-copy-separator js-only" aria-hidden="true">·</span>
+          <button class="handoff-secondary js-only" id="copy-setup" type="button">Copy Setup Link</button>
+          <span class="js-only" aria-hidden="true">·</span>
+          <button class="text-button js-only" id="mobile-install-toggle" type="button" aria-expanded="false" aria-controls="computer-install" aria-label="View computer install instructions">Install</button>
+        </div>
+        <details class="install-details" id="computer-install" open>
           <summary>View computer install instructions</summary>
           <div class="install-options">
         <h2 class="sr-only" id="command-title">Install</h2>
@@ -106,7 +111,7 @@ If this chat can't install locally or setup fails because of this environment, e
         </div>
           </div>
         </details>
-        <p class="trust"><span class="desktop-copy">Free <span aria-hidden="true">·</span> open source <span aria-hidden="true">·</span> your login stays on your laptop <span aria-hidden="true">·</span> <a href="https://github.com/udaysinghkanwar/amicooked/blob/main/install/install.sh">view install script</a></span><span class="mobile-copy">Free <span aria-hidden="true">·</span> secure</span></p>
+        <p class="trust desktop-copy"><span>Free <span aria-hidden="true">·</span> open source <span aria-hidden="true">·</span> your login stays on your laptop <span aria-hidden="true">·</span> <a href="https://github.com/udaysinghkanwar/amicooked/blob/main/install/install.sh">view install script</a></span></p>
         <p class="panel-hint">
           <span id="update-question">Already have Am I Cooked?</span> <a id="update-toggle" href="./references/updates.md">View update commands</a>
           <span id="update-help" hidden><span aria-hidden="true">·</span> Reload your AI app after updating. <a href="./references/updates.md">update guide</a></span>
@@ -119,7 +124,7 @@ If this chat can't install locally or setup fails because of this environment, e
         <div class="window" id="window" role="group" aria-label="Example: a student asks their AI about their courses">
           <div class="window-bar">
             <span class="dots" aria-hidden="true"><span></span><span></span><span></span></span>
-            <span class="window-title"><span class="desktop-copy">Your AI</span><span class="mobile-copy">Sample answer</span></span>
+            <span class="window-title">Your AI</span>
             <div class="bar-end">
               <button class="with-toggle js-only" type="button" role="switch" aria-checked="true" aria-label="With Am I Cooked">
                 <span class="with-on">With Am I Cooked</span><span class="with-off">Without</span>

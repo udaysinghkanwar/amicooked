@@ -343,7 +343,7 @@ h1 {
 }
 
 /* Mobile preview: preserve the desktop structure and styling. */
-.mobile-copy, .mobile-handoff, .mobile-title-break { display: none; }
+.mobile-copy, .mobile-handoff, .mobile-title-break, .mobile-utilities { display: none; }
 .install-details { display: contents; }
 .install-options { display: flex; flex-direction: column; gap: 14px; align-items: center; width: 100%; }
 .install-details > summary { display: none; }
@@ -357,19 +357,22 @@ h1 {
   .lede { margin-top: 18px; font-size: 1.0625rem; max-width: 30ch; }
   .get { margin-top: 28px; gap: 8px; }
   .mobile-handoff { display: block; width: 100%; text-align: center; }
-  .mobile-handoff h2 { margin: 0 0 7px; font: 700 1.0625rem/1.3 var(--sans); }
+  .mobile-handoff h2 { margin: 0; font: 700 1rem/1.4 var(--sans); }
   .mobile-handoff p { font-size: 0.875rem; line-height: 1.5; color: var(--muted); max-width: 36ch; margin-inline: auto; }
   .handoff-actions { display: flex; flex-direction: column; gap: 2px; margin-top: 18px; }
   .handoff-actions button { width: 100%; min-height: 48px; padding: 11px 16px; border-radius: 10px; font: 700 0.875rem/1.3 var(--sans); cursor: pointer; }
   .handoff-primary { background: var(--ink); color: var(--bg); border: 1px solid var(--ink); }
   .handoff-secondary { background: var(--raised); color: var(--ink); border: 1px solid var(--rule-strong); }
-  .handoff-primary:not([hidden]) + .handoff-secondary { min-height: 44px; background: transparent; border-color: transparent; color: var(--soft); font-size: 0.8125rem; font-weight: 500; text-decoration: underline; text-underline-offset: 0.2em; }
   .handoff-actions button[hidden] { display: none; }
   .handoff-actions button:only-child, .handoff-actions button:first-child[hidden] + button { width: 100%; background: var(--ink); color: var(--bg); }
   .mobile-handoff .handoff-status { margin-top: 8px; }
   .handoff-status:empty { display: none; }
+  .mobile-utilities { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; white-space: nowrap; font-size: 0.75rem; color: var(--muted); }
+  .mobile-utilities button { min-height: 44px; padding: 0 5px; border: 0; background: none; color: var(--soft); font: inherit; text-decoration: underline; text-underline-offset: 0.2em; cursor: pointer; }
+  .mobile-utilities [hidden] { display: none; }
   .install-details { display: block; width: 100%; }
   .install-details > summary { display: list-item; width: fit-content; margin-inline: auto; padding: 8px 0; font-size: 0.8125rem; color: var(--soft); cursor: pointer; }
+  .js .install-details > summary { display: none; }
   .install-details:not([open]) > .install-options { display: none; }
   .install-options { display: flex; flex-direction: column; gap: 12px; align-items: center; padding-top: 10px; }
   .install-options > .cmd, .install-options > .tab-panel { width: 100%; }
