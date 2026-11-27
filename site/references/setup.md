@@ -1,8 +1,8 @@
 # Setup and client verification
 
-Setup runs on the student's computer. Start with the normal Mac/Linux or Windows installer below, unchanged. Ask for their operating system if it is unknown. Never ask for their school password, cookies or tokens.
+Setup runs on the student's computer. Start with the normal Mac/Linux or Windows installer below, unchanged. Use the student's Mac, Windows or Linux OS when already known from the conversation or reliable information about their own computer; do not ask again. Ask only when it is unknown. Begin installation instructions with “Since you’re on [Mac/Windows/Linux], …”. Never ask for their school password, cookies or tokens.
 
-If this chat cannot run commands on the student's own computer, do not install into a hosted sandbox, container or temporary AI environment. Do not infer the student's OS from that environment. Ask for their OS if unknown, then say “You can still install it yourself:” and give only the matching manual instructions:
+If this chat cannot run commands on the student's own computer, do not install into a hosted sandbox, container or temporary AI environment. Do not infer the student's OS from that environment. Use their known OS without asking again, or ask if unknown. Say “Since you’re on [OS], you can still install it yourself:” and give only the matching manual instructions:
 
 1. Explain how to open Terminal on Mac (⌘ Space, type Terminal, press Return) or PowerShell on Windows (Windows key, type PowerShell, press Enter). On Linux, use their terminal.
 2. Put the exact matching installer from the table below in its own copyable fenced code block, not just a guide link or a reference to “the command above.” Tell them to paste it into that window and press Enter, then choose their school and AI app and sign in on the school's page.
