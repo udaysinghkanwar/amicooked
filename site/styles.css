@@ -343,13 +343,14 @@ h1 {
 }
 
 /* Mobile preview: preserve the desktop structure and styling. */
-.mobile-copy, .mobile-handoff { display: none; }
+.mobile-copy, .mobile-handoff, .mobile-title-break { display: none; }
 .install-details { display: contents; }
 .install-options { display: flex; flex-direction: column; gap: 14px; align-items: center; width: 100%; }
 .install-details > summary { display: none; }
 @media (max-width: 600px) {
   .desktop-copy { display: none; }
   .mobile-copy { display: inline; }
+  .mobile-title-break { display: block; }
   .hero { padding-block: 36px 28px; }
   .eyebrow { margin-bottom: 16px; font-size: 0.75rem; }
   h1 { font-size: clamp(2rem, 10vw, 3.5rem); }
