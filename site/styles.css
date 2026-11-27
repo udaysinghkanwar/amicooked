@@ -122,6 +122,18 @@ h1 {
 
 .get { display: flex; flex-direction: column; align-items: center; gap: 14px; width: 100%; max-width: 600px; margin-top: 44px; }
 .get .cmd { width: 100%; text-align: left; }
+/* Three numbered steps: what to open, what to paste, what happens next */
+.install-steps { list-style: none; counter-reset: step; width: 100%; margin: 0; padding: 18px 20px; display: flex; flex-direction: column; gap: 18px; text-align: left; border-radius: 16px; background: var(--raised); border: 1px solid var(--rule); }
+.install-steps[hidden] { display: none; }
+.install-steps li { counter-increment: step; position: relative; padding-left: 38px; }
+.install-steps li::before {
+  content: counter(step); position: absolute; left: 0; top: 0; width: 24px; height: 24px; display: grid; place-items: center;
+  border-radius: 50%; border: 1px solid var(--rule-strong); font-size: 0.75rem; font-weight: 600; color: var(--soft);
+}
+.step-title { font-weight: 600; color: var(--ink); line-height: 24px; }
+.step-hint { margin-top: 2px; font-size: 0.875rem; color: var(--muted); }
+.install-steps .cmd { margin-top: 10px; background: var(--well); }
+.other-ways { font-size: 0.875rem; color: var(--muted); text-align: center; }
 .tab-panel { display: flex; flex-direction: column; gap: 10px; width: 100%; }
 .tab-panel[hidden] { display: none; }
 .panel-hint { font-size: 0.8125rem; color: var(--muted); text-align: center; }
@@ -163,8 +175,8 @@ h1 {
 .icon-button:active, .segmented button:active, .with-toggle:active { transform: scale(0.97); }
 .icon-button.is-done .i-check { opacity: 1; transform: none; color: var(--ink); }
 
+.trust { font-size: 0.8125rem; color: var(--faint); }
 .trust a { color: var(--muted); }
-.trust { margin-top: 10px; text-align: center; font-size: 0.875rem; color: var(--faint); }
 
 /* The window: a generic AI chat app replaying real questions */
 
