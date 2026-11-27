@@ -565,3 +565,8 @@ h1 { background: linear-gradient(110deg, var(--ink) 20%, #F5C39A 65%, var(--acce
 .privacy-content .maintainer-list { list-style: none; padding: 0; margin-top: 14px; color: var(--muted); }
 .privacy-content .maintainer-list li { margin-top: 10px; line-height: 1.7; }
 .privacy-content .maintainer-list strong { color: var(--soft); }
+
+@media (max-width: 600px) {
+  .setup-links { flex-direction: column; gap: 0; }
+  .setup-links button { min-height: 44px; }
+}
