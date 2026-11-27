@@ -137,7 +137,7 @@ To contribute:
 
 ## Made by students
 
-Made with ♥ by students, for students — [Uday Kanwar](https://ca.linkedin.com/in/uday-kanwar), [Sachin Gupta](https://www.linkedin.com/in/sachin-ved-gupta/) and [Akshay Gupta](https://ca.linkedin.com/in/akshay-m-gupta). Built to make grades, deadlines and studying easier to manage through the AI tools students already use.
+Made with ♥ by students, for students — [Uday Kanwar](https://www.linkedin.com/in/uday-kanwar/), [Sachin Gupta](https://www.linkedin.com/in/sachin-ved-gupta/) and [Akshay Gupta](https://www.linkedin.com/in/akshay-m-gupta/). Built to make grades, deadlines and studying easier to manage through the AI tools students already use.
 
 ## Not affiliated
 
