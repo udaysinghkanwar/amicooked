@@ -355,14 +355,15 @@ h1 {
   .eyebrow { margin-bottom: 16px; font-size: 0.75rem; }
   h1 { font-size: clamp(2rem, 10vw, 3.5rem); }
   .lede { margin-top: 18px; font-size: 1.0625rem; max-width: 30ch; }
-  .get { margin-top: 24px; gap: 12px; }
+  .get { margin-top: 28px; gap: 8px; }
   .mobile-handoff { display: block; width: 100%; text-align: center; }
   .mobile-handoff h2 { margin: 0 0 7px; font: 700 1.0625rem/1.3 var(--sans); }
   .mobile-handoff p { font-size: 0.875rem; line-height: 1.5; color: var(--muted); max-width: 36ch; margin-inline: auto; }
-  .handoff-actions { display: flex; gap: 8px; justify-content: center; margin-top: 14px; }
-  .handoff-actions button { min-height: 46px; padding: 11px 16px; border-radius: 10px; font: 700 0.875rem/1.3 var(--sans); cursor: pointer; }
+  .handoff-actions { display: flex; flex-direction: column; gap: 2px; margin-top: 18px; }
+  .handoff-actions button { width: 100%; min-height: 48px; padding: 11px 16px; border-radius: 10px; font: 700 0.875rem/1.3 var(--sans); cursor: pointer; }
   .handoff-primary { background: var(--ink); color: var(--bg); border: 1px solid var(--ink); }
   .handoff-secondary { background: var(--raised); color: var(--ink); border: 1px solid var(--rule-strong); }
+  .handoff-primary:not([hidden]) + .handoff-secondary { min-height: 44px; background: transparent; border-color: transparent; color: var(--soft); font-size: 0.8125rem; font-weight: 500; text-decoration: underline; text-underline-offset: 0.2em; }
   .handoff-actions button[hidden] { display: none; }
   .handoff-actions button:only-child, .handoff-actions button:first-child[hidden] + button { width: 100%; background: var(--ink); color: var(--bg); }
   .mobile-handoff .handoff-status { margin-top: 8px; }

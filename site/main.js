@@ -114,15 +114,17 @@ const setupLink = `https://${DOMAIN}/#install`;
 const handoffStatus = document.getElementById('handoff-status');
 const shareSetup = document.getElementById('share-setup');
 shareSetup.hidden = typeof navigator.share !== 'function';
+const copySetup = document.getElementById('copy-setup');
+copySetup.textContent = shareSetup.hidden ? 'Copy setup link' : 'Copy link instead';
 shareSetup.addEventListener('click', async () => {
   handoffStatus.textContent = '';
   try {
     await navigator.share({title: 'Am I Cooked', text: 'Set up Am I Cooked on your computer.', url: setupLink});
   } catch (error) {
-    if (error.name !== 'AbortError') handoffStatus.textContent = 'Sharing is unavailable. Try Copy setup link instead.';
+    if (error.name !== 'AbortError') handoffStatus.textContent = 'Sharing is unavailable. Use Copy link instead below.';
   }
 });
-document.getElementById('copy-setup').addEventListener('click', async () => {
+copySetup.addEventListener('click', async () => {
   handoffStatus.textContent = await copy(setupLink)
     ? 'Link copied. Send it to yourself or save it for your computer.'
     : `Copy this link: ${setupLink}`;
