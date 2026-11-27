@@ -546,3 +546,18 @@ h1 { background: linear-gradient(110deg, var(--ink) 20%, #F5C39A 65%, var(--acce
   text-decoration-thickness: 1px;
   text-underline-offset: 6px;
 }
+
+/* Readable standalone privacy notice; scoped away from the landing page. */
+.privacy-content { max-width: 780px; padding-block: 48px 72px; }
+.privacy-content .privacy-back { display: inline-block; margin-bottom: 28px; color: var(--muted); }
+.privacy-content h1 { font-size: clamp(2.5rem, 7vw, 4rem); line-height: 1.1; }
+.privacy-content .privacy-date { margin-top: 14px; font-size: 0.8125rem; color: var(--faint); }
+.privacy-content .privacy-summary { margin-top: 24px; font-size: 1.0625rem; color: var(--soft); }
+.privacy-content section { margin-top: 32px; }
+.privacy-content h2 { font: 700 1.25rem/1.35 var(--sans); color: #F5C39A; }
+.privacy-content section p { margin-top: 12px; color: var(--muted); line-height: 1.7; }
+.privacy-content code { overflow-wrap: anywhere; font-size: 0.875em; }
+@media (max-width: 600px) {
+  .privacy-content { padding-block: 28px 48px; }
+  .privacy-content h2 { font-size: 1.125rem; }
+}

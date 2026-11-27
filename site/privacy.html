@@ -1,45 +1,67 @@
 <!doctype html>
-<!-- Linked from the CLI's optional email prompt (src/signup.ts PRIVACY_URL). Keep in step with site/api/signup.js. -->
-<html lang="en" class="no-js" data-site-domain="amicooked-mcp.vercel.app">
+<!-- Keep this notice aligned with signup, telemetry, website analytics and remote-connection code. -->
+<html lang="en" data-site-domain="amicooked-mcp.vercel.app">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Privacy · Am I Cooked</title>
-  <meta name="description" content="What Am I Cooked collects, why, and how to remove it.">
+  <meta name="description" content="How local course access, optional update emails and anonymous usage counts work in Am I Cooked.">
   <meta name="theme-color" content="#0E0C0B">
   <meta name="color-scheme" content="dark">
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./styles.css?v=23">
+  <link rel="stylesheet" href="./styles.css?v=44">
 </head>
-<body>
-  <main id="main" class="wrap">
-    <p class="eyebrow"><a href="./">Am I Cooked</a></p>
+<body class="privacy-page">
+  <main id="main" class="wrap privacy-content">
+    <a class="privacy-back" href="./">← Am I Cooked</a>
     <h1>Privacy</h1>
-    <p>Last updated November 26, 2026.</p>
+    <p class="privacy-date">Last updated November 27, 2026.</p>
+    <p class="privacy-summary">Your course connection runs on your computer. We do not collect your school password or store your course content on our application servers. Optional update emails and limited usage counts are separate, as explained below.</p>
 
-    <h2>Who we are</h2>
-    <p>Am I Cooked is a free, open-source app run by its maintainers (see <a href="https://github.com/udaysinghkanwar/amicooked/blob/main/LICENSE">LICENSE</a>). Contact us through <a href="https://github.com/udaysinghkanwar/amicooked/issues">GitHub issues</a>.</p>
+    <section aria-labelledby="local-data">
+      <h2 id="local-data">Your computer, school and AI app</h2>
+      <p>Am I Cooked is a free, open-source project maintained by Uday Kanwar, Sachin Gupta and Akshay Gupta. Its local server reads your Brightspace courses and makes the information you request available to the AI app you connect. Course access is read-only: it does not submit assignments or change your grades.</p>
+      <p>You sign in on your school’s own page in your browser. Am I Cooked saves session tokens and cookies locally so it can stay connected; it does not ask for or save your school password. Settings, session data, caches and logs are normally stored under <code>~/.amicooked</code>. Downloaded course files and generated lessons are saved in your configured local files folder.</p>
+      <p>Local software does not mean offline AI. Course information returned to Claude, ChatGPT, Gemini or another connected service may be processed and retained by that provider under its policies and your account settings. If you enable a remote connection, requests can pass through Cloudflare tunnel infrastructure; our provisioning service stores tunnel identifiers, creation/last-active times and connection-management records. Those records are separate from course content.</p>
+    </section>
 
-    <h2>Your courses stay on your computer</h2>
-    <p>Am I Cooked runs on your computer. Your Brightspace sign-in, courses, grades and files go between your computer, your school and the AI app you chose. They never reach our servers.</p>
+    <section aria-labelledby="email-updates">
+      <h2 id="email-updates">Optional emails about updates</h2>
+      <p>If you enter your email at the optional setup prompt, we may email you about Am I Cooked releases, new features, fixes and other product updates. An email address is not required to install or use Am I Cooked. Enter <code>N/A</code> or <code>NA</code>, in any letter case, to continue without joining the email list.</p>
+      <p>We store your normalized email address, signup time, setup source, app version and the identifier for the prompt you were shown. We use the address for Am I Cooked updates, not advertising for other products, and do not sell it. Service providers may process it to host the list or deliver messages.</p>
+      <p>You can withdraw from update emails or request access, correction or deletion using the private contact options below. Any product-update email we send must identify the sender, include contact information and offer a working, free way to unsubscribe. Requests to stop update emails will be honoured within 10 business days. Signup storage exists today; this app does not currently include an email-delivery or automated unsubscribe service.</p>
+    </section>
 
-    <h2>Anonymous counts</h2>
-    <p>Setup and updates send anonymous counts: which preset school (or "custom"), your platform, and version numbers. No IP address, install ID or anything from Brightspace is stored. Set <code>DO_NOT_TRACK=1</code> or <code>AMICOOKED_NO_TELEMETRY=1</code> to turn this off.</p>
+    <section aria-labelledby="anonymous-data">
+      <h2 id="anonymous-data">Anonymous counts and choosing N/A</h2>
+      <p>The app sends limited setup and successful-upgrade counts: a preset school identifier (or “custom”), OS/architecture, version numbers, update mode and native/npm channel where relevant. These counters contain no course data, email address or persistent installation identifier.</p>
+      <p>Choosing N/A can record a separate anonymous signup event containing its time, setup source, app version and a random submission ID. The ID prevents retries from counting twice; it is not an email signup or a persistent device ID. Cancelling the email prompt records no signup. These events measure submissions, not unique people.</p>
+      <p>Set <code>AMICOOKED_NO_TELEMETRY=1</code> or <code>DO_NOT_TRACK=1</code> in the environment running the app to disable app telemetry and anonymous N/A events. This does not cancel an email subscription you separately choose or disable your AI provider’s processing.</p>
+    </section>
 
-    <h2>Update emails (optional)</h2>
-    <p>At the end of <code>amicooked setup</code> you can enter an email to get occasional product-update emails, such as new features and fixes. Typing N/A continues without joining the email list. Blank or invalid entries are re-prompted. Students on Ontario K-12 school-board Brightspace are never asked.</p>
-    <p>When you choose N/A, we record a separate anonymous signup event: the time, app version and source (CLI setup). A random submission ID prevents retries from being counted twice; it is not a persistent device or installation ID. No email address or email consent is stored for this event. This count measures anonymous submissions, not unique people. <code>DO_NOT_TRACK=1</code> or <code>AMICOOKED_NO_TELEMETRY=1</code> disables it. Cancelling the prompt records no signup.</p>
-    <ul>
-      <li><strong>What we keep:</strong> your email, when you signed up, the wording you agreed to, and the app version. Nothing else.</li>
-      <li><strong>Why:</strong> only to send Am I Cooked updates. We never sell or share it, and never use it for ads.</li>
-      <li><strong>Where:</strong> stored with Upstash (Redis) through Vercel, in the United States, where it may be accessible to US authorities under US law. When we send email we will use an email service, also likely in the US.</li>
-      <li><strong>Unsubscribe:</strong> every email has an unsubscribe link, honoured within 10 business days. You can also ask us to delete your email at any time through the contact above.</li>
-      <li><strong>How long:</strong> until you unsubscribe or ask us to delete it. After an unsubscribe we keep only what we need to never email you again.</li>
-      <li><strong>Age:</strong> the list is for post-secondary students. If someone under 18 signed up, contact us and we will delete it.</li>
-    </ul>
+    <section aria-labelledby="website-services">
+      <h2 id="website-services">Website and service providers</h2>
+      <p>The landing page loads Vercel Web Analytics and records aggregate install-command copy and setup-prompt-open counts. These website counts are separate from the app’s telemetry settings. We do not set advertising cookies in our own website code.</p>
+      <p>Vercel hosts the website and signup API; Upstash Redis stores signup records and counters. Requests also expose normal network information, including an IP address, to hosting providers. The signup endpoint uses a salted hash of the date and IP address for abuse prevention; that rate-limit key expires after 24 hours. It does not save the raw IP address in the signup record. Providers may maintain their own operational or security logs.</p>
+      <p>Installers and updates download software from services such as GitHub and npm. AI services, school systems and any enabled tunnel providers have their own privacy policies. Providers may process information outside Canada, depending on their infrastructure and configuration, where different laws may apply.</p>
+    </section>
 
-    <h2>Questions or complaints</h2>
-    <p>Contact us first. You can also complain to the <a href="https://www.priv.gc.ca/en/report-a-concern/">Office of the Privacy Commissioner of Canada</a> or, in Quebec, the <a href="https://www.cai.gouv.qc.ca/">Commission d'accès à l'information</a>.</p>
+    <section aria-labelledby="retention">
+      <h2 id="retention">Retention and removal</h2>
+      <p>Email and anonymous signup records do not currently expire automatically. We retain email records for update subscriptions and consent records, and handle removal requests through the maintainers. After withdrawal, we may retain only information needed to honour the opt-out or meet a legal obligation. Aggregate counters are not linked to an identified person; we generally cannot locate an anonymous event from your name or email.</p>
+      <p>Disconnecting the app does not by itself delete all local data. The uninstall command’s <code>--purge</code> option removes stored login/settings data; downloaded files, generated lessons, AI chat history and provider-held records may need to be deleted separately. Review your configured folders before deleting files.</p>
+    </section>
+
+    <section aria-labelledby="young-users">
+      <h2 id="young-users">Young users</h2>
+      <p>The optional email list is intended for post-secondary students aged 18 or older. Setup skips the email prompt for recognized Ontario K–12 Brightspace domains, but it does not verify every user’s age. If an under-18 email address has been submitted, contact us privately so we can remove it.</p>
+    </section>
+
+    <section aria-labelledby="privacy-contact">
+      <h2 id="privacy-contact">Contact and your choices</h2>
+      <p>For private privacy requests, message a maintainer: <a href="https://ca.linkedin.com/in/uday-kanwar">Uday Kanwar</a>, <a href="https://www.linkedin.com/in/sachin-ved-gupta/">Sachin Gupta</a> or <a href="https://ca.linkedin.com/in/akshay-m-gupta">Akshay Gupta</a>. You can also use <a href="https://github.com/udaysinghkanwar/amicooked/issues">GitHub issues</a> to request a private contact channel. Do not post your email address, school credentials, tokens or course information in a public issue.</p>
+      <p>We may ask for enough information to verify a request before changing an email record. You may also contact the <a href="https://www.priv.gc.ca/en/report-a-concern/">Office of the Privacy Commissioner of Canada</a> or Quebec’s <a href="https://www.cai.gouv.qc.ca/">Commission d’accès à l’information</a>. We will update this page when our practices change; a new purpose for using your email will require an appropriate new choice.</p>
+    </section>
   </main>
 </body>
 </html>
