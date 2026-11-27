@@ -66,7 +66,7 @@ Course tools are read-only and take a code like `"3BB4"`.
 
 ## Schools
 
-University presets cover McMaster, Waterloo, Western, Queen's, Guelph, Laurier, TMU, uOttawa, Carleton, Brock, Windsor, Laurentian and Lakehead.
+University presets cover McMaster, Waterloo, Western, Queen's, Guelph, Laurier, TMU, uOttawa, Carleton, Brock, Windsor, Laurentian, Lakehead, McGill and the University of Calgary.
 
 School-board presets cover the Toronto District School Board (TDSB) and the Peel District School Board, e.g. `amicooked setup --school tdsb` or `amicooked setup --school "Peel District School Board"`. Other Ontario boards on the provincial Brightspace work through “Somewhere else” by name or portal URL; see the [verified portal list and research sources](docs/research/ontario-school-board-portals-2026-11-26.md). Student sign-in and course access are not yet tested at the boards.
 

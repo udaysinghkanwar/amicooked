@@ -42,7 +42,7 @@ describe("schools", () => {
 
   it("keeps only the universities, TDSB and Peel as presets", () => {
     expect(PRESETS.map((s) => s.id)).toEqual(["mcmaster", "waterloo", "western", "queens", "guelph", "laurier", "tmu",
-      "uottawa", "carleton", "brock", "windsor", "laurentian", "lakehead", "tdsb", "pdsb"]);
+      "uottawa", "carleton", "brock", "windsor", "laurentian", "lakehead", "mcgill", "ucalgary", "tdsb", "pdsb"]);
     expect(findPreset("waterloo")?.host).toBe("learn.uwaterloo.ca");
     expect(findPreset("lakehead")?.host).toBe("mycourselink.lakeheadu.ca");
     expect(findPreset("Toronto DSB")?.host).toBe("tdsb.elearningontario.ca");
@@ -62,6 +62,17 @@ describe("schools", () => {
         owners.set(key, school.id);
       }
     }
+  });
+
+  it.each([
+    { id: "mcgill", host: "mycourses2.mcgill.ca", inputs: ["McGill", " McGill University ", "mycourses2.mcgill.ca", "https://mycourses2.mcgill.ca/d2l/home"] },
+    { id: "ucalgary", host: "d2l.ucalgary.ca", inputs: ["ucalgary", "University of Calgary", " Calgary ", "U of C", "d2l.ucalgary.ca", "https://d2l.ucalgary.ca/d2l/home"] },
+  ])("resolves $id names and portal URLs without directory access", async ({ id, host, inputs }) => {
+    const fetchImpl = vi.fn();
+    for (const input of inputs) {
+      expect(await resolveSchool(input, fetchImpl)).toMatchObject({ id, host });
+    }
+    expect(fetchImpl).not.toHaveBeenCalled();
   });
 
   it("accepts a bare D2L host", async () => {

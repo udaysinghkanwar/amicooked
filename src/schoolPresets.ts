@@ -1,6 +1,6 @@
 import type { School } from "./config.js";
 
-/** Ontario Brightspace universities plus two school boards; every other school is found by name or URL.
+/** Canadian Brightspace universities plus two school boards; every other school is found by name or URL.
  * API checks are not proof of a successful student login.
  * Board portal sources and verification: docs/research/ontario-school-board-portals-2026-11-26.md.
  */
@@ -18,6 +18,8 @@ export const PRESETS: Array<School & { aliases?: string[] }> = [
   { id: "windsor", name: "University of Windsor", lmsName: "Brightspace", host: "brightspace.uwindsor.ca" },
   { id: "laurentian", name: "Laurentian University", lmsName: "D2L", host: "d2l.laurentian.ca" },
   { id: "lakehead", name: "Lakehead University", lmsName: "myCourseLink", host: "mycourselink.lakeheadu.ca" },
+  { id: "mcgill", name: "McGill University", lmsName: "myCourses", host: "mycourses2.mcgill.ca" },
+  { id: "ucalgary", name: "University of Calgary", aliases: ["Calgary", "UCalgary", "U of C"], lmsName: "D2L Brightspace", host: "d2l.ucalgary.ca" },
 
   // School boards on the provincial Brightspace. Other boards are found through "Somewhere else".
   { id: "tdsb", name: "Toronto District School Board", aliases: ["Toronto DSB"], lmsName: "Brightspace", host: "tdsb.elearningontario.ca", loginUrl: "https://tdsb.elearningontario.ca/d2l/login" },

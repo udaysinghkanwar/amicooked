@@ -5,7 +5,7 @@
 // Must match the preset ids in src/schools.ts; a unit test checks this.
 export const SCHOOLS = [
   "mcmaster", "waterloo", "western", "queens", "guelph", "laurier", "tmu",
-  "uottawa", "carleton", "brock", "windsor", "laurentian", "lakehead", "tdsb", "pdsb", "custom",
+  "uottawa", "carleton", "brock", "windsor", "laurentian", "lakehead", "mcgill", "ucalgary", "tdsb", "pdsb", "custom",
 ];
 export const PLATFORMS = ["darwin-arm64", "darwin-x64", "linux-x64", "linux-arm64", "win32-x64", "win32-arm64"];
 
