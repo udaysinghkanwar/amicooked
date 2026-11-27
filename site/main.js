@@ -131,8 +131,9 @@ shareSetup.addEventListener('click', async () => {
   handoffStatus.textContent = '';
   try {
     await navigator.share({title: 'Am I Cooked', text: 'Set up Am I Cooked on your computer.', url: setupLink});
+    handoffStatus.textContent = 'Setup link shared. Open it on your computer to get started.';
   } catch (error) {
-    if (error.name !== 'AbortError') handoffStatus.textContent = 'Sharing is unavailable. Use Copy Setup Link below.';
+    if (error.name !== 'AbortError') handoffStatus.textContent = 'Couldn’t share the link. Try Copy Setup Link instead.';
   }
 });
 copySetup.addEventListener('click', async () => {
