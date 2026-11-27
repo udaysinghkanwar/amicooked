@@ -112,6 +112,21 @@ for (const { button: btn, setup, update } of commandBoxes) {
 const installDetails = document.querySelector('.install-details');
 const setupLink = `https://${DOMAIN}/#install`;
 const handoffStatus = document.getElementById('handoff-status');
+let handoffStatusTimer;
+let handoffAction = 0;
+function resetHandoffStatus() {
+  clearTimeout(handoffStatusTimer);
+  handoffStatus.textContent = '';
+  return ++handoffAction;
+}
+function showHandoffStatus(action, message, success = false) {
+  if (action !== handoffAction) return;
+  clearTimeout(handoffStatusTimer);
+  handoffStatus.textContent = message;
+  if (success) handoffStatusTimer = setTimeout(() => {
+    if (action === handoffAction) handoffStatus.textContent = '';
+  }, 10000);
+}
 const shareSetup = document.getElementById('share-setup');
 shareSetup.hidden = typeof navigator.share !== 'function';
 const copySetup = document.getElementById('copy-setup');
@@ -123,23 +138,26 @@ if (shareSetup.hidden) {
 const mobileInstallToggle = document.getElementById('mobile-install-toggle');
 const syncInstallToggle = () => mobileInstallToggle.setAttribute('aria-expanded', String(installDetails.open));
 mobileInstallToggle.addEventListener('click', () => {
+  resetHandoffStatus();
   installDetails.open = !installDetails.open;
   syncInstallToggle();
 });
 installDetails.addEventListener('toggle', syncInstallToggle);
 shareSetup.addEventListener('click', async () => {
-  handoffStatus.textContent = '';
+  const action = resetHandoffStatus();
   try {
     await navigator.share({title: 'Am I Cooked', text: 'Set up Am I Cooked on your computer.', url: setupLink});
-    handoffStatus.textContent = 'Setup link shared. Open it on your computer to get started.';
+    showHandoffStatus(action, 'Setup link shared. Open it on your computer to get started.', true);
   } catch (error) {
-    if (error.name !== 'AbortError') handoffStatus.textContent = 'Couldn’t share the link. Try Copy Setup Link instead.';
+    if (error.name !== 'AbortError') showHandoffStatus(action, 'Couldn’t share the link. Try Copy Setup Link instead.');
   }
 });
 copySetup.addEventListener('click', async () => {
-  handoffStatus.textContent = await copy(setupLink)
+  const action = resetHandoffStatus();
+  const copied = await copy(setupLink);
+  showHandoffStatus(action, copied
     ? 'Link copied. Send it to your computer and setup from there.'
-    : `Copy this link: ${setupLink}`;
+    : `Copy this link: ${setupLink}`, copied);
 });
 installDetails.open = !compactScreen.matches;
 syncInstallToggle();
