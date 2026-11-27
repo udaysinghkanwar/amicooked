@@ -295,7 +295,7 @@ async function configureClients(clients: ClientId[]): Promise<Outcome[]> {
         const reopen = windows ? "Start a new Antigravity CLI session" : "Reopen Gemini or start a new Antigravity CLI session";
         outcomes.push({ app: "Gemini", ready: false, connected: true, next: `set up. ${reopen}.` });
       } catch (error) {
-        outcomes.push({ app: "Gemini", ready: false, connected: false, failed: true, next: error instanceof Error ? error.message : String(error) });
+        outcomes.push({ app: "Gemini", ready: false, connected: false, failed: true, next: "failed to connect." });
       }
     }
   }
@@ -333,7 +333,12 @@ function codexHas(launch: ReturnType<typeof selfCommand>): boolean {
   return codexEntryIs(launch) && skillBundleIs(path.dirname(codexSkillPath()));
 }
 
-/** The end of setup: every app's next step, then one line saying whether they're done. */
+/** A configured installation can finish while its app still needs reopening; failed connections need attention. */
+export function setupSucceeded(outcomes: Outcome[]): boolean {
+  return outcomes.some(o => o.ready || o.connected) && !outcomes.some(o => o.failed);
+}
+
+/** Every app's next step, followed by the installation outcome. */
 export function finishMessage(outcomes: Outcome[]): { steps: string | null; outro: string } {
   if (!outcomes.length) {
     const gemini = process.platform === "darwin" ? `, or Gemini (${GEMINI_DOWNLOAD})`
@@ -343,8 +348,15 @@ export function finishMessage(outcomes: Outcome[]): { steps: string | null; outr
       outro: `Nothing was set up. Get Claude Desktop (${APPS.claude.download}) or the ChatGPT app (${APPS.chatgpt.download})${gemini}, then run \`amicooked setup\` again.`,
     };
   }
-  const steps = outcomes.map((o) => `${o.app}: ${o.next}`).join("\n");
-  return { steps, outro: outcomes.some((o) => o.ready) ? "You're in. Go ask your AI \"am I cooked?\" and brace yourself." : "Almost there. Do the step above." };
+  const failed = outcomes.some((o) => o.failed);
+  const steps = [
+    ...outcomes.map((o) => `${o.app}: ${o.next}`),
+    ...(failed ? [
+      "Restart your computer and AI app, then rerun the install command.",
+      "Still stuck? Open a support ticket: https://github.com/udaysinghkanwar/amicooked/issues",
+    ] : []),
+  ].join("\n");
+  return { steps, outro: setupSucceeded(outcomes) ? "You're in! Go ask your AI \"am I cooked?\" and brace yourself." : failed ? "Setup needs another try. Follow the steps above." : "Almost there. Do the step above." };
 }
 
 function setupText(color: "green" | "blue" | "bold", text: string): string {
@@ -449,7 +461,7 @@ export async function setup(options: SetupOptions): Promise<number> {
         say: (message) => p.log.message(message),
       });
     }
-    p.outro(outcomes.some((o) => o.ready) ? setupText("green", outro) : outro);
+    p.outro(setupSucceeded(outcomes) ? setupText("green", outro) : outro);
     return outcomes.some((o) => o.failed) ? 1 : 0;
   } catch (error) {
     const code = error instanceof SetupStop ? error.code : 1;

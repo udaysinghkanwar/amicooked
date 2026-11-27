@@ -43,6 +43,20 @@ afterEach(() => {
 });
 
 describe("school setup", () => {
+  it.each([
+    { id: "mcgill", name: "McGill University", host: "mycourses2.mcgill.ca", lmsName: "myCourses" },
+    { id: "ucalgary", name: "University of Calgary", host: "d2l.ucalgary.ca", lmsName: "D2L Brightspace" },
+  ])("offers $name in the initial school picker and selects its portal", async (preset) => {
+    vi.mocked(p.select).mockResolvedValueOnce(preset.id);
+    expect(await chooseSchool(undefined)).toMatchObject(preset);
+    expect(p.select).toHaveBeenCalledWith(expect.objectContaining({
+      message: "Which school do you go to?",
+      options: expect.arrayContaining([{ value: preset.id, label: preset.name, hint: preset.lmsName }]),
+    }));
+    expect(resolveSchool).not.toHaveBeenCalled();
+    expect(p.text).not.toHaveBeenCalled();
+  });
+
   it("accepts a school name from the Somewhere else prompt", async () => {
     vi.mocked(p.select).mockResolvedValueOnce("other");
     vi.mocked(p.text).mockResolvedValueOnce("Example University");

@@ -84,7 +84,10 @@ try {
   writeFileSync(helper, "");
   const skill = path.join(home, "other-client", "skills", "amicooked");
   const setup = run(["setup", "--school", "mcmaster", "--clients", "gemini", "--no-login", "--yes", "--skip-video-deps", "--skill-dir", skill], 1);
-  if (process.platform === "darwin" || process.platform === "win32") assert.match(setup, /isn't a valid Gemini config/);
+  if (process.platform === "darwin" || process.platform === "win32") assert.match(setup, /Gemini: failed to connect\./);
+  assert.match(setup, /Restart your computer and AI app/);
+  assert.match(setup, /https:\/\/github.com\/udaysinghkanwar\/amicooked\/issues/);
+  assert.match(setup, /Setup needs another try/);
   assert.equal(existsSync(path.join(skill, "SKILL.md")), true);
   assert.match(run(["uninstall"], 1), /isn't a valid Gemini config/);
   assert.equal(existsSync(path.join(skill, "SKILL.md")), false);

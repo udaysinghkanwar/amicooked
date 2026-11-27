@@ -2,7 +2,7 @@
 
 > Am I Cooked is a free, open-source (MIT) MCP server that runs on a student's laptop and connects Claude Desktop, Claude Code, local Codex in the ChatGPT desktop app or CLI, Gemini on Mac, or Antigravity CLI on Windows to their D2L Brightspace courses: grades, assignments and due dates, announcements, course content and files. Every tool is read-only. Not affiliated with or endorsed by D2L or any university.
 
-The student signs in on their school's own login page in a real browser window. Am I Cooked keeps the session in `~/.amicooked` on the laptop and never sees the password. Downloaded files go to `~/Downloads/amicooked`. Setup has presets for McMaster, Waterloo, Western, Queen's, Guelph, Laurier, TMU, uOttawa, Carleton, Brock, Windsor, Laurentian and Lakehead, and accepts custom Brightspace login URLs. Sign-in has been tested at McMaster.
+The student signs in on their school's own login page in a real browser window. Am I Cooked keeps the session in `~/.amicooked` on the laptop and never sees the password. Downloaded files go to `~/Downloads/amicooked`. Setup has presets for McMaster, Waterloo, Western, Queen's, Guelph, Laurier, TMU, uOttawa, Carleton, Brock, Windsor, Laurentian, Lakehead, McGill and the University of Calgary, and accepts custom Brightspace login URLs. Sign-in has been tested at McMaster.
 
 ## Setting it up
 

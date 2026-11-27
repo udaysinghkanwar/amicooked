@@ -27,7 +27,8 @@
     <p>Setup and updates send anonymous counts: which preset school (or "custom"), your platform, and version numbers. No IP address, install ID or anything from Brightspace is stored. Set <code>DO_NOT_TRACK=1</code> or <code>AMICOOKED_NO_TELEMETRY=1</code> to turn this off.</p>
 
     <h2>Update emails (optional)</h2>
-    <p>At the end of <code>amicooked setup</code> you can enter an email to get occasional product-update emails, such as new features and fixes. Leaving it blank or typing N/A stores nothing. Students on Ontario K-12 school-board Brightspace are never asked.</p>
+    <p>At the end of <code>amicooked setup</code> you can enter an email to get occasional product-update emails, such as new features and fixes. Typing N/A continues without joining the email list. Blank or invalid entries are re-prompted. Students on Ontario K-12 school-board Brightspace are never asked.</p>
+    <p>When you choose N/A, we record a separate anonymous signup event: the time, app version and source (CLI setup). A random submission ID prevents retries from being counted twice; it is not a persistent device or installation ID. No email address or email consent is stored for this event. This count measures anonymous submissions, not unique people. <code>DO_NOT_TRACK=1</code> or <code>AMICOOKED_NO_TELEMETRY=1</code> disables it. Cancelling the prompt records no signup.</p>
     <ul>
       <li><strong>What we keep:</strong> your email, when you signed up, the wording you agreed to, and the app version. Nothing else.</li>
       <li><strong>Why:</strong> only to send Am I Cooked updates. We never sell or share it, and never use it for ads.</li>

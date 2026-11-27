@@ -10,11 +10,29 @@ describe("finishMessage", () => {
     expect(m.steps).toBe(
       "Claude Desktop: set up, and opening now.\nChatGPT app: install the ChatGPT app from https://chatgpt.com/download, then run `amicooked setup` again."
     );
-    expect(m.outro).toBe("You're in. Go ask your AI \"am I cooked?\" and brace yourself.");
+    expect(m.outro).toBe("You're in! Go ask your AI \"am I cooked?\" and brace yourself.");
   });
 
   it("says what's left when nothing is ready yet", () => {
     expect(finishMessage([{ app: "Claude Desktop", next: "quit it, then run setup again.", ready: false }]).outro).toMatch(/Almost there/);
+  });
+
+  it("finishes a configured installation normally while preserving reopen instructions", () => {
+    const result = finishMessage([{ app: "Gemini", connected: true, ready: false, next: "set up. Reopen Gemini." }]);
+    expect(result.outro).toBe('You\'re in! Go ask your AI "am I cooked?" and brace yourself.');
+    expect(result.steps).toContain("Reopen Gemini");
+    expect(result.outro).not.toContain("Almost there");
+  });
+
+  it("does not hide an actual failed client behind another configured client", () => {
+    const result = finishMessage([
+      { app: "Claude", ready: true, connected: true, next: "set up" },
+      { app: "Gemini", ready: false, connected: false, failed: true, next: "connection failed" },
+    ]);
+    expect(result.outro).toContain("Setup needs another try");
+    expect(result.steps).toContain("Restart your computer and AI app, then rerun the install command.");
+    expect(result.steps).toContain("https://github.com/udaysinghkanwar/amicooked/issues");
+    expect(result.steps).toContain("connection failed");
   });
 
   it("points to the downloads when no app was set up", () => {

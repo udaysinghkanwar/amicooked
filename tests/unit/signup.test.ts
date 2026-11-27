@@ -1,4 +1,5 @@
 import * as fs from "fs";
+import { randomUUID } from "node:crypto";
 import * as os from "os";
 import * as path from "path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -12,6 +13,7 @@ const env = { KV_REST_API_URL: "https://redis.example", KV_REST_API_TOKEN: "t", 
 function fakeRedis() {
   const counters = new Map<string, number>();
   const hash = new Map<string, string>();
+  const anonymous = new Map<string, string>();
   const calls: unknown[][][] = [];
   const fetchImpl = vi.fn(async (_url: string, init: RequestInit) => {
     const commands = JSON.parse(String(init.body)) as string[][];
@@ -19,11 +21,11 @@ function fakeRedis() {
     return Response.json(commands.map(([cmd, key, field, value]) => {
       if (cmd === "INCR") { counters.set(key, (counters.get(key) ?? 0) + 1); return { result: counters.get(key) }; }
       if (cmd === "EXPIRE") return { result: 1 };
-      if (cmd === "HSETNX") { if (hash.has(field)) return { result: 0 }; hash.set(field, value); return { result: 1 }; }
+      if (cmd === "HSETNX") { const target = key === "signup:anonymous" ? anonymous : hash; if (target.has(field)) return { result: 0 }; target.set(field, value); return { result: 1 }; }
       return { error: "unknown" };
     }));
   });
-  return { fetchImpl: fetchImpl as unknown as typeof fetch, hash, calls };
+  return { fetchImpl: fetchImpl as unknown as typeof fetch, hash, anonymous, calls };
 }
 
 const post = (body: unknown, ip = "1.2.3.4") =>
@@ -88,17 +90,28 @@ describe("CLI signup", () => {
   let home: string;
   beforeEach(() => {
     home = fs.mkdtempSync(path.join(os.tmpdir(), "amicooked-signup-"));
-    process.env.AMICOOKED_HOME = home;
+    vi.stubEnv("AMICOOKED_HOME", home);
+    vi.stubEnv("DO_NOT_TRACK", "0");
+    vi.stubEnv("AMICOOKED_NO_TELEMETRY", "0");
   });
   afterEach(() => {
-    delete process.env.AMICOOKED_HOME;
+    vi.unstubAllEnvs();
     fs.rmSync(home, { recursive: true, force: true });
   });
 
-  it("treats blank, N/A and cancel as a skip", () => {
-    for (const answer of ["", "  ", "n/a", "N/A", "na", "no", "n", undefined]) expect(parseEmailAnswer(answer)).toEqual({ skip: true });
+  it("accepts only N/A variants or an email; cancellation sends nothing", () => {
+    for (const answer of ["n/a", "N/A", "NA", "na", " Na ", " n/A "]) expect(parseEmailAnswer(answer)).toEqual({ anonymous: true });
+    for (const answer of ["", "  ", "no", "n", "none", "skip", "not-an-email", "me@", "me@mail", "@mail.com"]) expect(parseEmailAnswer(answer)).toEqual({ invalid: true });
+    expect(parseEmailAnswer(undefined)).toEqual({ skip: true });
     expect(parseEmailAnswer(" Me@Mail.com ")).toEqual({ email: "me@mail.com" });
-    expect(parseEmailAnswer("not-an-email")).toEqual({ invalid: true });
+  });
+
+  it.each(["N/A", "student@example.com"])("goes straight to the email prompt without a tracking banner (%s)", async answer => {
+    const say = vi.fn();
+    const prompt = vi.fn(async () => { expect(say).not.toHaveBeenCalled(); return answer; });
+    const fetchImpl = (async () => new Response(null, { status: 204 })) as typeof fetch;
+    await askForEmail({ host: "learn.uwaterloo.ca" }, { prompt, say, fetchImpl });
+    expect(say.mock.calls).toEqual([[answer === "N/A" ? "Continuing without email updates." : "Saved. Thanks!"]]);
   });
 
   it("recognizes K-12 boards by their provincial Brightspace host", () => {
@@ -136,13 +149,156 @@ describe("CLI signup", () => {
     expect(prompt).not.toHaveBeenCalled();
   });
 
-  it("re-asks after an invalid entry, and remembers a skip", async () => {
-    const answers = ["oops", "N/A"];
+  it.each([
+    ["me@mail.com", "Couldn't confirm your subscription to email updates.", 'Run "amicooked setup" later to retry subscribing to email updates.'],
+    ["N/A", "Couldn't confirm your anonymous signup.", "Run amicooked setup later to retry."],
+  ])("explains that optional signup failure leaves installation configured (%s)", async (answer, problem, retry) => {
+    const say = vi.fn();
+    const fetchImpl = (async () => new Response(null, { status: 502 })) as typeof fetch;
+    expect(await askForEmail({ host: "learn.uwaterloo.ca" }, { prompt: async () => answer, say, fetchImpl })).toBe("failed");
+    expect(say.mock.calls.map(([message]) => message)).toEqual([
+      problem,
+      "Am I Cooked is installed and configured. Follow any app reopening steps above.",
+      retry,
+    ]);
+    expect(fs.existsSync(path.join(home, "signup-asked"))).toBe(false);
+  });
+
+  it("re-asks after invalid entries, records N/A separately and remembers acknowledgement", async () => {
+    const answers = ["oops", "", "N/A"];
     const prompt = vi.fn(async () => answers.shift());
-    const fetchImpl = vi.fn() as unknown as typeof fetch;
-    expect(await askForEmail({ host: "learn.uwaterloo.ca" }, { prompt, say: vi.fn(), fetchImpl })).toBe("skipped");
-    expect(prompt).toHaveBeenCalledTimes(2);
-    expect(fetchImpl).not.toHaveBeenCalled();
+    const fetchImpl = vi.fn(async () => new Response(null, { status: 204 })) as unknown as typeof fetch & ReturnType<typeof vi.fn>;
+    expect(await askForEmail({ host: "learn.uwaterloo.ca" }, { prompt, say: vi.fn(), fetchImpl })).toBe("anonymous");
+    expect(prompt).toHaveBeenCalledTimes(3);
+    const body = JSON.parse(String(fetchImpl.mock.calls[0][1].body));
+    expect(body).toMatchObject({ kind: "anonymous", prompt: CONSENT_VERSION, eventId: expect.any(String) });
+    expect(body).not.toHaveProperty("email");
+    expect(body).not.toHaveProperty("consent");
     expect(await askForEmail({ host: "learn.uwaterloo.ca" }, { prompt, say: vi.fn(), fetchImpl })).toBe("already-asked");
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it("uses the same persisted ID after a lost acknowledgement, without overwriting the first timestamp", async () => {
+    const redis = fakeRedis();
+    const bodies: object[] = [];
+    let attempt = 0;
+    const fetchImpl = vi.fn(async (_url, init) => {
+      bodies.push(JSON.parse(String(init?.body)));
+      const response = await handle(post(bodies.at(-1)), env, redis.fetchImpl,
+        new Date(attempt++ === 0 ? "2026-11-26T12:00:00Z" : "2026-11-26T12:05:00Z"));
+      if (attempt === 1) throw new Error("Response lost after commit");
+      return response;
+    }) as unknown as typeof fetch;
+    const options = { prompt: async () => "N/A", say: vi.fn(), fetchImpl, version: "0.1.23" };
+    expect(await askForEmail({ host: "learn.uwaterloo.ca" }, options)).toBe("failed");
+    expect(fs.existsSync(path.join(home, "signup-asked"))).toBe(false);
+    expect(fs.existsSync(path.join(home, "signup-anonymous-pending"))).toBe(true);
+    expect(await askForEmail({ host: "learn.uwaterloo.ca" }, options)).toBe("anonymous");
+    expect(bodies[0]).toEqual(bodies[1]);
+    expect(redis.anonymous.size).toBe(1);
+    expect(redis.hash.size).toBe(0);
+    expect(JSON.parse([...redis.anonymous.values()][0])).toEqual({ at: "2026-11-26T12:00:00.000Z", src: "cli-setup", v: "0.1.23" });
+    expect(fs.existsSync(path.join(home, "signup-anonymous-pending"))).toBe(false);
+    expect(await askForEmail({ host: "learn.uwaterloo.ca" }, options)).toBe("already-asked");
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+  });
+
+  it("retains the ID when the server acknowledged but writing the local completion marker fails", async () => {
+    const redis = fakeRedis(); let attempt = 0;
+    const fetchImpl = (async (_url, init) => {
+      const response = await handle(post(JSON.parse(String(init?.body))), env, redis.fetchImpl);
+      if (++attempt === 1) fs.mkdirSync(path.join(home, "signup-asked"));
+      return response;
+    }) as typeof fetch;
+    const options = { prompt: async () => "NA", say: vi.fn(), fetchImpl };
+    expect(await askForEmail({ host: "learn.uwaterloo.ca" }, options)).toBe("anonymous");
+    expect(fs.existsSync(path.join(home, "signup-anonymous-pending"))).toBe(true);
+    fs.rmdirSync(path.join(home, "signup-asked"));
+    expect(await askForEmail({ host: "learn.uwaterloo.ca" }, options)).toBe("anonymous");
+    expect(redis.anonymous.size).toBe(1);
+  });
+
+  it("does not send a second event when another setup finishes while a prompt is open", async () => {
+    const redis = fakeRedis(); let answerLater: (answer: string) => void;
+    const fetchImpl = (async (_url, init) => handle(post(JSON.parse(String(init?.body))), env, redis.fetchImpl)) as typeof fetch;
+    const waiting = askForEmail({ host: "learn.uwaterloo.ca" }, { prompt: () => new Promise(resolve => { answerLater = resolve; }), say: vi.fn(), fetchImpl });
+    expect(await askForEmail({ host: "learn.uwaterloo.ca" }, { prompt: async () => "NA", say: vi.fn(), fetchImpl })).toBe("anonymous");
+    answerLater!("N/A");
+    expect(await waiting).toBe("already-asked");
+    expect(redis.anonymous.size).toBe(1);
+  });
+
+  it.each(["DO_NOT_TRACK", "AMICOOKED_NO_TELEMETRY"])("respects %s for anonymous events, while email remains explicit opt-in", async key => {
+    vi.stubEnv(key, "1");
+    const fetchImpl = vi.fn(async () => new Response(null, { status: 204 })) as unknown as typeof fetch;
+    const options = { prompt: async () => "NA", say: vi.fn(), fetchImpl };
+    expect(await askForEmail({ host: "learn.uwaterloo.ca" }, options)).toBe("skipped");
+    expect(fetchImpl).not.toHaveBeenCalled();
+    expect(fs.existsSync(path.join(home, "signup-anonymous-pending"))).toBe(false);
+    expect(await submitSignup("person@example.com", { fetchImpl })).toBe(true);
+  });
+
+  it("does not record cancellation or mark it as an accepted response", async () => {
+    const fetchImpl = vi.fn() as unknown as typeof fetch;
+    expect(await askForEmail({ host: "learn.uwaterloo.ca" }, { prompt: async () => undefined, say: vi.fn(), fetchImpl })).toBe("skipped");
+    expect(fetchImpl).not.toHaveBeenCalled();
+    expect(fs.existsSync(path.join(home, "signup-asked"))).toBe(false);
+  });
+
+  it("never rotates a corrupt pending ID and risks a second event", async () => {
+    fs.writeFileSync(path.join(home, "signup-anonymous-pending"), "corrupt");
+    const fetchImpl = vi.fn() as unknown as typeof fetch;
+    expect(await askForEmail({ host: "learn.uwaterloo.ca" }, { prompt: async () => "NA", say: vi.fn(), fetchImpl })).toBe("failed");
+    expect(fetchImpl).not.toHaveBeenCalled();
+    expect(fs.readFileSync(path.join(home, "signup-anonymous-pending"), "utf8")).toBe("corrupt");
+  });
+});
+
+// Each HSETNX below is the backend's existing atomic primitive, now in a separate event hash.
+describe("anonymous signup storage", () => {
+  const anonymous = (eventId = randomUUID()) => ({ kind: "anonymous", eventId, prompt: CONSENT_VERSION, version: "0.1.23" });
+  it("keeps distinct submissions and concurrent retries separate from the email list", async () => {
+    const redis = fakeRedis();
+    const body = anonymous();
+    const replies = await Promise.all([handle(post(body), env, redis.fetchImpl), handle(post(body), env, redis.fetchImpl)]);
+    expect(replies.map(r => r.status)).toEqual([204, 204]);
+    expect(redis.anonymous.size).toBe(1);
+    expect((await handle(post(anonymous()), env, redis.fetchImpl)).status).toBe(204);
+    expect(redis.anonymous.size).toBe(2);
+    expect(redis.hash.size).toBe(0);
+    expect(JSON.stringify([...redis.anonymous.values()])).not.toMatch(/email|consent|1\.2\.3\.4/);
+  });
+
+  it("normalizes UUID case so a replay cannot count twice", async () => {
+    const redis = fakeRedis(); const body = anonymous();
+    await handle(post(body), env, redis.fetchImpl);
+    await handle(post({ ...body, eventId: body.eventId.toUpperCase() }), env, redis.fetchImpl);
+    expect(redis.anonymous.size).toBe(1);
+  });
+
+  it("rejects malformed or mixed anonymous requests before touching Redis", async () => {
+    const redis = fakeRedis(); const body = anonymous();
+    for (const invalid of [{ ...body, eventId: "bad" }, { ...body, eventId: undefined },
+      { ...body, prompt: "unknown" }, { ...body, email: "person@example.com" }, { ...body, consent: CONSENT_VERSION },
+      { ...body, kind: "unknown" }]) {
+      expect((await handle(post(invalid), env, redis.fetchImpl)).status).toBe(400);
+    }
+    expect(redis.calls).toEqual([]);
+  });
+
+  it("retains legacy email-client compatibility", async () => {
+    const redis = fakeRedis();
+    expect((await handle(post({ email: "legacy@example.com", consent: "2026-11-26-prompt", version: "0.1.23" }), env, redis.fetchImpl)).status).toBe(204);
+    expect(redis.hash.size).toBe(1);
+    expect(redis.anonymous.size).toBe(0);
+  });
+
+  it("applies rate limits and storage failures to anonymous writes too", async () => {
+    const redis = fakeRedis();
+    for (let i = 0; i < MAX_PER_IP_PER_DAY; i++) expect((await handle(post(anonymous()), env, redis.fetchImpl)).status).toBe(204);
+    expect((await handle(post(anonymous()), env, redis.fetchImpl)).status).toBe(429);
+    expect(redis.anonymous.size).toBe(MAX_PER_IP_PER_DAY);
+    expect((await handle(post(anonymous()), {}, redis.fetchImpl)).status).toBe(503);
+    expect((await handle(post(anonymous()), env, async () => { throw new Error("offline"); })).status).toBe(502);
   });
 });
