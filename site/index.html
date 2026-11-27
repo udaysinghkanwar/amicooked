@@ -24,10 +24,10 @@
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./styles.css?v=36">
+  <link rel="stylesheet" href="./styles.css?v=37">
   <link rel="alternate" type="text/markdown" href="./SKILL.md" title="Setup instructions for AI agents">
   <script>document.documentElement.classList.replace("no-js", "js");</script>
-  <script src="./main.js?v=30" defer></script>
+  <script src="./main.js?v=31" defer></script>
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -70,7 +70,6 @@
           <li><p class="step-title">Paste this and press Return</p>
             <div class="cmd">
               <code id="cmd-mac">curl -fsSL https://<span data-domain>amicooked-mcp.vercel.app</span>/install.sh | sh</code>
-              <code id="cmd-mac-update" hidden>amicooked update</code>
               <button class="icon-button" type="button" data-copy="cmd-mac" aria-label="Copy the Mac and Linux install command">
               <svg class="i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i-check" aria-hidden="true"><use href="#i-check"/></svg>
             </button>
@@ -83,7 +82,6 @@
           <li><p class="step-title">Paste this and press Enter</p>
             <div class="cmd">
               <code id="cmd-win">irm https://<span data-domain>amicooked-mcp.vercel.app</span>/install.ps1 | iex</code>
-              <code id="cmd-win-update" hidden>amicooked update</code>
               <button class="icon-button" type="button" data-copy="cmd-win" aria-label="Copy the Windows install command">
               <svg class="i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i-check" aria-hidden="true"><use href="#i-check"/></svg>
             </button>
@@ -96,7 +94,7 @@
           <span>Free</span><span aria-hidden="true">·</span>
           <span>Your login stays with you</span><span aria-hidden="true">·</span>
           <button type="button" class="text-button js-only" data-setup-method aria-controls="agent-panel" aria-expanded="false">Coding agent auto-install prompt</button><span aria-hidden="true" class="js-only">·</span>
-          <button type="button" class="text-button js-only" id="other-setup-toggle" aria-controls="other-setup-panel" aria-expanded="false">Other ways to install or update</button>
+          <button type="button" class="text-button js-only" id="other-setup-toggle" aria-controls="other-setup-panel" aria-expanded="false">Other ways to install</button>
         </div>
         <div class="tab-panel" id="agent-panel" hidden>
           <div class="cmd cmd-prompt">
@@ -115,30 +113,25 @@ If you have local access, run that installer and help with the same steps. Do no
 
 Claude Code or Codex with local access is an optional alternative. If installation fails, troubleshoot the actual error; offer npx -y amicooked@0 setup only with Node.js 22+.
 Guide: https://<span data-domain>amicooked-mcp.vercel.app</span>/references/setup.md</code>
-              <code id="agent-prompt-update" hidden>Update Am I Cooked using https://amicooked-mcp.vercel.app/references/updates.md. Use the command that matches how I installed it. If you can’t run commands on my computer, give me that command.</code>
             <button class="icon-button" type="button" data-copy="agent-prompt" aria-label="Copy the setup prompt for your coding agent">
               <svg class="i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i-check" aria-hidden="true"><use href="#i-check"/></svg>
             </button>
           </div>
-          <p class="panel-hint">Paste it into your agent. <button type="button" class="text-button js-only" id="prompt-toggle" aria-controls="agent-prompt agent-prompt-update" aria-expanded="false">Show full prompt</button></p>
+          <p class="panel-hint">Paste it into your agent. <button type="button" class="text-button js-only" id="prompt-toggle" aria-controls="agent-prompt" aria-expanded="false">Show full prompt</button></p>
         </div>
         <div class="setup-extras" id="other-setup-panel" hidden>
           <div class="setup-extras-content">
-            <p class="other-ways"><button type="button" class="text-button" data-setup-method aria-controls="npm-panel" aria-expanded="false">Use npm</button></p>
-        <div class="tab-panel" id="npm-panel" hidden>
-          <div class="cmd">
-            <code id="cmd-npm">npx -y amicooked@0 setup</code>
-              <code id="cmd-npm-update" hidden>npx -y amicooked@0 update</code>
-            <button class="icon-button" type="button" data-copy="cmd-npm" aria-label="Copy the npm setup command">
-              <svg class="i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i-check" aria-hidden="true"><use href="#i-check"/></svg>
-            </button>
-          </div>
-          <p class="panel-hint">Needs Node.js 22 or later.</p>
-        </div>
-        <p class="panel-hint">
-          <span id="update-question">Already have Am I Cooked?</span> <a id="update-toggle" href="./references/updates.md">View update commands</a>
-          <span id="update-help" hidden><span aria-hidden="true">·</span> Reload your AI app after updating. <a href="./references/updates.md">update guide</a></span>
-        </p>
+            <h3>Install with npm</h3>
+            <p class="step-hint">For any OS with Node.js 22 or later.</p>
+            <div class="cmd"><code id="cmd-npm">npx -y amicooked@0 setup</code><button class="icon-button" type="button" data-copy="cmd-npm" aria-label="Copy the npm setup command"><svg class="i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i-check" aria-hidden="true"><use href="#i-check"/></svg></button></div>
+            <div class="update-options">
+              <h3>Already have Am I Cooked?</h3>
+              <p class="step-hint">Installed with the Mac/Linux or Windows installer:</p>
+              <div class="cmd"><code id="cmd-native-update">amicooked update</code><button class="icon-button" type="button" data-copy="cmd-native-update" aria-label="Copy the installed app update command"><svg class="i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i-check" aria-hidden="true"><use href="#i-check"/></svg></button></div>
+              <p class="step-hint">Installed with npm or npx (Node.js 22+):</p>
+              <div class="cmd"><code id="cmd-npm-update">npx -y amicooked@0 update</code><button class="icon-button" type="button" data-copy="cmd-npm-update" aria-label="Copy the npm update command"><svg class="i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i-check" aria-hidden="true"><use href="#i-check"/></svg></button></div>
+              <p class="step-hint">After updating, reopen your AI app. <a href="./references/updates.md">Update guide</a></p>
+            </div>
           </div>
         </div>
           </div>

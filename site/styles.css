@@ -503,3 +503,10 @@ h1 { background: linear-gradient(110deg, var(--ink) 20%, #F5C39A 65%, var(--acce
   .setup-links { width: 100%; max-width: 100%; row-gap: 8px; line-height: 1.6; }
   .setup-links button { min-height: 36px; }
 }
+
+.setup-extras { padding: 18px; border: 1px solid rgba(243, 163, 106, 0.22); border-radius: 14px; }
+.setup-extras-content { padding-top: 0; gap: 8px; }
+.setup-extras h3 { font-size: 0.9375rem; color: var(--soft); }
+.update-options { display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--rule); padding-top: 16px; margin-top: 8px; min-width: 0; }
+.setup-extras .step-hint { font-size: 0.8125rem; }
+@media (max-width: 600px) { .setup-extras { padding: 14px 10px; } }
