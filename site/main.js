@@ -275,12 +275,6 @@ const EXCHANGES = [
     without: "can’t see your course 💔 the only video i can make is you panicking in 4k",
   },
   {
-    q: "what’s on the midterm?",
-    tools: ["get_announcements"], note: "2XB3",
-    text: "Chapters 4 to 7, 90 minutes, no calculators. That’s from Friday’s announcement.",
-    without: "everything bro 💀 that’s always the answer",
-  },
-  {
     // 2 overdue (+4), 1 due within 72h (+1), lowest grade 47% (+3) = 8, well done
     q: "how bad is finals week?",
     tools: ["am_i_cooked"], note: "read 4 courses",
@@ -460,7 +454,7 @@ async function stream(nodes, id, first = 46, last = 22) {
 async function play(index, mode, id) {
   const ex = pickVariant(EXCHANGES[index]);
   await clearThread(id);
-  if (!compactScreen.matches) await typeQuestion(ex.q, id);
+  await typeQuestion(ex.q, id);
 
   const bubble = el("p", "msg-user pop", ex.q);
   thread.append(bubble);
@@ -562,7 +556,7 @@ function restart(index) {
   composerText.textContent = "";
   composer.classList.remove("has-text");
   const mode = withTool ? "with" : "without";
-  if (reducedMotion || compactScreen.matches) {
+  if (reducedMotion) {
     const ex = pickVariant(EXCHANGES[index]);
     renderFinal(ex, mode);
     loop(id);
@@ -634,7 +628,6 @@ new IntersectionObserver(([entry]) => {
 setPaused(paused);
 placePill();
 thread.replaceChildren();
-if (compactScreen.matches) { started = true; restart(0); }
 reserveHeight();
 document.fonts.ready.then(() => { reserveHeight(); placePill(); });
 let resizeTimer;
