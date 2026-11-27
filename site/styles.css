@@ -124,7 +124,7 @@ h1 {
 
 .get { display: flex; flex-direction: column; align-items: center; gap: 14px; width: 100%; max-width: 600px; margin-top: 44px; }
 .get .cmd { width: 100%; text-align: left; }
-.tab-panel { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+.tab-panel { display: flex; flex-direction: column; gap: 10px; width: 100%; min-width: 0; }
 .tab-panel[hidden] { display: none; }
 .panel-hint { font-size: 0.8125rem; color: var(--muted); text-align: center; }
 /* The agent prompt shows one line like the commands; the full text is a click away (copy always takes all of it) */
@@ -344,8 +344,9 @@ h1 {
 
 /* Mobile preview: preserve the desktop structure and styling. */
 .mobile-copy, .mobile-handoff, .mobile-title-break, .mobile-utilities { display: none; }
-.install-details { display: contents; }
-.install-options { display: flex; flex-direction: column; gap: 14px; align-items: center; width: 100%; }
+/* Keep a real width constraint: display: contents lets the single-line agent prompt widen every setup panel. */
+.install-details { display: block; width: 100%; min-width: 0; }
+.install-options { display: flex; flex-direction: column; gap: 14px; align-items: center; width: 100%; min-width: 0; }
 .install-details > summary { display: none; }
 @media (max-width: 600px) {
   .desktop-copy { display: none; }
@@ -443,4 +444,37 @@ h1 { background: linear-gradient(110deg, var(--ink) 20%, #F5C39A 65%, var(--acce
 }
 @media (forced-colors: active) {
   h1 { background: none; color: CanvasText; }
+}
+
+/* Three numbered steps: what to open, what to paste, what happens next */
+.install-steps { list-style: none; counter-reset: step; width: 100%; margin: 0; padding: 18px 20px; display: flex; flex-direction: column; gap: 18px; text-align: left; border-radius: 16px; background: var(--raised); border: 1px solid var(--rule); }
+.install-steps[hidden] { display: none; }
+.install-steps li { counter-increment: step; position: relative; padding-left: 38px; }
+.install-steps li::before {
+  content: counter(step); position: absolute; left: 0; top: 0; width: 24px; height: 24px; display: grid; place-items: center;
+  border-radius: 50%; border: 1px solid var(--rule-strong); font-size: 0.75rem; font-weight: 600; color: var(--soft);
+}
+.step-title { font-weight: 600; color: var(--ink); line-height: 24px; }
+.step-hint { margin-top: 2px; font-size: 0.875rem; color: var(--muted); }
+.install-steps .cmd { margin-top: 10px; background: var(--well); }
+.other-ways { font-size: 0.875rem; color: var(--muted); text-align: center; }
+
+/* Fit guided setup into the existing mobile install disclosure. */
+@media (max-width: 600px) {
+  .install-steps { padding: 14px 12px; gap: 16px; }
+  .install-steps li { padding-left: 30px; min-width: 0; }
+  .step-title { font-size: 0.875rem; }
+  .step-hint, .other-ways { font-size: 0.8125rem; }
+  .install-steps .cmd code { font-size: 0.75rem; }
+}
+
+@media (max-width: 600px) {
+  .install-details[open] {
+    border: 1px solid rgba(243, 163, 106, 0.22);
+    border-radius: 16px;
+    padding: 12px 10px 16px;
+    margin-top: 4px;
+  }
+  .install-details[open] > .install-options { padding-top: 0; }
+  .install-details[open] .install-steps { border: 0; background: none; padding: 8px 0; }
 }

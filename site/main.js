@@ -84,6 +84,17 @@ updateToggle.addEventListener("click", event => {
   live.textContent = showingUpdates ? "Update commands shown" : "Setup commands shown";
 });
 
+// Alternative setup methods stay separate from the primary OS instructions.
+const otherWays = [...document.querySelectorAll('.other-ways [aria-controls]')];
+otherWays.forEach((button) => button.addEventListener('click', () => {
+  const opening = button.getAttribute('aria-expanded') !== 'true';
+  otherWays.forEach((item) => {
+    const active = opening && item === button;
+    item.setAttribute('aria-expanded', String(active));
+    document.getElementById(item.getAttribute('aria-controls')).hidden = !active;
+  });
+}));
+
 // ---- The agent prompt: one line until asked for in full ----
 
 const promptToggle = document.getElementById("prompt-toggle");
