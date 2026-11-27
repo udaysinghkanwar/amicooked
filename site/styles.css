@@ -561,3 +561,7 @@ h1 { background: linear-gradient(110deg, var(--ink) 20%, #F5C39A 65%, var(--acce
   .privacy-content { padding-block: 28px 48px; }
   .privacy-content h2 { font-size: 1.125rem; }
 }
+
+.privacy-content .maintainer-list { list-style: none; padding: 0; margin-top: 14px; color: var(--muted); }
+.privacy-content .maintainer-list li { margin-top: 10px; line-height: 1.7; }
+.privacy-content .maintainer-list strong { color: var(--soft); }
