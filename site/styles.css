@@ -538,13 +538,10 @@ h1 { background: linear-gradient(110deg, var(--ink) 20%, #F5C39A 65%, var(--acce
   .privacy-band h2 { margin-bottom: 24px; }
 }
 
-.privacy-band h2::after {
-  content: "";
-  display: block;
-  width: 44px;
-  height: 2px;
-  margin-top: 12px;
-  border-radius: 2px;
-  background: var(--accent);
-  opacity: 0.6;
+.privacy-band h2 {
+  font-weight: 700;
+  text-decoration-line: underline;
+  text-decoration-color: rgba(243, 163, 106, 0.6);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 6px;
 }
