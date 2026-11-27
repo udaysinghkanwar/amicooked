@@ -191,12 +191,22 @@ describe("render jobs", () => {
   it("waits for another app's start, and clears a lock left by one that died", () => {
     const { id } = createLesson("t");
     const lock = path.join(home, "Downloads", "amicooked", "Lessons", ".render.lock");
-    fs.writeFileSync(lock, "");
-    expect(() => startRender(id, () => 4242)).toThrow("Another render is starting");
-    const old = new Date(Date.now() - 60_000);
-    fs.utimesSync(lock, old, old);
-    expect(startRender(id, () => 4242).state).toBe("running");
-    expect(fs.existsSync(lock)).toBe(false);
+    // Real sleeps can exceed the test deadline on a loaded runner. Keep the real
+    // filesystem/lock checks, but make waiting deterministic and verify retries.
+    const wait = vi.spyOn(Atomics, "wait").mockReturnValue("timed-out");
+    try {
+      fs.writeFileSync(lock, "");
+      expect(() => startRender(id, () => 4242)).toThrow("Another render is starting");
+      expect(wait).toHaveBeenCalledTimes(50);
+      wait.mockClear();
+      const old = new Date(Date.now() - 60_000);
+      fs.utimesSync(lock, old, old);
+      expect(startRender(id, () => 4242).state).toBe("running");
+      expect(wait).not.toHaveBeenCalled();
+      expect(fs.existsSync(lock)).toBe(false);
+    } finally {
+      wait.mockRestore();
+    }
   });
 });
 
