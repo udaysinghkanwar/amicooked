@@ -275,12 +275,6 @@ const EXCHANGES = [
     without: "can’t see your course 💔 the only video i can make is you panicking in 4k",
   },
   {
-    q: "what’s on the midterm?",
-    tools: ["get_announcements"], note: "2XB3",
-    text: "Chapters 4 to 7, 90 minutes, no calculators. That’s from Friday’s announcement.",
-    without: "everything bro 💀 that’s always the answer",
-  },
-  {
     // 2 overdue (+4), 1 due within 72h (+1), lowest grade 47% (+3) = 8, well done
     q: "how bad is finals week?",
     tools: ["am_i_cooked"], note: "read 4 courses",
