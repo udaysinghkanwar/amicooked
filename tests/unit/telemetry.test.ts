@@ -118,7 +118,11 @@ describe("site/api/e.js", () => {
     const buttons = [...html.matchAll(/data-copy="([^"]+)"/g)].map((m) => m[1]);
     const map = JSON.parse(main.match(/const COPY_TABS = (\{[^}]+\})/)![1].replace(/"?([\w-]+)"?:/g, '"$1":'));
     expect(buttons.length).toBeGreaterThan(0);
-    for (const id of buttons) expect(TABS).toContain(map[id]);
+    for (const id of buttons) {
+      // Update actions are separate from setup-copy analytics.
+      if (id.endsWith("-update")) expect(map[id]).toBeUndefined();
+      else expect(TABS).toContain(map[id]);
+    }
   });
 
   it("buckets unknown values instead of storing them", () => {

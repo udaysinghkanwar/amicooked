@@ -24,10 +24,10 @@
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="./styles.css?v=34">
+  <link rel="stylesheet" href="./styles.css?v=46">
   <link rel="alternate" type="text/markdown" href="./SKILL.md" title="Setup instructions for AI agents">
   <script>document.documentElement.classList.replace("no-js", "js");</script>
-  <script src="./main.js?v=29" defer></script>
+  <script src="./main.js?v=31" defer></script>
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -70,7 +70,6 @@
           <li><p class="step-title">Paste this and press Return</p>
             <div class="cmd">
               <code id="cmd-mac">curl -fsSL https://<span data-domain>amicooked-mcp.vercel.app</span>/install.sh | sh</code>
-              <code id="cmd-mac-update" hidden>amicooked update</code>
               <button class="icon-button" type="button" data-copy="cmd-mac" aria-label="Copy the Mac and Linux install command">
               <svg class="i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i-check" aria-hidden="true"><use href="#i-check"/></svg>
             </button>
@@ -83,7 +82,6 @@
           <li><p class="step-title">Paste this and press Enter</p>
             <div class="cmd">
               <code id="cmd-win">irm https://<span data-domain>amicooked-mcp.vercel.app</span>/install.ps1 | iex</code>
-              <code id="cmd-win-update" hidden>amicooked update</code>
               <button class="icon-button" type="button" data-copy="cmd-win" aria-label="Copy the Windows install command">
               <svg class="i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i-check" aria-hidden="true"><use href="#i-check"/></svg>
             </button>
@@ -92,44 +90,51 @@
           <li><p class="step-title">Choose your school and AI app</p><p class="step-hint">Follow setup to sign in on your school’s page. Then ask your connected AI: “am I cooked?”</p></li>
         </ol>
 
-        <p class="other-ways">Use Claude Code, Codex or Antigravity? <button type="button" class="text-button" aria-controls="agent-panel" aria-expanded="false">Set up with a coding agent</button> <span aria-hidden="true">·</span> <button type="button" class="text-button" aria-controls="npm-panel" aria-expanded="false">Use npm</button></p>
+        <div class="setup-links">
+          <span class="desktop-copy">Free</span><span class="desktop-copy" aria-hidden="true">·</span>
+          <span class="desktop-copy">Your login stays with you</span><span class="desktop-copy" aria-hidden="true">·</span>
+          <button type="button" class="text-button js-only" data-setup-method aria-controls="agent-panel" aria-expanded="false">Coding agent auto-install prompt</button><span aria-hidden="true" class="desktop-copy js-only">·</span>
+          <button type="button" class="text-button js-only" id="other-setup-toggle" aria-controls="other-setup-panel" aria-expanded="false">Other ways to install</button>
+        </div>
         <div class="tab-panel" id="agent-panel" hidden>
           <div class="cmd cmd-prompt">
-            <code id="agent-prompt">Set up Am I Cooked for me. Ask which school I go to, and never ask for my password.
+            <code id="agent-prompt">Help me install Am I Cooked on my own computer. Never ask for my school password. Use my Mac, Windows or Linux OS if it is already known from this conversation or reliable information about my own computer; do not ask again. Otherwise ask which OS I use. Never infer my OS from your hosted sandbox. Begin the installation instructions with “Since you’re on [Mac/Windows/Linux], …”.
 
-If you can run commands on my computer, run the installer for my system:
-• Windows (PowerShell): irm https://<span data-domain>amicooked-mcp.vercel.app</span>/install.ps1 | iex
-• macOS or Linux: curl -fsSL https://<span data-domain>amicooked-mcp.vercel.app</span>/install.sh | sh
-• With Node.js 22+: npx -y amicooked@0 setup
+Use only the matching installer, unchanged:
+Mac/Linux (Terminal): curl -fsSL https://<span data-domain>amicooked-mcp.vercel.app</span>/install.sh | sh
+Windows (PowerShell): irm https://<span data-domain>amicooked-mcp.vercel.app</span>/install.ps1 | iex
 
-Setup guide: https://<span data-domain>amicooked-mcp.vercel.app</span>/references/setup.md
-GitHub copy: https://github.com/udaysinghkanwar/amicooked/blob/main/skill/references/setup.md
+If you cannot run commands on MY computer, do not try installing in a hosted sandbox or stop at “I can’t.” Say “Since you’re on [OS], you can still install it yourself:” and give these steps for my OS:
+1. Open Terminal on Mac (press ⌘ Space, type Terminal, press Return) or PowerShell on Windows (press Windows, type PowerShell, press Enter). On Linux, open the terminal app. Show only my OS’s instructions.
+2. Show my exact installer above in its own copyable code block. Tell me to paste it into that window and press Enter, choose my school and AI app, and sign in on my school’s page.
+3. Follow setup’s next step, reopen the selected AI app if requested, and ask “am I cooked?” there. Use this chat only if it is connected.
 
-If this chat can't install locally or setup fails because of this environment, explain the blocker and give me the exact next command for Terminal or PowerShell. Suggest continuing in Claude Code, Codex, or another coding AI I use with local access, and give me a copyable handoff with the command, completed steps, and error (no secrets). Only report success after verification.</code>
-              <code id="agent-prompt-update" hidden>Update Am I Cooked using https://amicooked-mcp.vercel.app/references/updates.md. Use the command that matches how I installed it. If you can’t run commands on my computer, give me that command.</code>
+If you can run commands on my computer, run the normal installer and guide the same steps. Do not add flags, environment variables or custom commands. If it fails, ask for the error without passwords/tokens; offer npx -y amicooked@0 setup only if Node.js 22+ is installed. Mention Claude Code or Codex as optional help only AFTER giving the manual steps. Never claim success from a sandbox install or from instructions alone; verify course access in the connected AI.
+Guide: https://<span data-domain>amicooked-mcp.vercel.app</span>/references/setup.md</code>
             <button class="icon-button" type="button" data-copy="agent-prompt" aria-label="Copy the setup prompt for your coding agent">
               <svg class="i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i-check" aria-hidden="true"><use href="#i-check"/></svg>
             </button>
           </div>
-          <p class="panel-hint">Paste it into your agent. <button type="button" class="text-button js-only" id="prompt-toggle" aria-controls="agent-prompt agent-prompt-update" aria-expanded="false">Show full prompt</button></p>
+          <p class="panel-hint">Paste it into your agent. <button type="button" class="text-button js-only" id="prompt-toggle" aria-controls="agent-prompt" aria-expanded="false">Show full prompt</button></p>
         </div>
-        <div class="tab-panel" id="npm-panel" hidden>
-          <div class="cmd">
-            <code id="cmd-npm">npx -y amicooked@0 setup</code>
-              <code id="cmd-npm-update" hidden>npx -y amicooked@0 update</code>
-            <button class="icon-button" type="button" data-copy="cmd-npm" aria-label="Copy the npm setup command">
-              <svg class="i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i-check" aria-hidden="true"><use href="#i-check"/></svg>
-            </button>
+        <div class="setup-extras" id="other-setup-panel" hidden>
+          <div class="setup-extras-content">
+            <h3>Install with npm</h3>
+            <p class="step-hint">For any OS with Node.js 22 or later.</p>
+            <div class="cmd"><code id="cmd-npm">npx -y amicooked@0 setup</code><button class="icon-button" type="button" data-copy="cmd-npm" aria-label="Copy the npm setup command"><svg class="i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i-check" aria-hidden="true"><use href="#i-check"/></svg></button></div>
+            <div class="update-options">
+              <h3>Already have Am I Cooked?</h3>
+              <p class="step-hint">Installed with the Mac/Linux or Windows installer:</p>
+              <div class="cmd"><code id="cmd-native-update">amicooked update</code><button class="icon-button" type="button" data-copy="cmd-native-update" aria-label="Copy the installed app update command"><svg class="i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i-check" aria-hidden="true"><use href="#i-check"/></svg></button></div>
+              <p class="step-hint">Installed with npm or npx (Node.js 22+):</p>
+              <div class="cmd"><code id="cmd-npm-update">npx -y amicooked@0 update</code><button class="icon-button" type="button" data-copy="cmd-npm-update" aria-label="Copy the npm update command"><svg class="i-copy" aria-hidden="true"><use href="#i-copy"/></svg><svg class="i-check" aria-hidden="true"><use href="#i-check"/></svg></button></div>
+              <p class="step-hint">After updating, reopen your AI app. <a href="./references/updates.md">Update guide</a></p>
+            </div>
           </div>
-          <p class="panel-hint">Needs Node.js 22 or later.</p>
         </div>
           </div>
         </details>
-        <p class="trust desktop-copy"><span>Free <span aria-hidden="true">·</span> open source <span aria-hidden="true">·</span> your login stays on your laptop <span aria-hidden="true">·</span> <a href="https://github.com/udaysinghkanwar/amicooked/blob/main/install/install.sh">view install script</a></span></p>
-        <p class="panel-hint">
-          <span id="update-question">Already have Am I Cooked?</span> <a id="update-toggle" href="./references/updates.md">View update commands</a>
-          <span id="update-help" hidden><span aria-hidden="true">·</span> Reload your AI app after updating. <a href="./references/updates.md">update guide</a></span>
-        </p>
+
       </div>
     </section>
 
@@ -193,29 +198,23 @@ If this chat can't install locally or setup fails because of this environment, e
         <li>
           <h3>Get a game plan</h3>
           <p><span class="desktop-copy">See your grades, deadlines, and missing submissions across courses. Start with the work that matters most.</span><span class="mobile-copy">See grades, deadlines and missing work. Know what to tackle first.</span></p>
-          <p class="workflow-prompt">“What should I work on first this week?”</p>
         </li>
         <li>
           <h3>Study from your slides</h3>
           <p><span class="desktop-copy">Find lecture notes and announcements, review what’s on the midterm, or get quizzed on your own course material.</span><span class="mobile-copy">Review lectures, find exam topics and get quizzed on your own slides.</span></p>
-          <p class="workflow-prompt">“Quiz me on week 7 from my slides.”</p>
         </li>
         <li>
           <h3>Make a lecture video</h3>
           <p>Turn slides into a narrated lesson with worked examples.</p>
-          <p class="workflow-prompt">“Turn these slides into a 10-minute exam review.”</p>
         </li>
       </ul>
     </section>
 
-    <section class="band wrap" aria-label="How it works">
-      <ol class="steps">
-        <li><span class="num">1</span><span class="desktop-copy">Paste one command</span><span class="mobile-copy">Open this link on your computer</span></li>
-        <li><span class="num">2</span>Log in on your school’s page</li>
-        <li><span class="num">3</span>Ask: am I cooked?</li>
-      </ol>
+
+    <section class="privacy-band wrap" aria-labelledby="privacy-title">
+      <h2 id="privacy-title">Your courses. Your control.</h2>
       <ul class="promises">
-        <li><svg aria-hidden="true"><use href="#i-laptop"/></svg><p><b>Runs on your laptop.</b> Nothing stored on our servers.</p></li>
+        <li><svg aria-hidden="true"><use href="#i-laptop"/></svg><p><b>Runs on your laptop.</b> Your course data stays off our servers.</p></li>
         <li><svg aria-hidden="true"><use href="#i-lock"/></svg><p><b>Your password stays with your school.</b> We never see it.</p></li>
         <li><svg aria-hidden="true"><use href="#i-eye"/></svg><p><b>Read-only.</b> It never submits anything.</p></li>
       </ul>
@@ -224,8 +223,8 @@ If this chat can't install locally or setup fails because of this environment, e
 
   <footer class="site-footer wrap">
     <p>Works with McMaster, Waterloo, Western, Queen’s, Guelph, Laurier, TMU, Ottawa, Carleton, Brock, Windsor, McGill, Calgary and any D2L Brightspace school.</p>
-    <p class="agent-note">Are you an AI agent? Read <a href="./SKILL.md"><span data-domain>amicooked-mcp.vercel.app</span>/SKILL.md</a></p>
-    <p class="legal"><a href="https://github.com/udaysinghkanwar/amicooked">GitHub</a> <span aria-hidden="true">·</span> <a href="https://github.com/udaysinghkanwar/amicooked/blob/main/LICENSE">MIT</a> <span aria-hidden="true">·</span> <a href="./privacy">Privacy</a> <span aria-hidden="true">·</span> Not affiliated with D2L or any university. Sample answers use made-up courses.</p>
+    <p class="creator-credit">Made with <span class="heart" aria-label="love">♥</span> by students, for students. <span class="creator-links"><a href="https://www.linkedin.com/in/uday-kanwar/">Uday Kanwar</a> <span aria-hidden="true">·</span> <a href="https://www.linkedin.com/in/sachin-ved-gupta/">Sachin Gupta</a> <span aria-hidden="true">·</span> <a href="https://www.linkedin.com/in/akshay-m-gupta/">Akshay Gupta</a></span></p>
+    <p class="legal"><a href="https://github.com/udaysinghkanwar/amicooked">GitHub</a> <span aria-hidden="true">·</span> <a href="https://github.com/udaysinghkanwar/amicooked/blob/main/LICENSE">MIT</a> <span aria-hidden="true">·</span> <a href="./privacy.html">Privacy</a> <span aria-hidden="true">·</span> Not affiliated with D2L or any university.</p>
   </footer>
 
   <p class="sr-only" aria-live="polite" id="live"></p>

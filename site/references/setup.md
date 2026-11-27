@@ -1,6 +1,14 @@
 # Setup and client verification
 
-Setup runs on the student's computer. If the current chat cannot run local commands, give the student the installer for their OS to run in Terminal or PowerShell. The installer asks for their school and which AI apps to connect. If local execution is unavailable or blocked, explain why and suggest a coding AI with local access, such as Claude Code, Codex or Antigravity CLI. Include a copyable handoff with the exact next command, completed steps and error, without secrets. Only report success after verification.
+Setup runs on the student's computer. Start with the normal Mac/Linux or Windows installer below, unchanged. Use the student's Mac, Windows or Linux OS when already known from the conversation or reliable information about their own computer; do not ask again. Ask only when it is unknown. Begin installation instructions with “Since you’re on [Mac/Windows/Linux], …”. Never ask for their school password, cookies or tokens.
+
+If this chat cannot run commands on the student's own computer, do not install into a hosted sandbox, container or temporary AI environment. Do not infer the student's OS from that environment. Use their known OS without asking again, or ask if unknown. Say “Since you’re on [OS], you can still install it yourself:” and give only the matching manual instructions:
+
+1. Explain how to open Terminal on Mac (⌘ Space, type Terminal, press Return) or PowerShell on Windows (Windows key, type PowerShell, press Enter). On Linux, use their terminal.
+2. Put the exact matching installer from the table below in its own copyable fenced code block, not just a guide link or a reference to “the command above.” Tell them to paste it into that window and press Enter, then choose their school and AI app and sign in on the school's page.
+3. Follow setup's printed next step, reopen the selected AI app if requested, and ask “am I cooked?” there. Use the current chat only if it is the connected app.
+
+Do not stop at explaining that local access is unavailable. A coding AI with local access, such as Claude Code or Codex, may be mentioned only after the manual steps. Do not add installer flags, environment overrides or custom commands for a routine install. If the normal installer fails, use its actual error to troubleshoot and offer npm only when Node.js 22+ is available. Do not claim installation is complete from instructions alone or a sandbox install; verify that the connected app can read the student's courses.
 
 | Platform | Installer |
 |---|---|
@@ -8,7 +16,9 @@ Setup runs on the student's computer. If the current chat cannot run local comma
 | Windows (PowerShell) | `irm https://amicooked-mcp.vercel.app/install.ps1 \| iex` |
 | Node.js 22+ | `npx -y amicooked@0 setup` |
 
-If you can run commands locally:
+If you can run commands on the student’s computer, run the normal installer and guide them through its school/app prompts and browser sign-in. Use the advanced flow below only when the student explicitly requests unattended configuration and execution is on their own computer. An unavailable interactive picker in a hosted chat is a reason to give the manual instructions above, not to use this advanced flow.
+
+## Advanced unattended configuration
 
 1. Ask which school and AI app to connect if the student hasn't said. For a Brightspace school without a preset, use `--school "Full School Name"` to search D2L's public directory, or `--school https://...` with the course portal URL. If several schools match, ask which one the student uses and retry with its full name or listed URL.
 2. For an automated setup, install without opening the picker. On macOS or Linux, append `-s -- --no-setup` to the shell command above. On Windows, set `$env:AMICOOKED_NO_SETUP=1` before running the installer. With Node.js, use `npx -y amicooked@0` in place of `amicooked`.

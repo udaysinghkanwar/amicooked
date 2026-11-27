@@ -6,6 +6,10 @@ It runs on your own computer. You sign in to your school in a normal browser win
 
 ## Install
 
+1. Open **Terminal** on Mac (press ⌘ Space and search Terminal), or **PowerShell** on Windows (search in Start).
+2. Paste the matching command below and press Enter.
+3. Choose your school and AI app. Sign in only on your school’s page. Follow the printed next step, reopen the connected AI app if asked, then ask **am I cooked?** there.
+
 macOS / Linux:
 
 ```sh
@@ -18,9 +22,9 @@ Windows (PowerShell):
 irm https://amicooked-mcp.vercel.app/install.ps1 | iex
 ```
 
-With Node.js 22+: `npx -y amicooked@0 setup`
+If your current AI chat cannot run local commands, run the installer yourself using these steps. A coding AI with local access, such as Claude Code or Codex, is optional. An ordinary web or phone chat does not install software on your computer.
 
-Run the installer and pick your school and AI app when setup asks. Sign in on your school's page, then follow setup's next step and ask **am I cooked?**
+If the normal installer fails and you already have Node.js 22+, use `npx -y amicooked@0 setup`. Include the original error when asking for help.
 
 Gemini works with the Mac app and its bundled CLI, or with [Antigravity CLI](https://antigravity.google/docs/cli-getting-started) on Windows. All supported apps use the same installer. See the [setup guide](skill/references/setup.md) for commands and troubleshooting.
 
@@ -108,7 +112,7 @@ For other local AI clients, configure a stdio MCP server running `amicooked mcp`
 ## Development
 
 ```sh
-npm install
+npm ci
 npm test
 npm run build        # TypeScript to dist/
 npm run build:bin    # standalone binaries in build/ (uses Bun)
@@ -121,6 +125,19 @@ npm run stats        # downloads, setups, manual/automatic upgrades, repo traffi
 `npm run stats` retains existing counters and adds upgrade totals, manual/automatic counts and version transitions. Counters are best effort, not unique-user counts or proof that a running session reloaded. GitHub checksum downloads include native installers and updaters. CSV upgrade columns are appended, preserving historical rows.
 
 For source checkouts, update your branch with `git pull --ff-only`, `npm ci` and `npm run build`, then run `node dist/cli.js update` to refresh installed skills. The updater does not modify developer checkouts automatically.
+
+## Contribute or request a feature
+
+Am I Cooked is free and open source. [Request a feature or report a bug](https://github.com/udaysinghkanwar/amicooked/issues/new): describe what you want to do, your OS and AI app, and what you expected. For bugs, include steps to reproduce and the exact error, with passwords, cookies, tokens and course data removed. Search existing issues first to avoid duplicates.
+
+To contribute:
+1. Fork the repository and create a branch for one focused change.
+2. Follow the Development commands above (`npm ci`, `npm test`, `npm run build`). If you edit `skill/` or `install/`, run `npm run sync:skill` and include the generated changes.
+3. Open a pull request explaining the problem, the change and how you tested it. Add before/after screenshots for UI changes when useful. Keep student data and credentials out of commits and issue reports.
+
+## Made by students
+
+Made with ♥ by students, for students — [Uday Kanwar](https://www.linkedin.com/in/uday-kanwar/), [Sachin Gupta](https://www.linkedin.com/in/sachin-ved-gupta/) and [Akshay Gupta](https://www.linkedin.com/in/akshay-m-gupta/). Built to make grades, deadlines and studying easier to manage through the AI tools students already use.
 
 ## Not affiliated
 
