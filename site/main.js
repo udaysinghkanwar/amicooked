@@ -128,7 +128,18 @@ function showHandoffStatus(action, message, success = false) {
   }, 10000);
 }
 const shareSetup = document.getElementById('share-setup');
-shareSetup.hidden = typeof navigator.share !== 'function';
+const setupShareData = {title: 'Am I Cooked', text: 'Set up Am I Cooked on your computer.', url: setupLink};
+function canShareSetupLink() {
+  if (!isSecureContext || typeof navigator.share !== 'function') return false;
+  try {
+    // Older Safari versions can share links even without canShare().
+    return typeof navigator.canShare !== 'function' || navigator.canShare(setupShareData);
+  } catch {
+    return false;
+  }
+}
+let sharePending = false;
+shareSetup.hidden = !canShareSetupLink();
 const copySetup = document.getElementById('copy-setup');
 copySetup.textContent = 'Copy Setup Link';
 if (shareSetup.hidden) {
@@ -144,12 +155,19 @@ mobileInstallToggle.addEventListener('click', () => {
 });
 installDetails.addEventListener('toggle', syncInstallToggle);
 shareSetup.addEventListener('click', async () => {
+  if (sharePending) return;
   const action = resetHandoffStatus();
+  sharePending = true;
+  shareSetup.disabled = true;
   try {
-    await navigator.share({title: 'Am I Cooked', text: 'Set up Am I Cooked on your computer.', url: setupLink});
+    // Keep this call synchronous with the tap: iOS/Android require transient user activation.
+    await navigator.share(setupShareData);
     showHandoffStatus(action, 'Setup link shared. Open it on your computer to get started.', true);
   } catch (error) {
-    if (error.name !== 'AbortError') showHandoffStatus(action, 'Couldn’t share the link. Try Copy Setup Link instead.');
+    if (error?.name !== 'AbortError') showHandoffStatus(action, 'Couldn’t share the link. Try Copy Setup Link instead.');
+  } finally {
+    sharePending = false;
+    shareSetup.disabled = false;
   }
 });
 copySetup.addEventListener('click', async () => {

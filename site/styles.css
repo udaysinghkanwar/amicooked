@@ -367,9 +367,9 @@ h1 {
   .handoff-actions button:only-child, .handoff-actions button:first-child[hidden] + button { width: 100%; background: var(--ink); color: var(--bg); }
   .get > .handoff-status { margin: 0; max-width: 36ch; color: var(--muted); font-size: 0.8125rem; line-height: 1.5; text-align: center; }
   .handoff-status:empty { display: none; }
-  .mobile-utilities { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; white-space: nowrap; font-size: 0.75rem; color: var(--muted); }
-  .mobile-utilities > .utility-text { padding-inline: 5px; }
-  .mobile-utilities button { min-height: 44px; padding: 0 5px; border: 0; background: none; color: var(--soft); font: inherit; text-decoration: underline; text-underline-offset: 0.2em; cursor: pointer; }
+  .mobile-utilities { display: flex; align-items: center; justify-content: center; gap: 4px; width: 100%; white-space: nowrap; font-size: 0.75rem; color: var(--muted); }
+  .mobile-utilities > .utility-text { padding-inline: 3px; }
+  .mobile-utilities button { min-height: 44px; padding: 0 3px; border: 0; background: none; color: var(--soft); font: inherit; text-decoration: underline; text-underline-offset: 0.2em; cursor: pointer; }
   .mobile-utilities [hidden] { display: none; }
   .install-details { display: block; width: 100%; }
   .install-details > summary { display: list-item; width: fit-content; margin-inline: auto; padding: 8px 0; font-size: 0.8125rem; color: var(--soft); cursor: pointer; }
