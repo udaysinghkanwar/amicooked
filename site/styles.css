@@ -478,3 +478,24 @@ h1 { background: linear-gradient(110deg, var(--ink) 20%, #F5C39A 65%, var(--acce
   .install-details[open] > .install-options { padding-top: 0; }
   .install-details[open] .install-steps { border: 0; background: none; padding: 8px 0; }
 }
+
+/* Keep optional setup and project information available without competing with installation. */
+.setup-extras { width: 100%; min-width: 0; text-align: left; }
+.setup-extras > summary { width: fit-content; margin-inline: auto; padding: 8px 0; color: var(--muted); font-size: 0.8125rem; cursor: pointer; }
+.setup-extras-content { display: flex; flex-direction: column; gap: 12px; padding-top: 10px; min-width: 0; }
+.setup-extras-content > .panel-hint { margin: 0; }
+.setup-trust { margin-top: 0; }
+.site-footer { gap: 14px; }
+.creator-credit { color: var(--soft); }
+.creator-links { display: block; margin-top: 6px; }
+.heart { color: var(--accent); }
+.footer-links { display: flex; flex-wrap: wrap; gap: 10px 20px; }
+.project-details { color: var(--muted); max-width: 75ch; }
+.project-details > summary { cursor: pointer; width: fit-content; }
+.project-details p { margin-top: 12px; }
+.site-footer .project-details .agent-note { display: block; }
+@media (max-width: 600px) {
+  .get > .setup-trust { margin-top: 2px; font-size: 0.75rem; }
+  .setup-extras > summary { font-size: 0.75rem; }
+  .footer-links { gap: 10px 16px; }
+}

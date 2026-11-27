@@ -1,6 +1,13 @@
 # Setup and client verification
 
-Setup runs on the student's computer. If the current chat cannot run local commands, give the student the installer for their OS to run in Terminal or PowerShell. The installer asks for their school and which AI apps to connect. If local execution is unavailable or blocked, explain why and suggest a coding AI with local access, such as Claude Code, Codex or Antigravity CLI. Include a copyable handoff with the exact next command, completed steps and error, without secrets. Only report success after verification.
+Setup runs on the student's computer. Start with the normal Mac/Linux or Windows installer below, unchanged. Ask for their operating system if it is unknown. Never ask for their school password, cookies or tokens.
+
+If this chat cannot run commands on their computer, give a short manual handoff:
+1. Open Terminal (Mac: press ⌘ Space and search Terminal) or PowerShell (Windows: search PowerShell in Start).
+2. Paste the matching installer below and press Enter. Choose the school and AI app, then sign in only on the school's page.
+3. Follow setup's printed next step, reopen the connected AI app if requested, and ask “am I cooked?” there. Use the current chat only if it is the connected app.
+
+Do not stop at explaining that local access is unavailable. Give the exact command and those steps. A coding AI with local access, such as Claude Code or Codex, is optional; the manual installer is the primary handoff. Do not add installer flags, environment overrides or custom commands for a routine install. If the normal installer fails, use its actual error to troubleshoot and offer npm only when Node.js 22+ is available. Only report success after the connected app can read the student's courses.
 
 | Platform | Installer |
 |---|---|
@@ -8,7 +15,9 @@ Setup runs on the student's computer. If the current chat cannot run local comma
 | Windows (PowerShell) | `irm https://amicooked-mcp.vercel.app/install.ps1 \| iex` |
 | Node.js 22+ | `npx -y amicooked@0 setup` |
 
-If you can run commands locally:
+If you can run commands on the student’s computer, run the normal installer and guide them through its school/app prompts and browser sign-in. Use the advanced flow below only when unattended configuration is explicitly requested or interactive setup cannot be used.
+
+## Advanced unattended configuration
 
 1. Ask which school and AI app to connect if the student hasn't said. For a Brightspace school without a preset, use `--school "Full School Name"` to search D2L's public directory, or `--school https://...` with the course portal URL. If several schools match, ask which one the student uses and retry with its full name or listed URL.
 2. For an automated setup, install without opening the picker. On macOS or Linux, append `-s -- --no-setup` to the shell command above. On Windows, set `$env:AMICOOKED_NO_SETUP=1` before running the installer. With Node.js, use `npx -y amicooked@0` in place of `amicooked`.
