@@ -498,9 +498,10 @@ const held = () => paused || focused || !visible || document.hidden;
 // Wait on the finished answer. The rail line is a WAAPI animation (compositor, not per-frame style writes)
 // that doubles as the timer: pause explicitly, for keyboard focus, or while offscreen.
 async function hold(id) {
-  // Verdicts carry more to read, so they stay up longer
+  // Verdicts and long answers carry more to read, so they stay up longer
   const ex = EXCHANGES[current];
-  const duration = ex.list || ex.variants ? HOLD_MS + 1400 : HOLD_MS;
+  const words = `${ex.lead ?? ""} ${ex.text ?? ""}`.split(/\s+/).filter(Boolean).length;
+  const duration = ex.list || ex.variants || words > 20 ? HOLD_MS + 1400 : HOLD_MS;
   const timer = railProgress.animate([{ transform: "scaleX(0)" }, { transform: "scaleX(1)" }], { duration, fill: "forwards" });
   while (timer.playState !== "finished") {
     await nextFrame();
