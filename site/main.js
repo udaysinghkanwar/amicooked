@@ -275,16 +275,10 @@ const EXCHANGES = [
     without: "can’t see your course 💔 the only video i can make is you panicking in 4k",
   },
   {
-    // 2 overdue (+4), 1 due within 72h (+1), lowest grade 47% (+3) = 8, well done
-    q: "how bad is finals week?",
-    tools: ["am_i_cooked"], note: "read 4 courses",
-    lead: "Well done (8/10).", text: "Bad, but fixable. Start with the labs.",
-    list: [
-      ["3XA3", "two labs overdue. The late window closes Sunday, so submit those first"],
-      ["2C03", "final project due Monday"],
-      ["2XB3", "you’re at 47%. Email your prof or go to office hours this week"],
-    ],
-    without: "no clue fr, but drink water, sleep, and maybe start today 💀🙏",
+    q: "quiz me for the 2XB3 final",
+    tools: ["get_announcements", "get_course_content", "download_file"], note: "2XB3",
+    lead: "Question 1 of 10.", text: "Your prof’s announcement says the final covers weeks 4 to 11. Starting with week 7: Dijkstra’s algorithm can fail on one kind of graph. Which one, and why?",
+    without: "sure, question 1: what’s on your final? 💔 because i genuinely don’t know",
   },
 ];
 
