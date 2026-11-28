@@ -20,7 +20,7 @@ git push --follow-tags     # pushes the commit and the tag together
 
 The tag starts `.github/workflows/release.yml`:
 
-1. **release**: runs the tests, checks the tag matches `package.json`, builds the four binaries and publishes the GitHub release with checksums. The curl and PowerShell installers pick this up immediately.
+1. **release**: checks the tag matches `package.json`, builds the four binaries and publishes the GitHub release with checksums. It skips the tests: `npm version` already ran them, and the push to `main` runs them on all three systems. The curl and PowerShell installers pick this up immediately.
 2. **npm**: publishes the same version to npm, only after step 1 succeeded. It skips itself if that version is already on npm, so re-running a failed workflow is safe.
 
 Then check it worked:

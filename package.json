@@ -16,7 +16,8 @@
   "scripts": {
     "sync:skill": "node scripts/sync-skill.mjs",
     "build": "node scripts/sync-skill.mjs && node scripts/clean-dist.mjs && tsc",
-    "test": "vitest run && npm run test:gemini && npm run test:updates && npm run test:updates:native && npm run test:video -- --ci",
+    "test": "npm run test:core && npm run test:video -- --ci",
+    "test:core": "vitest run && npm run test:gemini && npm run test:updates && npm run test:updates:native",
     "test:watch": "vitest",
     "prepack": "npm run build",
     "build:bin": "node scripts/sync-skill.mjs && node scripts/build-binaries.mjs",

@@ -12,6 +12,10 @@ import { testVideoRecovery } from "./test-video-recovery.mjs";
 
 // The ordinary local suite stays offline. The existing GitHub matrix runs the full acceptance test.
 if (process.argv.includes("--ci") && process.env.GITHUB_ACTIONS !== "true") process.exit(0);
+// --channel=native or --channel=npm runs one channel, so CI can run them as parallel jobs.
+const channelArg = process.argv.find(arg => arg.startsWith("--channel="))?.slice("--channel=".length);
+if (channelArg && !["native", "npm"].includes(channelArg)) throw new Error(`Unknown channel ${channelArg}. Use native or npm.`);
+const channels = channelArg ? [channelArg] : ["native", "npm"];
 
 const root = mkdtempSync(path.join(os.tmpdir(), "amicooked video acceptance "));
 const windows = process.platform === "win32";
@@ -42,7 +46,7 @@ try {
     ? execFileSync(process.execPath, [npmScript, ...packArgs], { encoding: "utf8" })
     : execFileSync("npm", packArgs, { encoding: "utf8" });
   const tarball = path.join(root, JSON.parse(packed)[0].filename);
-  for (const channel of ["native", "npm"]) {
+  for (const channel of channels) {
     const home = path.join(root, channel);
     const data = path.join(home, ".amicooked");
     const project = path.join(home, "lecture workspace Ω", "a lesson project with a space and a longer directory name");
