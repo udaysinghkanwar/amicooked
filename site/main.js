@@ -277,7 +277,7 @@ const EXCHANGES = [
   {
     q: "quiz me for the 2XB3 final",
     tools: ["get_announcements", "get_course_content", "download_file"], note: "2XB3",
-    lead: "First question, from week 7.", text: "Your prof’s announcement says the final covers weeks 4 to 11. Dijkstra’s algorithm can fail on one kind of graph. Which one, and why?",
+    lead: "First question, from week 7.", text: "Your prof’s announcement says the final covers weeks 4 to 11. On the graph from slide 14, run BFS from A. In what order does it visit the nodes?",
     without: "sure, question 1: what’s on your final? 💔 because i genuinely don’t know",
   },
 ];
