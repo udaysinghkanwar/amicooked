@@ -275,16 +275,10 @@ const EXCHANGES = [
     without: "can’t see your course 💔 the only video i can make is you panicking in 4k",
   },
   {
-    // 2 overdue (+4), 1 due within 72h (+1), lowest grade 47% (+3) = 8, well done
-    q: "how bad is finals week?",
-    tools: ["am_i_cooked"], note: "read 4 courses",
-    lead: "Well done (8/10).", text: "Bad, but fixable. Start with the labs.",
-    list: [
-      ["3XA3", "two labs overdue. The late window closes Sunday, so submit those first"],
-      ["2C03", "final project due Monday"],
-      ["2XB3", "you’re at 47%. Email your prof or go to office hours this week"],
-    ],
-    without: "no clue fr, but drink water, sleep, and maybe start today 💀🙏",
+    q: "quiz me for the 2XB3 final",
+    tools: ["get_announcements", "get_course_content", "download_file"], note: "2XB3",
+    lead: "First question, from week 7.", text: "Your prof’s announcement says the final covers weeks 4 to 11. On the graph from slide 14, run BFS from A. In what order does it visit the nodes?",
+    without: "sure, question 1: what’s on your final? 💔 because i genuinely don’t know",
   },
 ];
 
@@ -504,9 +498,10 @@ const held = () => paused || focused || !visible || document.hidden;
 // Wait on the finished answer. The rail line is a WAAPI animation (compositor, not per-frame style writes)
 // that doubles as the timer: pause explicitly, for keyboard focus, or while offscreen.
 async function hold(id) {
-  // Verdicts carry more to read, so they stay up longer
+  // Verdicts and long answers carry more to read, so they stay up longer
   const ex = EXCHANGES[current];
-  const duration = ex.list || ex.variants ? HOLD_MS + 1400 : HOLD_MS;
+  const words = `${ex.lead ?? ""} ${ex.text ?? ""}`.split(/\s+/).filter(Boolean).length;
+  const duration = ex.list || ex.variants || words > 20 ? HOLD_MS + 1400 : HOLD_MS;
   const timer = railProgress.animate([{ transform: "scaleX(0)" }, { transform: "scaleX(1)" }], { duration, fill: "forwards" });
   while (timer.playState !== "finished") {
     await nextFrame();
